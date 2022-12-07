@@ -1,2 +1,0 @@
-Example of using avr opcode parser for disassembling AVR binary code. 
-Output is similar to the one produced by avr-objdump.
