@@ -1,3 +1,5 @@
+from io import BytesIO
+
 import nilspodlib
 import numpy as np
 from nilspodlib.dataset import split_into_sensor_data
@@ -12,22 +14,19 @@ from typing_extensions import Self
 import warnings
 
 
-def get_header_and_data_bytes(byteFile: bytes) -> Tuple[np.ndarray, np.ndarray]:
+def get_header_and_data_bytes(bin_file: BytesIO) -> Tuple[np.ndarray, np.ndarray]:
     """Separate a binary file into its header and data part."""
-    file = bytearray(byteFile)
-    header = file[0]
-    header_size = header
-    header = file[0:header_size]
-    data_bytes = file[header_size:]
-    data_bytes = np.frombuffer(file, dtype=np.dtype("B"), offset=header_size)
-    return np.frombuffer(header, dtype=np.dtype("B")), data_bytes
+    header_size = np.frombuffer(bin_file.read(1), dtype=np.dtype('B'))
+    header = np.append(header_size, np.frombuffer(bin_file.read(header_size[0] - 1), dtype=np.dtype('B')))
+    data_bytes = np.frombuffer(bin_file.read(), dtype=np.dtype("B"))
+    return header, data_bytes
 
 
 def parse_binary(
-        byteFile: bytes, legacy_support: str = "error", force_version: Optional[Version] = None,
+        bin_file: BytesIO, legacy_support: str = "error", force_version: Optional[Version] = None,
         tz: Optional[str] = None
 ) -> Tuple[Dict[str, np.ndarray], np.ndarray, Header]:
-    header_bytes, data_bytes = get_header_and_data_bytes(byteFile)
+    header_bytes, data_bytes = get_header_and_data_bytes(bin_file)
     version = get_strict_version_from_header_bytes(header_bytes)
     if legacy_support == "resolve":
         version = force_version or version
@@ -63,14 +62,14 @@ class NilsPodAdapted(nilspodlib.Dataset):
     @classmethod
     def from_bin_file(
                         cls,
-                        byteFile: bytes,
+                        file: BytesIO,
                         *,
                         legacy_support: str = "error",
                         force_version: Optional[Version] = None,
                         tz: Optional[str] = None,
                     ) -> Self:
         sensor_data, counter, info = parse_binary(
-            byteFile=byteFile, legacy_support=legacy_support, force_version=force_version, tz=tz
+            bin_file=file, legacy_support=legacy_support, force_version=force_version, tz=tz
         )
         s = nilspodlib.Dataset(sensor_data, counter, info)
         return s

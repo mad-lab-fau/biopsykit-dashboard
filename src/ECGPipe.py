@@ -169,12 +169,12 @@ class FileUploadPhysiological(param.Parameterized):
         if value is not None or len(value) > 0:
             if type(self.file_input.value) == list and not self.synced:
                 for val, fn in zip(self.file_input.value, self.file_input.filename):
-                    self.handle_single_file(val, fn)
+                    self.handle_single_file(io.BytesIO(val), fn)
                 self.data = Session(self.data)
                 self.ready = True
             elif type(self.file_input.value) == list and self.synced:
                 for val, fn in zip(self.file_input.value, self.file_input.filename):
-                    self.handle_single_file(val, fn)
+                    self.handle_single_file(io.BytesIO(val), fn)
                 self.data = SyncedSession(self.data)
                 self.ready = True
             elif type(self.file_input.value) != list:
@@ -189,7 +189,7 @@ class FileUploadPhysiological(param.Parameterized):
 
     def handle_single_file(self, value, filename):
         if filename.endswith('.bin'):
-            self.handle_bin_file(bytefile=value)
+            self.handle_bin_file(bytefile=BytesIO(value))
             pn.state.notifications.success(filename)
         elif filename.endswith('.csv'):
             if self.file_input.filename.endswith('.csv'):
@@ -198,7 +198,7 @@ class FileUploadPhysiological(param.Parameterized):
             pn.state.notifications.error('Not a matching file format')
 
     def handle_bin_file(self, bytefile: bytes):
-        dataset = NilsPodAdapted.from_bin_file(byteFile=bytefile, legacy_support='resolve', tz=self.timezone)
+        dataset = NilsPodAdapted.from_bin_file(file=bytefile, legacy_support='resolve', tz=self.timezone)
         if self.data is None:
             self.data = []
         self.data.append(dataset)
