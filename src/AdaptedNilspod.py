@@ -1,15 +1,17 @@
 from io import BytesIO
+from pathlib import Path
 
 import nilspodlib
 import numpy as np
 from nilspodlib.dataset import split_into_sensor_data
 from nilspodlib.exceptions import LegacyWarning
 from nilspodlib.header import Header
+from nilspodlib.utils import path_t
 from typing import Dict, Optional, Tuple
-import struct
 from nilspodlib.legacy import find_conversion_function, legacy_support_check
 from nilspodlib.utils import read_binary_uint8, get_strict_version_from_header_bytes
 from packaging.version import Version
+from pandas._typing import FilePath, ReadCsvBuffer
 from typing_extensions import Self
 import warnings
 
@@ -62,14 +64,29 @@ class NilsPodAdapted(nilspodlib.Dataset):
     @classmethod
     def from_bin_file(
                         cls,
-                        file: BytesIO,
+                        filepath_or_buffer: path_t | BytesIO,
                         *,
                         legacy_support: str = "error",
                         force_version: Optional[Version] = None,
                         tz: Optional[str] = None,
                     ) -> Self:
-        sensor_data, counter, info = parse_binary(
-            bin_file=file, legacy_support=legacy_support, force_version=force_version, tz=tz
-        )
-        s = nilspodlib.Dataset(sensor_data, counter, info)
-        return s
+        if isinstance(filepath_or_buffer, BytesIO):
+            sensor_data, counter, info = parse_binary(
+                bin_file=filepath_or_buffer, legacy_support=legacy_support, force_version=force_version, tz=tz
+            )
+            s = nilspodlib.Dataset(sensor_data, counter, info)
+            return s
+        else:
+            path = Path(filepath_or_buffer)
+            if path.suffix != ".bin":
+                ValueError('Invalid file type! Only ".bin" files are supported not {}'.format(path))
+
+            sensor_data, counter, info = parse_binary(
+                path, legacy_support=legacy_support, force_version=force_version, tz=tz
+            )
+            s = nilspodlib.Dataset(sensor_data, counter, info)
+
+            s.path = path
+            return s
+
+

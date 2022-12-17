@@ -4,9 +4,21 @@ pn.extension(notifications=True)
 pn.extension('plotly', 'tabulator')
 from MainPage import *
 
+pn.config.raw_css = [
+"""
+.sidenav .bk-root:nth-of-type(1) {
+    z-index: 200
+}
+div.choices__list.choices__list--dropdown.is-active > div {
+    background: var(--background-color);
+}
+"""
+]
+
 app = pn.template.FastListTemplate(title='BioPysKit Dashboard', header_background='#186FEF',
-                                   logo='../assets/biopsykit_Icon.png',
-                                   favicon="/favicon.ico")
+                                   logo='../assets/Icons/biopsykit_Icon.png',
+                                   favicon="../assets/Favicon/bio.ico"
+                                   )
 app.sidebar.constant = False
 app.main.constant = False
 app.theme_toggle = False
