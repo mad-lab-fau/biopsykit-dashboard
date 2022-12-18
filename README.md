@@ -3,7 +3,7 @@
 * [Technologies](#technologies)
 * [Setup](#setup)
 * [TODO](#TODO)
-
+* [Questions](#questions)
 ## General info
 This project is a Dashboard version of the BioPsyKit Python package. This enables researchers
 to use this package without programming themselves but perform their analyses in the browser 
@@ -44,11 +44,22 @@ after that the Dashboard should start in your default Browser.
 
 ## TODO
 
-* Two paths: 
-  * Single Session
-  * Multi Session
-* Click on previous, the sampling rate Box has to be updated in order to proceed again
-* In the Processing Step: Check Lower and upper Bound dynamically
-* Stages: Select Subtypes, Results
-* Adapted Nilspodlib: Change such that the porcessing is similar to read_csv in pandas and make a pull request
-* Refactoring: Tests, Catch Exceptions, For each Stage a single Python File, etc.
+- [ ] Two paths: 
+  - [ ] Single Session
+  - [ ] Multi Session
+- [X] Click on previous, the sampling rate Box has to be updated in order to proceed again
+- [ ] In the Processing Step: Check Lower and upper Bound dynamically
+- [ ] Stages: 
+  - [ ] Select Subtypes
+  - [ ] Results
+- [ ] Adapted Nilspodlib: Change such that the processing is similar to read_csv in pandas and make a pull request
+- [ ] Refactoring: 
+  - [ ] Tests
+  - [ ] Catch Exceptions
+  - [X] For each Stage a single Python File
+
+## Questions
+* Müssen multi sessions synced sein?
+* load_synced_session müsste noch so angepasst werden, dass es auch eine Liste an Datasets annehmen kann
+* Phasen sollte man auch noch selbst angeben können?
+* Als vorletzte Phase soll der User noch angeben können welche Subtypen ausgewertet werden sollen, sind hiermit die Phasen gemeint?

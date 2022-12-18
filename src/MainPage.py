@@ -1,8 +1,9 @@
 import panel as pn
+import param
+from src.Physiological.ecgPipe import *
 pn.extension(sizing_mode='stretch_width')
 pn.extension(notifications=True)
 pn.extension('plotly', 'tabulator')
-from ECGPipe import *
 
 
 class MainPage(param.Parameterized):
@@ -15,23 +16,21 @@ class MainPage(param.Parameterized):
     salBtn = pn.widgets.Button(name="Saliva Data")
     mainPage = None
 
-    def startPhysPipeline(self, event):
+    def start_physiological_pipeline(self, event):
         ecg = ECGPipeline()
         return self.mainPage.append(ecg.pipeline)
 
-    def __init__(self, mainPage, **params):
+    def __init__(self, main_page, **params):
         f = open('../assets/Markdown/WelcomeText.md', 'r')
         fileString = f.read()
-        self.mainPage = mainPage
+        self.mainPage = main_page
         self.welcomeText = fileString
-        self.physBtn.on_click(self.startPhysPipeline)
+        self.physBtn.on_click(self.start_physiological_pipeline)
         self.signalSelection.append(self.physBtn)
         super().__init__(
             **params)
 
     def view(self):
-        # ecg = ECGPipeline()
-        # return ecg.pipeline
         return pn.Column(
             pn.pane.Markdown(self.welcomeText),
             self.signalSelection
