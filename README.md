@@ -1,3 +1,9 @@
+# BioPsyKit Dashboard
+
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/mad-lab-fau/biopsykit-dashboard)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
+
 ## Table of contents
 * [General info](#general-info)
 * [Technologies](#technologies)
@@ -44,11 +50,9 @@ after that the Dashboard should start in your default Browser.
 
 ## TODO
 
-- [ ] Two paths: 
-  - [ ] Single Session
-  - [ ] Multi Session
+
 - [X] Click on previous, the sampling rate Box has to be updated in order to proceed again
-- [ ] In the Processing Step: Check Lower and upper Bound dynamically
+- [X] In the Processing Step: Check Lower and upper Bound dynamically
 - [ ] Stages: 
   - [ ] Select Subtypes
   - [ ] Results
@@ -57,6 +61,7 @@ after that the Dashboard should start in your default Browser.
   - [ ] Tests
   - [ ] Catch Exceptions
   - [X] For each Stage a single Python File
+  - [ ] Progress Bar
 
 ## Questions
 * Müssen multi sessions synced sein?

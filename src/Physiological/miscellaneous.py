@@ -12,9 +12,9 @@ class ClientSideFileInput(ReactiveHTML):
     """
 
     _scripts = {
-        'render': """
+        "render": """
         """,
-        'select': """
+        "select": """
             // store a reference to our file handle
             let fileHandle;
             const options = {
@@ -46,7 +46,7 @@ class ClientSideFileInput(ReactiveHTML):
             }
 
             getFile();
-        """
+        """,
     }
 
 
@@ -61,9 +61,9 @@ class ClientSideDirectoryInput(ReactiveHTML):
     """
 
     _scripts = {
-        'render': """
+        "render": """
         """,
-        'select': """
+        "select": """
             async function getFiles() {   
                 // store a reference to our file handle
                 const dirHandle = await window.showDirectoryPicker();
@@ -92,5 +92,5 @@ class ClientSideDirectoryInput(ReactiveHTML):
             }
             getFiles();
             console.log('Done');
-        """
+        """,
     }

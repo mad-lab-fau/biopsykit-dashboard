@@ -1,9 +1,10 @@
 import panel as pn
 import param
 from src.Physiological.ecgPipe import *
-pn.extension(sizing_mode='stretch_width')
+
+pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
-pn.extension('plotly', 'tabulator')
+pn.extension("plotly", "tabulator")
 
 
 class MainPage(param.Parameterized):
@@ -21,18 +22,13 @@ class MainPage(param.Parameterized):
         return self.mainPage.append(ecg.pipeline)
 
     def __init__(self, main_page, **params):
-        f = open('../assets/Markdown/WelcomeText.md', 'r')
+        f = open("../assets/Markdown/WelcomeText.md", "r")
         fileString = f.read()
         self.mainPage = main_page
         self.welcomeText = fileString
         self.physBtn.on_click(self.start_physiological_pipeline)
         self.signalSelection.append(self.physBtn)
-        super().__init__(
-            **params)
+        super().__init__(**params)
 
     def view(self):
-        return pn.Column(
-            pn.pane.Markdown(self.welcomeText),
-            self.signalSelection
-        )
-
+        return pn.Column(pn.pane.Markdown(self.welcomeText), self.signalSelection)

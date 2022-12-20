@@ -2,8 +2,13 @@
 name = "biopsykitdashboard"
 version = "0.1.0"
 description = ""
-authors = ["Simon Meske <simon.h.meske@fau.de>"]
+authors = [
+    "Simon Meske <simon.h.meske@fau.de>",
+    "Robert Richer <robert.richer@fau.de>",
+]
 readme = "README.md"
+homepage = "https://github.com/mad-lab-fau/biopsykit-dashboard"
+repository = "https://github.com/mad-lab-fau/biopsykit-dashboard"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
@@ -22,3 +27,6 @@ holoviews = "^1.15.2"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.dev-dependencies]
+black = { version="^22" }
