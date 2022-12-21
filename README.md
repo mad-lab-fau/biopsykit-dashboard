@@ -43,14 +43,14 @@ poetry install
 To then run the Dashboard locally in your Browser:
 
 ```bash
-poetry run Main.py
+poetry run main.py
 ```
 
 after that the Dashboard should start in your default Browser.
 
 ## TODO
 
-
+- [ ] User can set Phases and their names
 - [X] Click on previous, the sampling rate Box has to be updated in order to proceed again
 - [X] In the Processing Step: Check Lower and upper Bound dynamically
 - [ ] Stages: 
@@ -68,3 +68,6 @@ after that the Dashboard should start in your default Browser.
 * load_synced_session müsste noch so angepasst werden, dass es auch eine Liste an Datasets annehmen kann
 * Phasen sollte man auch noch selbst angeben können?
 * Als vorletzte Phase soll der User noch angeben können welche Subtypen ausgewertet werden sollen, sind hiermit die Phasen gemeint?
+* Bei biopsykit.io.nilspod.load_dataset_nilspod: hier kann man noch die Datastreams bekommen (so kann man später sagen, was alles zur Verfügung steht: ECG,
+ACC: IMU; RSP: aus ECG Daten)
+* 

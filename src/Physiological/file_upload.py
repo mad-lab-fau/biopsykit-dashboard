@@ -3,12 +3,13 @@ import param
 import panel as pn
 import pandas as pd
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
-from src.Physiological.sessionKind import SessionKind
+from src.Physiological.session_kind import SessionKind
 from src.utils import get_datetime_columns_of_data_frame
 from io import BytesIO
 from io import StringIO
 from typing import io
-from nilspodlib import Session, SyncedSession
+from nilspodlib import SyncedSession
+from src.utils import _handle_counter_inconsistencies_dataset
 
 
 class FileUpload(SessionKind):
@@ -36,37 +37,62 @@ class FileUpload(SessionKind):
         if self.hardware_select.value == "NilsPod":
             self.file_input.accept = ".csv,.bin"
         if self.hardware_select.value == "BioPac":
-            self.file_input.accept = ".xslx,.xsl"
+            self.file_input.accept = ".acq"
 
     @pn.depends("file_input.value", watch=True)
-    def _parse_file_input(self):
+    def parse_file_input(self):
         self.ready = False
         self.data = None
         value = self.file_input.value
         if value is not None or len(value) > 0:
             if type(self.file_input.value) == list and not self.synced:
-                for val, fn in zip(self.file_input.value, self.file_input.filename):
-                    self.handle_single_file(io.BytesIO(val), fn)
-                self.data = Session(self.data)
-                self.ready = True
+                self.handle_multi_not_synced_sessions()
             elif type(self.file_input.value) == list and self.synced:
-                for val, fn in zip(self.file_input.value, self.file_input.filename):
-                    self.handle_single_file(io.BytesIO(val), fn)
-                self.data = SyncedSession(self.data)
-                self.data = self.data.data_as_df()
-                self.ready = True
+                self.handle_synced_sessions()
             elif type(self.file_input.value) != list:
-                self.handle_single_file(self.file_input.value, self.file_input.filename)
-                if self.file_input.filename.endswith(".bin"):
-                    (
-                        self.data,
-                        self.sampling_rate,
-                    ) = biopsykit.io.nilspod.load_dataset_nilspod(dataset=self.data[0])
-                self.ready = True
+                self.handle_single_session()
             else:
                 pn.state.notifications.error("No matching operators")
         else:
             pn.state.notifications.error("No matching operators")
+
+    def handle_single_session(self):
+        self.handle_single_file(self.file_input.value, self.file_input.filename)
+        if self.file_input.filename.endswith(".bin"):
+            (
+                self.data,
+                self.sampling_rate,
+            ) = biopsykit.io.nilspod.load_dataset_nilspod(dataset=self.data[0])
+        self.ready = True
+
+    def handle_multi_not_synced_sessions(self):
+        phase_names = [f"Part{i}" for i in range(len(self.file_input.filename))]
+        for val, fn in zip(self.file_input.value, self.file_input.filename):
+            self.handle_single_file(io.BytesIO(val), fn)
+        fs_list = [fs for df, fs in self.data]
+        fs = fs_list[0]
+        dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, self.data)}
+        self.data = dataset_dict
+        self.sampling_rate = fs
+        self.ready = True
+
+    # TODO: Timezone
+    def handle_synced_sessions(self):
+        for val, fn in zip(self.file_input.value, self.file_input.filename):
+            self.handle_single_file(io.BytesIO(val), fn)
+        session = SyncedSession(self.data)
+        session.align_to_syncregion(inplace=True)
+        _handle_counter_inconsistencies_dataset(session, "ignore")
+        df = session.data_as_df(None, index="local_datetime", concat_df=True)
+        df.index.name = "time"
+        if len(set(session.info.sampling_rate_hz)) > 1:
+            raise ValueError(
+                f"Datasets in the sessions have different sampling rates! Got: {session.info.sampling_rate_hz}."
+            )
+        fs = session.info.sampling_rate_hz[0]
+        self.data = df
+        self.sampling_rate = fs
+        self.ready = True
 
     def handle_single_file(self, value, filename):
         if filename.endswith(".bin"):

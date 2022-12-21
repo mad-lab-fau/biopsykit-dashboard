@@ -9,7 +9,6 @@ from src.utils import (
 )
 
 
-# TODO: Start und stopp Zeiten nach unten bzw. oben limitieren, Daten cutten --> müssen hierzu alle in df umgewandelt werden? (zwar cut fkt bei nilspodlib aber nur index basiert)
 class TrimSession(param.Parameterized):
     original_data = param.Dynamic()
     trimmed_data = param.Dynamic()

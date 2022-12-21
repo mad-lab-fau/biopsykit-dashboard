@@ -1,7 +1,14 @@
+import warnings
 from datetime import datetime
 from typing import Tuple
 
+import biopsykit
+import numpy as np
 import pandas as pd
+from nilspodlib import Dataset
+from typing_extensions import Literal
+
+COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
 
 
 def get_datetime_columns_of_data_frame(df: pd.DataFrame):
@@ -39,3 +46,25 @@ def timezone_aware_to_naive(dt: datetime) -> datetime:
         tzinfo=None,
     )
     return naive
+
+
+def _handle_counter_inconsistencies_dataset(
+    dataset: Dataset,
+    handle_counter_inconsistency: COUNTER_INCONSISTENCY_HANDLING,
+):
+    idxs_corrupted = np.where(np.diff(dataset.counter) < 1)[0]
+    # edge case: check if only last sample is corrupted. if yes, cut last sample
+    if len(idxs_corrupted) == 1 and (idxs_corrupted == len(dataset.counter) - 2):
+        dataset.cut(start=0, stop=idxs_corrupted[0], inplace=True)
+    elif len(idxs_corrupted) > 1:
+        if handle_counter_inconsistency == "raise":
+            raise ValueError(
+                "Error loading dataset. Counter not monotonously increasing!"
+            )
+        if handle_counter_inconsistency == "warn":
+            warnings.warn(
+                "Counter not monotonously increasing. This might indicate that the dataset is corrupted or "
+                "that the dataset was recorded as part of a synchronized session and might need to be loaded "
+                "using `biopsykit.io.nilspod.load_synced_session_nilspod()`. "
+                "Check the counter of the DataFrame manually!"
+            )

@@ -1,11 +1,11 @@
 import panel as pn
-from src.Physiological.sessionKind import SessionKind
-from src.Physiological.fileUpload import FileUpload
-from src.Physiological.dataArrived import DataArrived
-from src.Physiological.trimSession import TrimSession
-from src.Physiological.outlierDetection import OutlierDetection
-from src.Physiological.processingAndPreview import ProcessingAndPreview
-from src.Physiological.processHRV import ProcessHRV
+from src.Physiological.session_kind import SessionKind
+from src.Physiological.file_upload import FileUpload
+from src.Physiological.data_arrived import DataArrived
+from src.Physiological.trim_session import TrimSession
+from src.Physiological.outlier_detection import OutlierDetection
+from src.Physiological.processing_and_preview import ProcessingAndPreview
+from src.Physiological.process_hrv import ProcessHRV
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)

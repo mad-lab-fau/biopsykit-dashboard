@@ -3,7 +3,7 @@ import panel as pn
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
-from MainPage import *
+from main_page import *
 
 pn.config.raw_css = [
     """

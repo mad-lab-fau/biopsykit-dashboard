@@ -1,8 +1,8 @@
 import param
 import panel as pn
 import pandas as pd
-from nilspodlib import Session, SyncedSession
-from src.utils import get_datetime_columns_of_data_frame, get_start_and_end_time
+from nilspodlib import Session
+from src.utils import get_start_and_end_time
 
 
 class DataArrived(param.Parameterized):
@@ -60,24 +60,13 @@ class DataArrived(param.Parameterized):
                 return
             start.value = start_end[0]
             end.value = start_end[1]
-        elif type(self.data) == Session:
-            start.value = self.data.info.local_datetime_start[0]
-            end.value = self.data.info.local_datetime_stop[0]
-        if type(self.data) != SyncedSession:
-            pane.append(start)
-            pane.append(end)
             return pane
-        elif type(self.data) == SyncedSession:
+        elif isinstance(self.data, dict) and all(
+            isinstance(x, pd.DataFrame) for x in self.data.values()
+        ):
             pane.append(pn.widgets.StaticText(name="Info", value=self.data.info))
-            for dataset in self.data.datasets:
-                pane.append(
-                    pn.widgets.StaticText(name="Session info:", value=dataset.info)
-                )
-                pane.append(
-                    pn.widgets.DataFrame(
-                        name="Session", value=dataset.data_as_df().head(20)
-                    )
-                )
+            for df in self.data.values():
+                pane.append(pn.widgets.DataFrame(name="Session", value=df.head(20)))
             return pane
 
     def panel(self):

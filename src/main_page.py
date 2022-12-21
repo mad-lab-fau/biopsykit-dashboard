@@ -1,6 +1,6 @@
 import panel as pn
 import param
-from src.Physiological.ecgPipe import *
+from src.Physiological.ecg_pipe import *
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
