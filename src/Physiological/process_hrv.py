@@ -4,6 +4,10 @@ import panel as pn
 
 class ProcessHRV(param.Parameterized):
     ecg_processor = param.Dynamic()
+    eeg_processor = param.Dynamic()
+    time_log_present = param.Boolean()
+    time_log = param.Dynamic()
+    sensors = param.Dynamic()
     textHeader = ""
     methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency", "all"]
     hrv_types = pn.widgets.MultiChoice(
@@ -32,12 +36,14 @@ class ProcessHRV(param.Parameterized):
         )
 
     def process_hrv(self):
-        self.ecg_processor.hrv_process(
-            self.ecg_processor,
-            "Data",
-            index=self.index.value,
-            index_name=self.index_name.value,
-            hrv_types=self.hrv_types.value,
-            correct_rpeaks=self.correct_rpeaks.value,
-        )
+        keys = self.ecg_processor.ecg_result.keys()
+        for key in keys:
+            self.ecg_processor.hrv_process(
+                self.ecg_processor,
+                key,
+                index=self.index.value,
+                index_name=self.index_name.value,
+                hrv_types=self.hrv_types.value,
+                correct_rpeaks=self.correct_rpeaks.value,
+            )
         pn.state.notifications.success("HRV processed successfully")

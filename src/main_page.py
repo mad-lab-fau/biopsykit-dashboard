@@ -19,7 +19,7 @@ class MainPage(param.Parameterized):
 
     def start_physiological_pipeline(self, event):
         ecg = ECGPipeline()
-        return self.mainPage.append(ecg.pipeline)
+        return self.mainPage.append(pn.Column(ecg.pipeline))
 
     def __init__(self, main_page, **params):
         f = open("../assets/Markdown/WelcomeText.md", "r")

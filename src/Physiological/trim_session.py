@@ -19,6 +19,9 @@ class TrimSession(param.Parameterized):
     trim_btn = pn.widgets.Button(name="Trim", button_type="primary")
     min_time = None
     max_time = None
+    sensors = param.Dynamic()
+    time_log = param.Dynamic()
+    time_log_present = param.Boolean()
 
     def limit_times(self):
         if type(self.original_data) is pd.DataFrame:
@@ -54,9 +57,6 @@ class TrimSession(param.Parameterized):
                 "s time is lower than the selected start time!"
             )
 
-    """TODO: Trim the data to the new span, and keep the original data 
-    (Two cases: CSV or bin --> hier evtl. noch unterscheidung zwischen synced und nicht synced)"""
-
     def trim_data(self, event):
         print("Trim started")
         print(self.trim_btn.clicks)
@@ -86,9 +86,24 @@ class TrimSession(param.Parameterized):
             fileString = f.read()
             self.text = fileString
         return pn.Column(
-            pn.pane.Markdown(self.text), self.start_time, self.stop_time, self.trim_btn
+            pn.pane.Markdown(self.text),
+            self.start_time,
+            self.stop_time,
+            self.trim_btn,
         )
 
-    @param.output(("data", param.Dynamic), ("sampling_rate", param.Dynamic))
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+    )
     def output(self):
-        return self.trimmed_data, self.sampling_rate
+        return (
+            self.trimmed_data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+        )

@@ -7,16 +7,18 @@ class SessionKind(param.Parameterized):
     synced_radiobox = pn.widgets.RadioBoxGroup(
         name="Synced", options=["Synced", "Not Synced"]
     )
-    session_type_select = pn.widgets.Select(
-        name="Session Type", options=["Multi Session", "Single Session"]
+
+    session = param.Selector(
+        default="Single Session", objects=["Multi Session", "Single Session"]
     )
+
     timezone_select = pn.widgets.Select(
         name="Timezone",
         options=["None Selected"] + list(pytz.all_timezones),
         value="Europe/Berlin",
     )
     text = ""
-    ready = param.Boolean(default=False)
+    ready = param.Boolean(default=True)
 
     @param.depends("timezone_select.value", watch=True)
     def timezone_selected(self):
@@ -26,20 +28,19 @@ class SessionKind(param.Parameterized):
             setattr(self, "ready", False)
 
     @param.output(
-        ("session_type", param.String),
+        ("session_type", param.Dynamic),
         ("synced", param.Boolean),
         ("timezone", param.String),
     )
     def output(self):
         if self.synced_radiobox.value == "Synced":
-            return self.session_type_select.value, True, self.timezone_select.value
+            return self.session, True, self.timezone_select.value
         else:
-            return self.session_type_select.value, False, self.timezone_select.value
+            return self.session, False, self.timezone_select.value
 
-    @param.depends("session_type_select.value", watch=True)
+    @param.depends("session", watch=True)
     def session_type_changed(self):
-        self.operator = self.session_type_select.value
-        if self.session_type_select.value == "Multi Session":
+        if self.session == "Multi Session":
             self.synced_radiobox.disabled = False
         else:
             self.synced_radiobox.disabled = True
@@ -50,9 +51,10 @@ class SessionKind(param.Parameterized):
             fileString = f.read()
             self.text = fileString
         self.ready = True
+        self.synced_radiobox.disabled = True
         return pn.Column(
             pn.pane.Markdown(self.text),
             self.timezone_select,
-            self.session_type_select,
+            self.param.session,
             self.synced_radiobox,
         )

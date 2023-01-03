@@ -50,13 +50,12 @@ after that the Dashboard should start in your default Browser.
 
 ## TODO
 
-- [ ] User can set Phases and their names
 - [X] Click on previous, the sampling rate Box has to be updated in order to proceed again
 - [X] In the Processing Step: Check Lower and upper Bound dynamically
 - [ ] Stages: 
   - [ ] Select Subtypes
   - [ ] Results
-- [ ] Adapted Nilspodlib: Change such that the processing is similar to read_csv in pandas and make a pull request
+- [~] Adapted Nilspodlib: Change such that the processing is similar to read_csv in pandas and make a pull request
 - [ ] Refactoring: 
   - [ ] Tests
   - [ ] Catch Exceptions
