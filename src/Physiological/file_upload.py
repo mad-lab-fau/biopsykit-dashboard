@@ -1,3 +1,5 @@
+import datetime
+
 import biopsykit.io.nilspod
 import param
 import panel as pn
@@ -45,7 +47,8 @@ class FileUpload(SessionKind):
             self.file_input.accept = ".acq"
 
     def parse_file_input(self, event):
-        self.ready = False
+        if self.data is None:
+            self.ready = False
         self.data = None
         if self.file_input.value is None or len(self.file_input.value) <= 0:
             pn.state.notifications.error("No Files arrived")
@@ -82,7 +85,6 @@ class FileUpload(SessionKind):
             return
         self.time_log = pd.read_excel(self.file_input.value[indices[0]])
 
-    # TODO: Das ist bei NilsPod gleich im DataSetType mit dabei
     def get_signal_type(self):
         if self.hardware_select.value == "NilsPod":
             self.sensors = "Test"
@@ -101,7 +103,6 @@ class FileUpload(SessionKind):
                     self.data,
                     self.sampling_rate,
                 ) = biopsykit.io.nilspod.load_dataset_nilspod(dataset=self.data[0])
-
             self.ready = True
 
     def handle_multi_not_synced_sessions(self):
@@ -116,7 +117,9 @@ class FileUpload(SessionKind):
             if "xls" in fn:
                 continue
             self.handle_single_file(val, fn)
-        dataset_dict = {vp: ds for vp, ds in zip(session_names, self.data)}
+        dataset_dict = {
+            vp: self.dataset_to_df(ds) for vp, ds in zip(session_names, self.data)
+        }
         self.sampling_rate = [
             ds.info.sampling_rate_hz for vp, ds in zip(session_names, self.data)
         ]
@@ -126,6 +129,21 @@ class FileUpload(SessionKind):
         self.sampling_rate = self.sampling_rate[0]
         self.data = dataset_dict
         self.ready = True
+
+    def dataset_to_df(self, ds):
+        df = ds.data_as_df()
+        start = ds.info.utc_datetime_start
+        sr = ds.info.sampling_rate_hz
+        step = datetime.timedelta(seconds=1 / sr)
+        my_ind = [start]
+        for i in range(len(df) - 1):
+            c = my_ind[i]
+            x = my_ind[i] + step
+            my_ind.append(x)
+        a = pd.Index(my_ind)
+        df.set_index(a, inplace=True)
+        df.index.name = "index"
+        return df
 
     def handle_synced_sessions(self):
         for val, fn in zip(self.file_input.value, self.file_input.filename):
@@ -197,6 +215,7 @@ class FileUpload(SessionKind):
         ("sampling_rate", param.Dynamic),
         ("time_log_present", param.Dynamic),
         ("time_log", param.Dynamic),
+        ("timezone", param.Dynamic),
         ("synced", param.Boolean),
         ("session_type", param.String),
         ("sensors", param.Dynamic),
@@ -207,6 +226,7 @@ class FileUpload(SessionKind):
             self.sampling_rate,
             self.time_log_present,
             self.time_log,
+            self.timezone,
             self.synced,
             self.session_type,
             self.sensors,
@@ -218,6 +238,10 @@ class FileUpload(SessionKind):
             fileString = f.read()
             self.text = fileString
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
+        if self.data is not None:
+            self.ready = True
         return pn.Column(
-            pn.pane.Markdown(self.text), self.hardware_select, self.file_input
+            pn.pane.Markdown(self.text),
+            self.hardware_select,
+            self.file_input,
         )

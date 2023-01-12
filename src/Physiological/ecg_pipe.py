@@ -36,25 +36,14 @@ class ECGPipeline:
         self.pipeline.add_stage("Process HRV", ProcessHRV())
         self.pipeline.add_stage("Select Subtypes", ChooseSubtypes)
 
-        self.pipeline.define_graph(
-            {
-                "Session Kind": "Upload File",
-                "Upload File": "Data arrived",
-                "Data arrived": "Trim Session",
-                "Trim Session": "Outlier Processing",
-                "Outlier Processing": "Preview",
-                "Preview": "Process HRV",
-                "Process HRV": "Select Subtypes",
-            }
-        )
-
-        # self.pipeline.layout = pn.Column(
-        #     pn.Row(
-        #         self.pipeline.title,
-        #         pn.layout.HSpacer(),
-        #         self.pipeline.prev_button,
-        #         self.pipeline.next_button,
-        #     ),
-        #     self.pipeline.network,
-        #     self.pipeline.stage,
+        # self.pipeline.define_graph(
+        #     {
+        #         "Session Kind": "Upload File",
+        #         "Upload File": "Data arrived",
+        #         "Data arrived": "Trim Session",
+        #         "Trim Session": "Outlier Processing",
+        #         "Outlier Processing": "Preview",
+        #         "Preview": "Process HRV",
+        #         "Process HRV": "Select Subtypes",
+        #     }
         # )

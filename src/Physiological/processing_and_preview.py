@@ -25,7 +25,8 @@ class ProcessingAndPreview(param.Parameterized):
             self.textHeader = fileString
         column = pn.Column(self.textHeader)
         accordion = self.get_dataframes_as_accordions()
-        for stat_value in self.get_statistical_values():
+        stat_values = self.get_statistical_values()
+        for stat_value in stat_values:
             accordion.append(stat_value)
         column.append(accordion)
         return column
@@ -38,7 +39,7 @@ class ProcessingAndPreview(param.Parameterized):
         if type(self.data) == dict:
             df = {}
             for key in self.data.keys():
-                df[key] = self.data[key].data_as_df()
+                df[key] = self.data[key]
 
         if "ecg" in self.sensors:
             if self.time_log_present:
@@ -126,22 +127,20 @@ class ProcessingAndPreview(param.Parameterized):
                     "Heart_Rate": ["min", "max", "min", "median"],
                 }
             )
+            values.append(
+                pn.widgets.DataFrame(
+                    name=key + " ECG Statistical Values", value=ecg_stats
+                )
+            )
             heart_rate_stats = self.ecg_processor.heart_rate[key].agg(
                 {
                     "Heart_Rate": ["min", "max", "min", "median"],
                 }
             )
             values.append(
-                [
-                    (
-                        key + " ECG Statistical Values",
-                        pn.widgets.DataFrame(value=ecg_stats),
-                    ),
-                    (
-                        key + " Heart Rate Statistical Values",
-                        pn.widgets.DataFrame(value=heart_rate_stats),
-                    ),
-                ]
+                pn.widgets.DataFrame(
+                    name=key + " Heart Rate Statistical Values", value=heart_rate_stats
+                )
             )
         return values
 

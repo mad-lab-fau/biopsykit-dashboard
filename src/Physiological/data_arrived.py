@@ -24,6 +24,7 @@ class DataArrived(param.Parameterized):
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
     sensors = param.Dynamic()
+    timezone = param.String()
 
     @pn.depends("sampling_rate_input.value", watch=True)
     def set_sampling_rate_value(self):
@@ -54,6 +55,7 @@ class DataArrived(param.Parameterized):
         ("sensors", param.Dynamic),
         ("time_log_present", param.Dynamic),
         ("time_log", param.Dynamic),
+        ("timezone", param.String()),
     )
     def output(self):
         return (
@@ -62,11 +64,13 @@ class DataArrived(param.Parameterized):
             self.sensors,
             self.time_log_present,
             self.time_log,
+            self.timezone,
         )
 
     def get_session_start_and_end(self, pane):
         start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
         end = pn.widgets.DatetimePicker(name="Session end:", disabled=True)
+        accordion = pn.Accordion()
         if type(self.data) == pd.DataFrame:
             start_end = get_start_and_end_time(self.data)
             if start_end is None:
@@ -80,14 +84,14 @@ class DataArrived(param.Parameterized):
         elif isinstance(self.data, dict) and all(
             isinstance(x, pd.DataFrame) for x in self.data.values()
         ):
-            pane.append(pn.widgets.StaticText(name="Info", value=self.data.info))
-            for df in self.data.values():
-                pane.append(pn.widgets.DataFrame(name="Session", value=df.head(20)))
+            for key in self.data.keys():
+                ds = self.data[key]
+                accordion.append(pn.widgets.DataFrame(name=key, value=ds.head(20)))
+            pane.append(accordion)
             return pane
         elif isinstance(self.data, dict) and all(
             isinstance(x, nilspodlib.Dataset) for x in self.data.values()
         ):
-            accordion = pn.Accordion()
             for key in self.data.keys():
                 ds = self.data[key]
                 accordion.append(

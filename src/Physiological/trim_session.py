@@ -22,20 +22,36 @@ class TrimSession(param.Parameterized):
     sensors = param.Dynamic()
     time_log = param.Dynamic()
     time_log_present = param.Boolean()
+    timezone = param.String()
 
     def limit_times(self):
+        min_time_all = None
+        max_time_all = None
         if type(self.original_data) is pd.DataFrame:
             start_end = get_start_and_end_time(self.original_data)
             if start_end is None:
                 return
-            self.min_time = timezone_aware_to_naive(start_end[0])
-            self.max_time = timezone_aware_to_naive(start_end[1])
-            self.start_time.start = self.min_time
-            self.start_time.end = self.max_time
-            self.stop_time.start = self.min_time
-            self.stop_time.end = self.max_time
-            self.start_time.value = self.min_time
-            self.stop_time.value = self.max_time
+            min_time_all = timezone_aware_to_naive(start_end[0])
+            max_time_all = timezone_aware_to_naive(start_end[1])
+        elif type(self.original_data) is dict:
+            for df in self.original_data.values():
+                min_max = get_start_and_end_time(df)
+                df_min = timezone_aware_to_naive(min_max[0])
+                df_max = timezone_aware_to_naive(min_max[1])
+                if min_time_all is None or min_time_all > df_min:
+                    min_time_all = df_min
+                if max_time_all is None or max_time_all < df_max:
+                    max_time_all = df_max
+        if min_time_all is None or max_time_all is None:
+            return
+        self.min_time = min_time_all
+        self.max_time = max_time_all
+        self.start_time.start = self.min_time
+        self.start_time.end = self.max_time
+        self.stop_time.start = self.min_time
+        self.stop_time.end = self.max_time
+        self.start_time.value = self.min_time
+        self.stop_time.value = self.max_time
 
     @pn.depends("start_time.value", watch=True)
     def start_time_changed(self):
@@ -58,22 +74,38 @@ class TrimSession(param.Parameterized):
             )
 
     def trim_data(self, event):
-        print("Trim started")
         print(self.trim_btn.clicks)
         if type(self.original_data) is pd.DataFrame:
-            print("trim df")
             dt_col = get_datetime_columns_of_data_frame(self.original_data)
             if len(dt_col) == 1:
                 col = dt_col[0]
                 start = self.start_time.value
                 stop = self.stop_time.value
-                tz = pytz.timezone("Europe/Berlin")
+                tz = pytz.timezone(self.timezone)
                 start = tz.localize(start)
                 stop = tz.localize(stop)
                 self.trimmed_data = self.original_data.loc[
                     (self.original_data[col] >= start)
                     & (self.original_data[col] <= stop)
                 ]
+        elif type(self.original_data) is dict:
+            keys = list(self.original_data.keys())
+            for key in keys:
+                dt_col = get_datetime_columns_of_data_frame(self.original_data[key])
+                if len(dt_col) == 1:
+                    col = dt_col[0]
+                    start = self.start_time.value
+                    stop = self.stop_time.value
+                    tz = pytz.timezone(self.timezone)
+                    start = tz.localize(start)
+                    stop = tz.localize(stop)
+                    df = self.original_data[key]
+                    if col == "index":
+                        df = df.between_time(start.time(), stop.time())
+                        self.trimmed_data[key] = df
+                    else:
+                        df = df.loc[(df[col] >= start) & (df[col] <= stop)]
+                        self.trimmed_data[key] = df
         else:
             print("session")
 
