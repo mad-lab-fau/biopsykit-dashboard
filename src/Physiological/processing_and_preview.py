@@ -4,6 +4,7 @@ import panel as pn
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.eeg import EegProcessor
 from nilspodlib import Dataset
+import plotly.express as px
 
 
 class ProcessingAndPreview(param.Parameterized):
@@ -132,6 +133,12 @@ class ProcessingAndPreview(param.Parameterized):
                     name=key + " ECG Statistical Values", value=ecg_stats
                 )
             )
+            for column in self.ecg_processor.ecg_result[key]:
+                df = self.ecg_processor.ecg_result[key]
+                fig = px.box(df, y=column)
+                plotly_pane = pn.pane.Plotly(fig)
+                values.append(("Boxplot " + key + ": " + column, plotly_pane))
+
             heart_rate_stats = self.ecg_processor.heart_rate[key].agg(
                 {
                     "Heart_Rate": ["min", "max", "min", "median"],

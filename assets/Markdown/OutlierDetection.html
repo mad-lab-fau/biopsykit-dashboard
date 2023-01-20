@@ -1,0 +1,15 @@
+<h1>Outlier Correction</h1>
+
+<h4>In this stage the ECG signal will be processed. This will be done in three steps: Filtering, R-peak detection,
+    Outlier correction.</h4>
+
+Below you can select the outlier correction methods, which consist of:
+<ul>
+    <li>Correlation: Computes cross-correlation coefficient between every single beat and the average of all detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold.</li>
+    <li>Quality: Uses the ECG_Quality indicator is below a certain threshold.</li>
+    <li>Artifact: Artifact detection based on <em>Berntson et al.</em> (1990).</li>
+    <li>Physiological: Physiological outlier removal. Marks beats if their heart rate is above or below a threshold that is very unlikely to be achieved physiologically.</li>
+    <li>Statistical rr: Statistical outlier removal based on RR intervals. Marks beats as outlier if the intervals are within the xx% highest or lowest values. Values are removed based on the z-score; e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values). </li>
+    <li>Statistical rr diff: Statistical outlier removal based on successive differences of RR intervals. Marks beats as outlier if the difference of successive RR intervals are within the xx% highest or lowest heart rates. Values are removed based on the z-score; e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% (0.5% highest, 0.5% lowest values).</li>
+</ul>
+

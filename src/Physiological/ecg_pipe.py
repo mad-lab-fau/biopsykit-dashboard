@@ -1,5 +1,7 @@
 import panel as pn
-
+from src.Physiological.sessions import Session
+from src.Physiological.recordings import Recordings
+from src.Physiological.compress_files import Compress
 from src.Physiological.choose_subtypes import ChooseSubtypes
 from src.Physiological.select_times import SelectTimes
 from src.Physiological.session_kind import SessionKind
@@ -16,25 +18,48 @@ pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
 
-# TODO: Welche Subtypen (Ankreuzfelder), Finish + Results runterladen (DF HR und HV + Plots optional auch, als .zip File), OutlierDetection nur wenn es ecg ist
 class ECGPipeline:
     pipeline = None
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True)
+
+        self.pipeline.add_stage("Sessions", Session(), ready_parameter="ready")
         self.pipeline.add_stage(
-            "Session Kind",
-            SessionKind,
-            ready_parameter="ready",
-            show_header=False,
+            "Recordings", Recordings(), ready_parameter="ready", next_parameter="next"
         )
-        self.pipeline.add_stage("Upload File", FileUpload, ready_parameter="ready")
+        self.pipeline.add_stage("Multiple Files", Compress())
+        self.pipeline.add_stage("Upload Files", FileUpload(), ready_parameter="ready")
         self.pipeline.add_stage("Data arrived", DataArrived(), ready_parameter="ready")
-        self.pipeline.add_stage("Trim Session", TrimSession())
-        self.pipeline.add_stage("Outlier Processing", OutlierDetection())
-        self.pipeline.add_stage("Preview", ProcessingAndPreview())
-        self.pipeline.add_stage("Process HRV", ProcessHRV())
-        self.pipeline.add_stage("Select Subtypes", ChooseSubtypes)
+
+        self.pipeline.define_graph(
+            {
+                "Sessions": "Recordings",
+                "Recordings": ("Multiple Files", "Upload Files"),
+                "Multiple Files": "Upload Files",
+                "Upload Files": "Data arrived",
+                # Zeiten hochladen oder eintragen
+                # Hier nun fragen, ob die Daten korrigiert werden sollen (Nein, Default, Expert Mode)
+                # Sollen die Daten getrimmt werden?
+                # Preview
+                # Soll noch HRV? berechnet werden
+                #
+            }
+        )
+
+        # self.pipeline.add_stage(
+        #     "Session Kind",
+        #     SessionKind,
+        #     ready_parameter="ready",
+        #     show_header=False,
+        # )
+        # self.pipeline.add_stage("Upload File", FileUpload, ready_parameter="ready")
+        # self.pipeline.add_stage("Data arrived", DataArrived(), ready_parameter="ready")
+        # self.pipeline.add_stage("Trim Session", TrimSession())
+        # self.pipeline.add_stage("Outlier Processing", OutlierDetection())
+        # self.pipeline.add_stage("Preview", ProcessingAndPreview())
+        # self.pipeline.add_stage("Process HRV", ProcessHRV())
+        # self.pipeline.add_stage("Select Subtypes", ChooseSubtypes)
 
         # self.pipeline.define_graph(
         #     {

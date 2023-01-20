@@ -1,11 +1,14 @@
 import datetime
+from zipfile import ZipFile
 
 import biopsykit.io.nilspod
 import param
 import panel as pn
 import pandas as pd
+import pytz
+
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
-from src.Physiological.session_kind import SessionKind
+from src.Physiological.recordings import Recordings
 from src.utils import get_datetime_columns_of_data_frame
 from io import BytesIO
 from io import StringIO
@@ -15,18 +18,21 @@ from src.utils import _handle_counter_inconsistencies_dataset
 from biopsykit.utils.datatype_helper import *
 
 
-class FileUpload(SessionKind):
+class FileUpload(Recordings):
     text = ""
     filetype_Select = pn.widgets.Select(
         name="File Type", options=["Multi Session", "Single Session"]
     )
     file_input = pn.widgets.FileInput(
-        background="WhiteSmoke", multiple=True, accept=".csv,.bin,.xls,.xlsx"
+        background="WhiteSmoke", multiple=False, accept=".csv,.bin,.xls,.xlsx"
     )
-    session_type = param.String()
+    session_type = param.Dynamic()
     synced = param.Boolean()
-    timezone = param.String()
-    ready = param.Boolean(default=False)
+    timezone_select = pn.widgets.Select(
+        name="Timezone",
+        options=["None Selected"] + list(pytz.all_timezones),
+        value="Europe/Berlin",
+    )
     data = None
     sampling_rate = param.Dynamic(default=-1)
     hardware_select = pn.widgets.Select(
@@ -42,7 +48,7 @@ class FileUpload(SessionKind):
     @pn.depends("hardware_select.value", watch=True)
     def hardware_selection_changed(self):
         if self.hardware_select.value == "NilsPod":
-            self.file_input.accept = ".csv,.bin"
+            self.file_input.accept = ".csv,.bin, .zip"
         if self.hardware_select.value == "BioPac":
             self.file_input.accept = ".acq"
 
@@ -53,20 +59,45 @@ class FileUpload(SessionKind):
         if self.file_input.value is None or len(self.file_input.value) <= 0:
             pn.state.notifications.error("No Files arrived")
             return
-        if type(self.file_input.value) != list:
-            self.handle_single_session()
+        if ".zip" in self.file_input.filename:
+            # Daten noch entpacken und dann parsen
+            self.data = self.extract_zip(self.file_input.value)
+            pn.state.notifications.success("unzipped")
             return
-        self.set_time_log()
-        if (
-            type(self.file_input.value) == list
-            and len(self.file_input.value) <= 2
-            and self.session_type == "Single Session"
-        ):
-            self.handle_single_session()
-        elif type(self.file_input.value) == list and not self.synced:
-            self.handle_multi_not_synced_sessions()
-        elif type(self.file_input.value) == list and self.synced:
-            self.handle_synced_sessions()
+        else:
+            # Eine Session dann mit einem oder mehreren Sensoren
+            fileType = self.file_input.filename[
+                self.file_input.filename.rindex(".") + 1 :
+            ]
+            match fileType:
+                case "csv":
+                    self.handle_csv_file(bytefile=self.file_input.value)
+                    return
+                case "bin":
+                    self.handle_bin_file(bytefile=self.file_input.value)
+                    return
+                case _:
+                    pn.state.notifications.error("No matching parser found")
+        return
+
+        # if type(self.file_input.value) != list:
+        #     self.handle_single_session()
+        #     return
+        # self.set_time_log()
+        # if (
+        #     type(self.file_input.value) == list
+        #     and len(self.file_input.value) <= 2
+        #     and self.session.value == "Single Session"
+        # ):
+        #     self.handle_single_session()
+        # elif type(self.file_input.value) == list and not self.synced:
+        #     self.handle_multi_not_synced_sessions()
+        # elif type(self.file_input.value) == list and self.synced:
+        #     self.handle_synced_sessions()
+
+    def extract_zip(self, input_zip):
+        input_zip = ZipFile(input_zip)
+        return {name: input_zip.read(name) for name in input_zip.namelist()}
 
     def set_time_log(self):
         if not any(".xls" in name for name in self.file_input.filename):
@@ -233,6 +264,12 @@ class FileUpload(SessionKind):
         )
 
     def panel(self):
+        self.progress.value = 10
+        self.step.value = "Step 3 of " + str(self.max_steps)
+        if self.recording.value == "Multiple Recording":
+            self.file_input.accept = ".zip"
+        else:
+            self.file_input.accept = ".csv,.bin,.xls,.xlsx"
         if self.text == "":
             f = open("../assets/Markdown/PhysiologicalFileUpload.md", "r")
             fileString = f.read()
@@ -243,5 +280,6 @@ class FileUpload(SessionKind):
         return pn.Column(
             pn.pane.Markdown(self.text),
             self.hardware_select,
+            self.timezone_select,
             self.file_input,
         )
