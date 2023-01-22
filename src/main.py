@@ -32,7 +32,12 @@ current_page = MainPage(app.main)
 def startPhysPipeline(event):
     ecg = ECGPipeline()
     pane = pn.Column(
-        pn.Row(ecg.pipeline.title, pn.layout.HSpacer(), ecg.pipeline.buttons),
+        pn.Row(
+            ecg.pipeline.title,
+            pn.layout.HSpacer(),
+            ecg.pipeline.prev_button,
+            ecg.pipeline.next_button,
+        ),
         ecg.pipeline.stage,
     )
     app.main[0].objects = [pane]

@@ -2,6 +2,47 @@ import param
 import panel as pn
 from biopsykit.signals.ecg import EcgProcessor
 
+from src.Physiological.add_times import AskToAddTimes
+
+
+class AskToDetectOutliers(AskToAddTimes):
+    text = ""
+    ready = param.Boolean(default=True)
+    next = param.Selector(
+        default="Now the Files will be processed",
+        objects=["Now the Files will be processed", "Expert Processing"],
+    )
+    ready = param.Boolean(default=False)
+    skip_btn = pn.widgets.Button(name="Skip")
+    expert_mode_btn = pn.widgets.Button(name="Expert Mode", button_type="danger")
+    default_btn = pn.widgets.Button(name="Default", button_type="primary")
+
+    def click_skip(self, event):
+        self.next = "Now the Files will be processed"
+        self.ready = True
+
+    def click_detect_outlier(self, event):
+        self.next = "Expert Processing"
+        self.ready = True
+
+    def click_default(self, event):
+        self.next = "Now the Files will be processed"
+        self.ready = True
+
+    def panel(self):
+        if self.text == "":
+            f = open("../assets/Markdown/AskToDetectOutliers.md", "r")
+            fileString = f.read()
+            self.text = fileString
+        self.expert_mode_btn.on_click(self.click_detect_outlier)
+        self.skip_btn.on_click(self.click_skip)
+        self.default_btn.on_click(self.click_default)
+        return pn.Column(
+            pn.Row(self.step, self.progress),
+            pn.pane.Markdown(self.text),
+            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
+        )
+
 
 class OutlierDetection(param.Parameterized):
     data = param.Dynamic()

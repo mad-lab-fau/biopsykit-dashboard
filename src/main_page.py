@@ -1,4 +1,4 @@
-import panel as pn
+import main as pn
 import param
 from src.Physiological.ecg_pipe import *
 

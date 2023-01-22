@@ -54,7 +54,7 @@ class FileUpload(Recordings):
 
     def parse_file_input(self, event):
         if self.data is None:
-            self.ready = False
+            self.ready = True
         self.data = None
         if self.file_input.value is None or len(self.file_input.value) <= 0:
             pn.state.notifications.error("No Files arrived")
@@ -204,7 +204,9 @@ class FileUpload(Recordings):
 
     def handle_bin_file(self, bytefile: bytes):
         dataset = NilsPodAdapted.from_bin_file(
-            filepath_or_buffer=bytefile, legacy_support="resolve", tz=self.timezone
+            filepath_or_buffer=bytefile,
+            legacy_support="resolve",
+            tz=self.timezone_select.value,
         )
         if self.data is None:
             self.data = []
@@ -239,14 +241,13 @@ class FileUpload(Recordings):
     def set_timezone_of_datetime_columns_(self):
         datetime_columns = get_datetime_columns_of_data_frame(self.data)
         for col in datetime_columns:
-            self.data[col] = self.data[col].dt.tz_localize(self.timezone)
+            self.data[col] = self.data[col].dt.tz_localize(self.timezone_select.value)
 
     @param.output(
         ("data", param.Dynamic),
         ("sampling_rate", param.Dynamic),
         ("time_log_present", param.Dynamic),
         ("time_log", param.Dynamic),
-        ("timezone", param.Dynamic),
         ("synced", param.Boolean),
         ("session_type", param.String),
         ("sensors", param.Dynamic),
@@ -257,7 +258,6 @@ class FileUpload(Recordings):
             self.sampling_rate,
             self.time_log_present,
             self.time_log,
-            self.timezone,
             self.synced,
             self.session_type,
             self.sensors,
