@@ -10,7 +10,10 @@ from src.Physiological.file_upload import FileUpload
 from src.Physiological.data_arrived import DataArrived
 from src.Physiological.trim_session import TrimSession
 from src.Physiological.outlier_detection import OutlierDetection, AskToDetectOutliers
-from src.Physiological.processing_and_preview import ProcessingAndPreview
+from src.Physiological.processing_and_preview import (
+    ProcessingAndPreview,
+    ProcessingPreStep,
+)
 from src.Physiological.process_hrv import ProcessHRV
 
 pn.extension(sizing_mode="stretch_width")
@@ -48,7 +51,10 @@ class ECGPipeline:
             next_parameter="next",
         )
         self.pipeline.add_stage("Expert Processing", OutlierDetection())
-        # self.pipeline.add_stage("Now the Files will be processed")
+        self.pipeline.add_stage(
+            "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
+        )
+        self.pipeline.add_stage("Preview", ProcessingAndPreview())
 
         self.pipeline.define_graph(
             {
@@ -63,8 +69,8 @@ class ECGPipeline:
                     "Expert Processing",
                     "Now the Files will be processed",
                 ),
+                "Now the Files will be processed": "Preview",
                 "Expert Processing": "Now the Files will be processed",
-                # "Now the Files will be processed": "Preview",
                 # "Preview": "Do you want to process the HRV also?",
                 # "Do you want to process the HRV also?": ("Process HRV", "Results"),
                 # "Process HRV": "Results"

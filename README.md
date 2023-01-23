@@ -61,7 +61,9 @@ after that the Dashboard should start in your default Browser.
   - [ ] Catch Exceptions
   - [X] For each Stage a single Python File
   - [ ] Progress Bar
-
+- [X] Test ob App in WebAssembly konvertiert werden kann
+  - [ ] Automatisieren, dass alle .py und .md Datei in eine Datei geladen wird
+- 
 ## Questions
 * Müssen multi sessions synced sein?
 * load_synced_session müsste noch so angepasst werden, dass es auch eine Liste an Datasets annehmen kann

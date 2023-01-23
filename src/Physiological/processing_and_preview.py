@@ -6,6 +6,26 @@ from biopsykit.signals.eeg import EegProcessor
 from nilspodlib import Dataset
 import plotly.express as px
 
+from src.Physiological.outlier_detection import AskToDetectOutliers
+
+
+class ProcessingPreStep(AskToDetectOutliers):
+
+    ready = param.Boolean(default=False)
+    ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
+
+    def ready_btn_click(self, event):
+        self.ready = True
+
+    def panel(self):
+        self.ready_btn.on_click(self.ready_btn_click)
+        if self.text == "":
+            f = open("../assets/Markdown/ProcessingPreSteps.md", "r")
+            fileString = f.read()
+            self.text = fileString
+        column = pn.Column(self.text)
+        return column
+
 
 class ProcessingAndPreview(param.Parameterized):
     ecg_processor = param.Dynamic()
