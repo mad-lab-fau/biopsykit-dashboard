@@ -52,6 +52,7 @@ class AskToAddTimes(FileUpload):
         )
 
 
+# TODO: Checkboxes für VPs (wenn mehrere VPs angegeben werden), Select für: subject_col und condition_col (nur wenn es fehl schlägt), für VP (wenn man nur eine will)
 class AddTimes(AskToAddTimes):
     time_upload = pn.widgets.FileInput(
         background="WhiteSmoke", multiple=False, accept=".xls,.xlsx"
