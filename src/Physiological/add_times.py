@@ -16,6 +16,7 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
 
+from src.Physiological.custom_components import Timestamp, TimestampList
 from src.Physiological.file_upload import FileUpload
 
 
@@ -88,8 +89,8 @@ class AddTimes(AskToAddTimes):
 
         for subject_name in df.index:
             conditions = df.loc[subject_name]
-            person = (subject_name,)
             col = pn.Column()
+            list_ts = []
             for dim in range(0, conditions.ndim):
                 condition = None
                 if conditions.ndim == 1:
@@ -106,7 +107,10 @@ class AddTimes(AskToAddTimes):
                         )
                         row.append(pn.widgets.DatetimePicker(value=t))
                         row.append(pn.widgets.Button(name="Remove Timestamp"))
-                        col.append(row)
+                        # test = Timestamp(name=index, value=(index, t))
+                        # test._timestamp_remove.on_click(self.remove_btn_click)
+                        # col.append(pn.Row(test))
+                        list_ts.append((index, t))
                     elif isinstance(value, str) and value.isalpha():
                         col.insert(
                             0,
@@ -117,9 +121,14 @@ class AddTimes(AskToAddTimes):
             btn = pn.widgets.Button(name="Add Timestamp", button_type="primary")
             btn.on_click(self.add_timestamp)
             col.append(btn)
-            person = (subject_name, col)
-            uploaded_times.append(person)
+            tsList = TimestampList(name=subject_name, value=list_ts)
+            person = (subject_name, tsList)
+            uploaded_times.append(tsList)  # person
+            # self.times.append(tsList)
         self.times.objects = [uploaded_times]
+
+    def remove_btn_click(self, event):
+        print(event)
 
     def add_timestamp(self, event):
         print(event)

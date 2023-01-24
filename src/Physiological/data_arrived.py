@@ -8,7 +8,7 @@ from src.utils import get_start_and_end_time
 
 class DataArrived(param.Parameterized):
     synced = param.Boolean()
-    session_type = param.String()
+    session_type = param.Dynamic()
     data = param.Dynamic()
     sampling_rate = param.Dynamic()
     sampling_rate_input = pn.widgets.TextInput(

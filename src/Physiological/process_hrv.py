@@ -1,6 +1,38 @@
 import param
 import panel as pn
 
+from src.Physiological.processing_and_preview import ProcessingAndPreview
+
+
+class AskToProcessHRV(ProcessingAndPreview):
+
+    skip_btn = pn.widgets.Button(name="Skip", button_type="primary")
+    process_hrv_btn = pn.widgets.Button(name="Process HRV")
+    next_page = param.Selector(
+        default="Process HRV",
+        objects=["Process HRV", "Results"],
+    )
+    ready = param.Boolean(default=False)
+
+    def skip_btn_click(self, _):
+        self.next_page = "Results"
+        self.ready = True
+
+    def process_hrv_btn_click(self, _):
+        self.next_page = "Process HRV"
+        self.ready = True
+
+    def panel(self):
+        if self.text == "":
+            f = open("../assets/Markdown/ProcessHRV.md", "r")
+            fileString = f.read()
+            self.text = fileString
+        self.skip_btn.on_click(self.skip_btn_click)
+        self.process_hrv_btn.on_click(self.process_hrv_btn_click)
+        return pn.Column(
+            pn.pane.Markdown(self.text), pn.Row(self.process_hrv_btn, self.skip_btn)
+        )
+
 
 class ProcessHRV(param.Parameterized):
     ecg_processor = param.Dynamic()

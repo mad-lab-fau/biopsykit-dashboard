@@ -14,7 +14,7 @@ from src.Physiological.processing_and_preview import (
     ProcessingAndPreview,
     ProcessingPreStep,
 )
-from src.Physiological.process_hrv import ProcessHRV
+from src.Physiological.process_hrv import ProcessHRV, AskToProcessHRV
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -54,7 +54,16 @@ class ECGPipeline:
         self.pipeline.add_stage(
             "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
         )
+
         self.pipeline.add_stage("Preview", ProcessingAndPreview())
+        self.pipeline.add_stage(
+            "Do you want to process the HRV also?",
+            AskToProcessHRV(),
+            auto_advance=True,
+            ready_parameter="ready",
+            next_parameter="next_page",
+        )
+        # self.pipeline.add_stage("Process HRV", ProcessHRV())
 
         self.pipeline.define_graph(
             {
@@ -71,9 +80,13 @@ class ECGPipeline:
                 ),
                 "Now the Files will be processed": "Preview",
                 "Expert Processing": "Now the Files will be processed",
-                # "Preview": "Do you want to process the HRV also?",
-                # "Do you want to process the HRV also?": ("Process HRV", "Results"),
-                # "Process HRV": "Results"
+                "Now the Files will be processed": "Preview",
+                "Preview": "Do you want to process the HRV also?",
+                # "Do you want to process the HRV also?": (
+                #    "Process HRV",
+                #    "Result preview",
+                # ),
+                # "Process HRV": "Result preview",
                 # Vorher noch fragen ob man das überhaupt will
                 # Zeiten hochladen oder eintragen
                 # Hier nun fragen, ob die Daten korrigiert werden sollen (Nein, Default, Expert Mode)
