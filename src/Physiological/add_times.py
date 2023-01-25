@@ -15,8 +15,8 @@ from biopsykit.io.io import (
 from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
+from panel import interact
 
-from src.Physiological.custom_components import Timestamp, TimestampList
 from src.Physiological.file_upload import FileUpload
 
 
@@ -53,7 +53,6 @@ class AskToAddTimes(FileUpload):
         )
 
 
-# TODO: Checkboxes für VPs (wenn mehrere VPs angegeben werden), Select für: subject_col und condition_col (nur wenn es fehl schlägt), für VP (wenn man nur eine will)
 class AddTimes(AskToAddTimes):
     time_upload = pn.widgets.FileInput(
         background="WhiteSmoke", multiple=False, accept=".xls,.xlsx"
@@ -70,8 +69,9 @@ class AddTimes(AskToAddTimes):
     time_log = None
     subject_log = None
     times = None
+    subject_timestamps = []
+    subj_time_dict = {}
 
-    # TODO: Verbindung zwischen Remove und dem richtigen Ort
     def parse_time_file(self, event):
         df = None
         if ".csv" in self.time_upload.filename:
@@ -81,36 +81,20 @@ class AddTimes(AskToAddTimes):
         else:
             df = pd.read_excel(self.time_upload.value)
             df = self.handle_time_file(df)
-
         if df is None:
             pn.state.notifications.error("Could not parse the given time File")
-        uploaded_times = pn.Accordion()
-        # Wenn Multiple Sessions -> VP -> List of Tuple(Condition -> Time)
-
         for subject_name in df.index:
             conditions = df.loc[subject_name]
             col = pn.Column()
-            list_ts = []
+            self.subj_time_dict[subject_name] = {}
             for dim in range(0, conditions.ndim):
-                condition = None
                 if conditions.ndim == 1:
                     condition = conditions.iloc[:]
                 else:
                     condition = conditions.iloc[:, dim]
-                cond_times = []
                 for index, value in condition.items():
                     if isinstance(value, datetime.time):
-                        row = pn.Row()
-                        row.append(pn.widgets.StaticText(value=index))
-                        t = datetime.datetime.combine(
-                            datetime.datetime.now().date(), value
-                        )
-                        row.append(pn.widgets.DatetimePicker(value=t))
-                        row.append(pn.widgets.Button(name="Remove Timestamp"))
-                        # test = Timestamp(name=index, value=(index, t))
-                        # test._timestamp_remove.on_click(self.remove_btn_click)
-                        # col.append(pn.Row(test))
-                        list_ts.append((index, t))
+                        self.subj_time_dict[subject_name][index] = value
                     elif isinstance(value, str) and value.isalpha():
                         col.insert(
                             0,
@@ -118,17 +102,37 @@ class AddTimes(AskToAddTimes):
                                 placeholder="Name the timestamp", value=value
                             ),
                         )
+        self.times.objects = self.dict_to_column()
+
+    def dict_to_column(self):
+        timestamps = []
+        for subject in self.subj_time_dict.keys():
+            col = pn.Column()
+            for phase in self.subj_time_dict[subject].keys():
+                row = pn.Row()
+                row.append(pn.widgets.TextInput(value=phase))
+                dt = datetime.datetime.combine(
+                    datetime.datetime.now().date(),
+                    self.subj_time_dict[subject][phase],
+                )
+                dt_picker = pn.widgets.DatetimePicker(value=dt)
+                row.append(dt_picker)
+                remove_btn = pn.widgets.Button(name="Remove", button_type="primary")
+                row.append(remove_btn)
+                remove_btn.link(
+                    (subject, phase),
+                    callbacks={"value": self.callback},
+                )
+                col.append(row)
             btn = pn.widgets.Button(name="Add Timestamp", button_type="primary")
             btn.on_click(self.add_timestamp)
             col.append(btn)
-            tsList = TimestampList(name=subject_name, value=list_ts)
-            person = (subject_name, tsList)
-            uploaded_times.append(tsList)  # person
-            # self.times.append(tsList)
-        self.times.objects = [uploaded_times]
+            timestamps.append((subject, col))
+        return [pn.Accordion(objects=timestamps)]
 
-    def remove_btn_click(self, event):
-        print(event)
+    def callback(self, target, event):
+        self.subj_time_dict[target[0]].pop(target[1])
+        self.times.objects = self.dict_to_column()
 
     def add_timestamp(self, event):
         print(event)
