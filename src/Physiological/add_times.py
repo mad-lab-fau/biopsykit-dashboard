@@ -15,7 +15,6 @@ from biopsykit.io.io import (
 from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
-from panel import interact
 
 from src.Physiological.file_upload import FileUpload
 
@@ -71,6 +70,7 @@ class AddTimes(AskToAddTimes):
     times = None
     subject_timestamps = []
     subj_time_dict = {}
+    df = None
 
     def parse_time_file(self, event):
         df = None
@@ -81,12 +81,41 @@ class AddTimes(AskToAddTimes):
         else:
             df = pd.read_excel(self.time_upload.value)
             df = self.handle_time_file(df)
+            self.df = df
+        if not self.ready:
+            # Subject oder condition column nicht angegeben
+            row = pn.Row()
+            cols = list(self.df.columns)
+            cols.insert(0, " ")
+            slct_subject = pn.widgets.Select(name="Select Subject column", options=cols)
+            slct_subject.link(
+                "subject",
+                callbacks={"value": self.subject_column_changed},
+            )
+            row.append(slct_subject)
+            slct_condition = pn.widgets.Select(
+                name="Select Condition column", options=cols
+            )
+            slct_condition.link(
+                "condition",
+                callbacks={"value": self.condition_column_changed},
+            )
+            row.append(slct_condition)
+            self.pane.append(row)
+            return
         if df is None:
             pn.state.notifications.error("Could not parse the given time File")
-        for subject_name in df.index:
-            conditions = df.loc[subject_name]
+        self.df = df
+        self.set_subject_time_dict()
+        self.dict_to_column()
+
+    def set_subject_time_dict(self):
+        for subject_name in self.df.index:
+            conditions = self.df.loc[subject_name]
             col = pn.Column()
+            cond_name = conditions.condition
             self.subj_time_dict[subject_name] = {}
+            self.subj_time_dict[subject_name][cond_name] = {}
             for dim in range(0, conditions.ndim):
                 if conditions.ndim == 1:
                     condition = conditions.iloc[:]
@@ -94,7 +123,12 @@ class AddTimes(AskToAddTimes):
                     condition = conditions.iloc[:, dim]
                 for index, value in condition.items():
                     if isinstance(value, datetime.time):
-                        self.subj_time_dict[subject_name][index] = value
+                        self.subj_time_dict[subject_name][cond_name][
+                            index
+                        ] = datetime.datetime.combine(
+                            datetime.datetime.now().date(),
+                            value,
+                        )
                     elif isinstance(value, str) and value.isalpha():
                         col.insert(
                             0,
@@ -102,41 +136,122 @@ class AddTimes(AskToAddTimes):
                                 placeholder="Name the timestamp", value=value
                             ),
                         )
-        self.times.objects = self.dict_to_column()
 
     def dict_to_column(self):
         timestamps = []
         for subject in self.subj_time_dict.keys():
             col = pn.Column()
-            for phase in self.subj_time_dict[subject].keys():
-                row = pn.Row()
-                row.append(pn.widgets.TextInput(value=phase))
-                dt = datetime.datetime.combine(
-                    datetime.datetime.now().date(),
-                    self.subj_time_dict[subject][phase],
+            for condition in self.subj_time_dict[subject].keys():
+                cond = pn.widgets.TextInput(value=condition)
+                cond.link(
+                    (subject, condition),
+                    callbacks={"value": self.change_condition_name},
                 )
-                dt_picker = pn.widgets.DatetimePicker(value=dt)
-                row.append(dt_picker)
-                remove_btn = pn.widgets.Button(name="Remove", button_type="primary")
-                row.append(remove_btn)
-                remove_btn.link(
-                    (subject, phase),
-                    callbacks={"value": self.callback},
+                col.append(cond)
+                for phase in self.subj_time_dict[subject][condition].keys():
+                    row = pn.Row()
+                    phase_name_input = pn.widgets.TextInput(value=phase)
+                    phase_name_input.link(
+                        (subject, condition, phase),
+                        callbacks={"value": self.change_phase_name},
+                    )
+                    row.append(phase_name_input)
+                    dt_picker = pn.widgets.DatetimePicker(
+                        value=self.subj_time_dict[subject][condition][phase]
+                    )
+                    dt_picker.link(
+                        (subject, condition, phase),
+                        callbacks={"value": self.timestamp_changed},
+                    )
+                    row.append(dt_picker)
+                    remove_btn = pn.widgets.Button(name="Remove", button_type="primary")
+                    remove_btn.link(
+                        (subject, condition, phase),
+                        callbacks={"value": self.remove_btn_click},
+                    )
+                    row.append(remove_btn)
+                    col.append(row)
+                btn = pn.widgets.Button(name="Add Phase", button_type="primary")
+                btn.link(
+                    (subject, condition),
+                    callbacks={"value": self.add_phase_btn_click},
                 )
-                col.append(row)
-            btn = pn.widgets.Button(name="Add Timestamp", button_type="primary")
-            btn.on_click(self.add_timestamp)
-            col.append(btn)
-            timestamps.append((subject, col))
-        return [pn.Accordion(objects=timestamps)]
+                col.append(btn)
+                timestamps.append((subject, col))
+        self.times.objects = [pn.Accordion(objects=timestamps)]
 
-    def callback(self, target, event):
-        self.subj_time_dict[target[0]].pop(target[1])
-        self.times.objects = self.dict_to_column()
+    def timestamp_changed(self, target, event):
+        changed_timestamp = event.new
+        self.subj_time_dict[target[0]][target[1]][target[2]] = changed_timestamp
+        self.dict_to_column()
 
-    def add_timestamp(self, event):
+    def change_condition_name(self, target, event):
+        self.subj_time_dict[target[0]][event.new] = self.subj_time_dict[target[0]].pop(
+            target[1]
+        )
+        self.dict_to_column()
+
+    def change_phase_name(self, target, event):
+        self.subj_time_dict[target[0]][target[1]][event.new] = self.subj_time_dict[
+            target[0]
+        ][target[1]].pop(target[2])
+        self.dict_to_column()
+
+    def remove_btn_click(self, target, event):
+        self.subj_time_dict[target[0]][target[1]].pop(target[2])
+        self.dict_to_column()
+
+    def add_timestamp(self, target, event):
         print(event)
         return
+
+    def check_subject_condition_columns(self, df):
+        if "subject" not in df.columns:
+            pn.state.notifications.error("Subject column must be specified")
+            return False
+        if "condition" not in df.columns:
+            pn.state.notifications.error("Condition column must be specified")
+            return False
+        return True
+
+    def subject_column_changed(self, target, event):
+        col = event.new
+        if col == " ":
+            return
+        col_name = "subject"
+        self.df = self.df.rename(columns={col: col_name})
+        if not self.check_subject_condition_columns(self.df):
+            return
+        self.ready = True
+        self.df = self.handle_time_file(self.df)
+        self.set_subject_time_dict()
+        self.dict_to_column()
+
+    def condition_column_changed(self, target, event):
+        col = event.new
+        if col == " ":
+            return
+        col_name = "condition"
+        self.df = self.df.rename(columns={col: col_name})
+        if not self.check_subject_condition_columns(self.df):
+            return
+        self.ready = True
+        self.df = self.handle_time_file(self.df)
+        self.set_subject_time_dict()
+        self.dict_to_column()
+
+    def add_phase_btn_click(self, target, event):
+        new_phase_name = "New Phase"
+        if new_phase_name in self.subj_time_dict[target[0]][target[1]].keys():
+            i = 1
+            new_phase_name = new_phase_name + " " + str(i)
+            while new_phase_name in self.subj_time_dict[target[0]][target[1]].keys():
+                i += 1
+                new_phase_name = new_phase_name + " " + str(i)
+        self.subj_time_dict[target[0]][target[1]][
+            new_phase_name
+        ] = datetime.datetime.now().time()
+        self.dict_to_column()
 
     def handle_time_file(self, df):
         if self.session.value == "Single Session":
@@ -150,6 +265,9 @@ class AddTimes(AskToAddTimes):
                 _assert_is_dtype(val, str)
             return data
         else:
+            if not self.check_subject_condition_columns(df):
+                self.ready = False
+                return df
             subject_col = "subject"
             condition_col = "condition"
             df = df.set_index(subject_col)
@@ -162,7 +280,6 @@ class AddTimes(AskToAddTimes):
             f = open("../assets/Markdown/SelectTimes.md", "r")
             fileString = f.read()
             self.text = fileString
-        self.ready = True
         self.progress.value = 5
         self.step.value = "Step 4 of " + str(self.max_steps)
         self.progress.width_policy = "max"
