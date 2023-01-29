@@ -10,9 +10,8 @@ class Compress(Recordings):
             fileString = f.read()
             self.text = fileString
         self.ready = True
-        self.progress.value = 5
         self.step.value = "Step 4 of " + str(self.max_steps + 1)
         return pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.step),
             pn.pane.Markdown(self.text),
         )

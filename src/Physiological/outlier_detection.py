@@ -14,7 +14,9 @@ class AskToDetectOutliers(AskToAddTimes):
     )
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip")
-    expert_mode_btn = pn.widgets.Button(name="Expert Mode", button_type="danger")
+    expert_mode_btn = pn.widgets.Button(
+        background="#d5433e", name="Expert Mode", button_type="success"
+    )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
 
     def click_skip(self, event):
@@ -38,7 +40,7 @@ class AskToDetectOutliers(AskToAddTimes):
         self.skip_btn.on_click(self.click_skip)
         self.default_btn.on_click(self.click_default)
         return pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.step),
             pn.pane.Markdown(self.text),
             pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
         )

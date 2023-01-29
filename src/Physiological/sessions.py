@@ -9,9 +9,6 @@ class Session(param.Parameterized):
     )
     text = ""
     ready = param.Boolean(default=True)
-    progress = pn.indicators.Progress(
-        name="Progress", value=0, bar_color="primary", width=300
-    )
     step = pn.widgets.StaticText(name="Progress", value="Step 1 of " + str(max_steps))
 
     def panel(self):
@@ -21,7 +18,7 @@ class Session(param.Parameterized):
             self.text = fileString
         self.ready = True
         return pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.step),
             pn.pane.Markdown(self.text),
             self.session,
         )

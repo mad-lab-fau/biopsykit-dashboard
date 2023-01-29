@@ -25,11 +25,9 @@ class Recordings(Session):
             fileString = f.read()
             self.text = fileString
         self.ready = True
-        self.progress.value = 5
         self.step.value = "Step 2 of " + str(self.max_steps)
-        self.progress.width_policy = "max"
         return pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.step),
             pn.pane.Markdown(self.text),
             self.recording,
         )

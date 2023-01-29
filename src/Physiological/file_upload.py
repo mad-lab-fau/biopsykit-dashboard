@@ -264,7 +264,6 @@ class FileUpload(Recordings):
         )
 
     def panel(self):
-        self.progress.value = 10
         self.step.value = "Step 3 of " + str(self.max_steps)
         if self.recording.value == "Multiple Recording":
             self.file_input.accept = ".zip"

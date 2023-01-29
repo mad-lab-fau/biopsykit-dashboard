@@ -23,15 +23,15 @@ class AskToAddTimes(FileUpload):
     text = ""
     ready = param.Boolean(default=True)
     next = param.Selector(
-        default="Want to correct Outlier?",
-        objects=["Want to correct Outlier?", "Add Times"],
+        default="Do you want to detect Outlier?",
+        objects=["Do you want to detect Outlier?", "Add Times"],
     )
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
 
     def click_skip(self, event):
-        self.next = "Want to correct Outlier?"
+        self.next = "Do you want to detect Outlier?"
         self.ready = True
 
     def click_add_times(self, event):
