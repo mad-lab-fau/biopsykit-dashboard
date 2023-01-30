@@ -39,6 +39,8 @@ class AskToAddTimes(FileUpload):
         self.ready = True
 
     def panel(self):
+        self.step = 5
+        self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/AskToAddTimes.md", "r")
             fileString = f.read()
@@ -46,7 +48,8 @@ class AskToAddTimes(FileUpload):
         self.add_times_btn.on_click(self.click_add_times)
         self.skip_btn.on_click(self.click_skip)
         return pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             pn.pane.Markdown(self.text),
             pn.Row(self.add_times_btn, self.skip_btn),
         )
@@ -276,6 +279,9 @@ class AddTimes(AskToAddTimes):
             return df
 
     def panel(self):
+        self.step = 6
+        self.max_steps = 21
+        self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/SelectTimes.md", "r")
             fileString = f.read()
@@ -288,9 +294,9 @@ class AddTimes(AskToAddTimes):
         self.times = pn.Column(
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
-
         self.pane = pn.Column(
-            pn.Row(self.step, self.progress),
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             pn.pane.Markdown(self.text),
             pn.widgets.StaticText(
                 name="Add Times",

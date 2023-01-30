@@ -1,7 +1,7 @@
 import warnings
 from datetime import datetime
 from typing import Tuple
-
+import panel as pn
 import biopsykit
 import numpy as np
 import pandas as pd

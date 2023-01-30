@@ -3,12 +3,8 @@ from src.Physiological.sessions import Session
 from src.Physiological.recordings import Recordings
 from src.Physiological.compress_files import Compress
 from src.Physiological.add_times import AddTimes, AskToAddTimes
-from src.Physiological.choose_subtypes import ChooseSubtypes
-from src.Physiological.select_times import SelectTimes
-from src.Physiological.session_kind import SessionKind
 from src.Physiological.file_upload import FileUpload
 from src.Physiological.data_arrived import DataArrived
-from src.Physiological.trim_session import TrimSession
 from src.Physiological.outlier_detection import OutlierDetection, AskToDetectOutliers
 from src.Physiological.processing_and_preview import (
     ProcessingAndPreview,
@@ -36,7 +32,7 @@ class ECGPipeline:
         self.pipeline.add_stage("Upload Files", FileUpload(), ready_parameter="ready")
         self.pipeline.add_stage("Data arrived", DataArrived())
         self.pipeline.add_stage(
-            "Want to add Times?",
+            "Do you want to add time logs?",
             AskToAddTimes(),
             auto_advance=True,
             ready_parameter="ready",
@@ -71,8 +67,11 @@ class ECGPipeline:
                 "Recordings": ("Multiple Files", "Upload Files"),
                 "Multiple Files": "Upload Files",
                 "Upload Files": "Data arrived",
-                "Data arrived": "Want to add Times?",
-                "Want to add Times?": ("Add Times", "Do you want to detect Outlier?"),
+                "Data arrived": "Do you want to add time logs?",
+                "Do you want to add time logs?": (
+                    "Add Times",
+                    "Do you want to detect Outlier?",
+                ),
                 "Add Times": "Do you want to detect Outlier?",
                 "Do you want to detect Outlier?": (
                     "Expert Processing",

@@ -18,12 +18,16 @@ class ProcessingPreStep(AskToDetectOutliers):
         self.ready = True
 
     def panel(self):
+        self.step = 8
+        self.set_progress_value()
         self.ready_btn.on_click(self.ready_btn_click)
         if self.text == "":
             f = open("../assets/Markdown/ProcessingPreSteps.md", "r")
             fileString = f.read()
             self.text = fileString
-        column = pn.Column(self.text)
+        column = pn.Column(pn.Row(self.get_step_static_text()))
+        column.append(self.progress)
+        column.append(self.text)
         return column
 
 

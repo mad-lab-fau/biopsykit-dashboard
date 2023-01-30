@@ -264,7 +264,7 @@ class FileUpload(Recordings):
         )
 
     def panel(self):
-        self.step.value = "Step 3 of " + str(self.max_steps)
+        self.step = 3
         if self.recording.value == "Multiple Recording":
             self.file_input.accept = ".zip"
         else:
@@ -276,8 +276,11 @@ class FileUpload(Recordings):
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
         if self.data is not None:
             self.ready = True
+        self.set_progress_value()
         return pn.Column(
             pn.pane.Markdown(self.text),
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             self.hardware_select,
             self.timezone_select,
             self.file_input,

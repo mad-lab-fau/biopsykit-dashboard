@@ -3,10 +3,12 @@ import param
 import panel as pn
 import pandas as pd
 from nilspodlib import Session
+
+from src.Physiological.file_upload import FileUpload
 from src.utils import get_start_and_end_time
 
 
-class DataArrived(param.Parameterized):
+class DataArrived(FileUpload):
     synced = param.Boolean()
     session_type = param.Dynamic()
     data = param.Dynamic()
@@ -101,12 +103,15 @@ class DataArrived(param.Parameterized):
             return pane
 
     def panel(self):
+        self.step = 4
+        self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/ECG_FilesUploaded.md", "r")
             fileString = f.read()
             self.text = fileString
-        pane = pn.Column(pn.pane.Markdown(self.text))
-
+        pane = pn.Column(pn.Row(self.get_step_static_text()))
+        pane.append(pn.Row(self.progress))
+        pane.append(pn.pane.Markdown(self.text))
         if self.sampling_rate == -1:
             if self.sampling_rate != -1:
                 self.sampling_rate_input.value = str(self.sampling_rate)
@@ -117,8 +122,8 @@ class DataArrived(param.Parameterized):
                 self.ready = True
         else:
             self.ready = True
-
         pane = self.get_session_start_and_end(pane)
+
         if type(self.data) == pd.DataFrame:
             pane.append(pn.widgets.DataFrame(name="Data", value=self.data.head(100)))
         elif type(self.data) == Session:

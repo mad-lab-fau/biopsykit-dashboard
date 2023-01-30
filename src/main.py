@@ -16,6 +16,7 @@ from main_page import *
 #     """
 # ]
 
+
 app = pn.template.FastListTemplate(
     title="BioPysKit Dashboard",
     header_background="#186FEF",
