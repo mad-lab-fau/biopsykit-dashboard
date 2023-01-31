@@ -51,23 +51,23 @@ class DataArrived(FileUpload):
         else:
             self.info_selected_value.object = self.info_dict[self.info_selection.value]
 
-    @param.output(
-        ("original_data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-        )
+    # @param.output(
+    #     ("data", param.Dynamic),
+    #     ("sampling_rate", param.Dynamic),
+    #     ("sensors", param.Dynamic),
+    #     ("time_log_present", param.Dynamic),
+    #     ("time_log", param.Dynamic),
+    #     ("timezone", param.String()),
+    # )
+    # def output(self):
+    #     return (
+    #         self.data,
+    #         self.sampling_rate,
+    #         self.sensors,
+    #         self.time_log_present,
+    #         self.time_log,
+    #         self.timezone,
+    #     )
 
     def get_session_start_and_end(self, pane):
         start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
@@ -82,6 +82,9 @@ class DataArrived(FileUpload):
                 return
             start.value = start_end[0]
             end.value = start_end[1]
+            accordion.append(start)
+            accordion.append(end)
+            pane.append(accordion)
             return pane
         elif isinstance(self.data, dict) and all(
             isinstance(x, pd.DataFrame) for x in self.data.values()

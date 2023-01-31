@@ -204,7 +204,7 @@ class FileUpload(Recordings):
 
     def handle_bin_file(self, bytefile: bytes):
         dataset = NilsPodAdapted.from_bin_file(
-            filepath_or_buffer=bytefile,
+            filepath_or_buffer=BytesIO(bytefile),
             legacy_support="resolve",
             tz=self.timezone_select.value,
         )
@@ -217,7 +217,9 @@ class FileUpload(Recordings):
             return
         if dataset in self.data:
             return
-        self.data.append(dataset)
+        df, fs = biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
+        self.sampling_rate = fs
+        self.data = df
 
     def handle_csv_file(self, bytefile: bytes):
         string_io = StringIO(bytefile.decode("utf8"))

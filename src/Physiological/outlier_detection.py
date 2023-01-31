@@ -50,8 +50,8 @@ class AskToDetectOutliers(AskToAddTimes):
 
 
 class OutlierDetection(AskToDetectOutliers):
-    data = param.Dynamic()
-    sampling_rate = param.Dynamic()
+    # data = param.Dynamic()
+    # sampling_rate = param.Dynamic()
     textHeader = ""
     textParams = ""
     methods = [

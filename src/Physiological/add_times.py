@@ -16,10 +16,10 @@ from biopsykit.utils._datatype_validation_helper import (
     _assert_is_dtype,
 )
 
-from src.Physiological.file_upload import FileUpload
+from src.Physiological.data_arrived import DataArrived
 
 
-class AskToAddTimes(FileUpload):
+class AskToAddTimes(DataArrived):
     text = ""
     ready = param.Boolean(default=True)
     next = param.Selector(
@@ -253,7 +253,7 @@ class AddTimes(AskToAddTimes):
                 new_phase_name = new_phase_name + " " + str(i)
         self.subj_time_dict[target[0]][target[1]][
             new_phase_name
-        ] = datetime.datetime.now().time()
+        ] = datetime.datetime.now()
         self.dict_to_column()
 
     def handle_time_file(self, df):
@@ -286,8 +286,6 @@ class AddTimes(AskToAddTimes):
             f = open("../assets/Markdown/SelectTimes.md", "r")
             fileString = f.read()
             self.text = fileString
-        self.progress.value = 5
-        self.step.value = "Step 4 of " + str(self.max_steps)
         self.progress.width_policy = "max"
         pn.bind(self.parse_time_file, self.time_upload.param.value, watch=True)
         self.add_button.on_click(self.add_timestamp)
