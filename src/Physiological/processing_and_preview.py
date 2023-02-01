@@ -31,7 +31,7 @@ class ProcessingPreStep(AskToDetectOutliers):
         return column
 
 
-class ProcessingAndPreview(param.Parameterized):
+class ProcessingAndPreview(ProcessingPreStep):
     ecg_processor = param.Dynamic()
     eeg_processor = param.Dynamic()
     textHeader = ""

@@ -34,7 +34,7 @@ class AskToProcessHRV(ProcessingAndPreview):
         )
 
 
-class ProcessHRV(param.Parameterized):
+class ProcessHRV(AskToProcessHRV):
     ecg_processor = param.Dynamic()
     eeg_processor = param.Dynamic()
     time_log_present = param.Boolean()
