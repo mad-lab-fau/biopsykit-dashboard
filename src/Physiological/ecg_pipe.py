@@ -38,7 +38,7 @@ class ECGPipeline:
             ready_parameter="ready",
             next_parameter="next",
         )
-        self.pipeline.add_stage("Add Times", AddTimes())
+        self.pipeline.add_stage("Add Times", AddTimes(), ready_parameter="ready")
         self.pipeline.add_stage(
             "Do you want to detect Outlier?",
             AskToDetectOutliers(),

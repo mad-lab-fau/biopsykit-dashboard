@@ -29,6 +29,7 @@ class AskToAddTimes(DataArrived):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
+    subject = ""
 
     def click_skip(self, event):
         self.next = "Do you want to detect Outlier?"
@@ -108,9 +109,28 @@ class AddTimes(AskToAddTimes):
             return
         if df is None:
             pn.state.notifications.error("Could not parse the given time File")
+
         self.df = df
         self.set_subject_time_dict()
         self.dict_to_column()
+        if (
+            self.session.value == "Single Session"
+            and len(self.subj_time_dict.keys()) > 1
+        ):
+            # VP muss noch ausgewählt werden
+            select_vp = pn.widgets.Select(
+                name="Select Subject column",
+                options=list(self.subj_time_dict.keys()),
+            )
+            select_vp.link(
+                "subject",
+                callbacks={"value": self.select_vp},
+            )
+            self.subject = list(self.subj_time_dict.keys())[0]
+            self.pane.append(select_vp)
+
+    def select_vp(self, _, event):
+        self.subject = event.new
 
     def set_subject_time_dict(self):
         for subject_name in self.df.index:
@@ -257,25 +277,24 @@ class AddTimes(AskToAddTimes):
         self.dict_to_column()
 
     def handle_time_file(self, df):
+        if not self.check_subject_condition_columns(df):
+            self.ready = False
+            return df
+        subject_col = "subject"
+        condition_col = "condition"
         if self.session.value == "Single Session":
-            df, index_cols = _sanitize_index_cols(df, _get_subject_col(df), None, None)
-            data = _apply_index_cols(df, index_cols=index_cols)
-            data.columns.name = "phase"
-            data = _parse_time_log_not_continuous(data, index_cols)
-            for val in data.values.flatten():
-                if val is np.nan:
-                    continue
-                _assert_is_dtype(val, str)
-            return data
-        else:
-            if not self.check_subject_condition_columns(df):
-                self.ready = False
-                return df
-            subject_col = "subject"
-            condition_col = "condition"
+            df, index_cols = _sanitize_index_cols(
+                data=df,
+                subject_col=subject_col,
+                condition_col=condition_col,
+                additional_index_cols=None,
+            )
             df = df.set_index(subject_col)
-            # df = df.groupby(condition_col).groups
-            # is_subject_condition_dict(df)
+            self.ready = True
+            return df
+        else:
+            df = df.set_index(subject_col)
+            self.ready = True
             return df
 
     def panel(self):
