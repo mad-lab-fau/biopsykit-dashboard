@@ -18,9 +18,30 @@ class AskToDetectOutliers(AskToAddTimes):
         background="#d5433e", name="Expert Mode", button_type="success"
     )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
+    methods = [
+        "quality",
+        "artifact",
+        "physiological",
+        "statistical_rr",
+        "statistical_rr_diff",
+    ]
+    outlier_methods = pn.widgets.MultiChoice(
+        name="Methods", value=["quality", "artifact"], options=methods
+    )
+
+    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
+    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
+    quality = pn.widgets.FloatInput(name="quality", value=0.4)
+    artifact = pn.widgets.FloatInput(name="artifact", value=0)
+    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
+    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
+    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
+    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+    skip_outlier_detection = False
 
     def click_skip(self, event):
         self.next = "Now the Files will be processed"
+        self.skip_outlier_detection = True
         self.ready = True
 
     def click_detect_outlier(self, event):
@@ -50,30 +71,13 @@ class AskToDetectOutliers(AskToAddTimes):
 
 
 class OutlierDetection(AskToDetectOutliers):
-    # data = param.Dynamic()
-    # sampling_rate = param.Dynamic()
     textHeader = ""
     textParams = ""
-    methods = [
-        "quality",
-        "artifact",
-        "physiological",
-        "statistical_rr",
-        "statistical_rr_diff",
-    ]
+
     sensors = param.Dynamic()
-    outlier_methods = pn.widgets.MultiChoice(
-        name="Methods", value=["quality", "artifact"], options=methods
-    )
-    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
+
     ecg_processor = None
-    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
-    quality = pn.widgets.FloatInput(name="quality", value=0.4)
-    artifact = pn.widgets.FloatInput(name="artifact", value=0)
-    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
-    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
-    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
-    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+
     time_log = param.Dynamic()
     time_log_present = param.Boolean()
 

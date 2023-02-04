@@ -23,17 +23,19 @@ class ClientSideFileInput(ReactiveHTML):
                     {
                         description: 'Files to analyze',
                         accept: {
-                        'text/plain': ['.bin','.csv','.xlsx'],
+                        'text/plain': ['.bin','.csv','.xlsx','.vcf'],
                         },
                     },
                 ],
             };
-            async function getFile() {        
-                [fileHandle] = await window.showOpenFilePicker(options);           
-
+            async function getFile() {     
+                console.log("hi");   
+                [fileHandle] = await window.showOpenFilePicker();
+                console.log("hi2");           
+                console.log(fileHandle);
                 if (fileHandle.kind === 'file') {
                     //run file code
-
+                    console.log(fileHandle.name);
                     const file = await fileHandle.getFile();
                     //console.log(file);
                     let contents = await file.arrayBuffer(); 
@@ -52,7 +54,7 @@ class ClientSideFileInput(ReactiveHTML):
 
 class ClientSideDirectoryInput(ReactiveHTML):
     fileContent = None
-    value = param.Array()
+    value = param.Dynamic()
     fileName = param.String()
     directoryName = param.String()
 
@@ -61,7 +63,7 @@ class ClientSideDirectoryInput(ReactiveHTML):
     """
 
     _scripts = {
-        "render": """
+        "render": """       
         """,
         "select": """
             async function getFiles() {   
@@ -72,7 +74,6 @@ class ClientSideDirectoryInput(ReactiveHTML):
                     if (entry.kind !== 'file') {
                         continue;
                     }
-
                     const file = await entry.getFile();
                     let fileName = file.name;
                     if(fileName.endsWith('.bin') || fileName.endsWith('.csv')){
@@ -85,7 +86,6 @@ class ClientSideDirectoryInput(ReactiveHTML):
                         };
                         promises.push(data);
                     }
-
                 }
                 console.log(await Promise.all(promises));        
                 data.value = promises;      
@@ -94,3 +94,31 @@ class ClientSideDirectoryInput(ReactiveHTML):
             console.log('Done');
         """,
     }
+
+
+# const
+# dirHandle = await showDirectoryPicker();
+#
+# if ((await dirHandle.queryPermission({mode: "readwrite"})) !== "granted") {
+# if (
+# (await dirHandle.requestPermission({mode: "readwrite"})) != = "granted"
+# ) {
+#     throw
+# Error("Unable to read and write directory");
+# }
+# }
+# let
+# pyodide = await loadPyodide();
+# const
+# nativefs = await pyodide.mountNativeFS("/mount_dir", dirHandle);
+# console.log(nativefs);
+# pyodide.runPython(`
+# import os
+# from pathlib import Path
+#
+# print(os.listdir('/mount_dir'))
+#
+# `);
+
+#        <input type="file" id="input" onclick='${script("select")}' />
+#             importScripts("https://cdn.jsdelivr.net/pyodide/v0.21.3/full/pyodide.js");

@@ -77,10 +77,16 @@ class ProcessingAndPreview(ProcessingPreStep):
                 self.ecg_processor = EcgProcessor(
                     data=df, sampling_rate=self.sampling_rate
                 )
-            self.ecg_processor.ecg_process(
-                outlier_correction=self.outlier_methods,
-                outlier_params=self.outlier_params,
-            )
+            if self.skip_outlier_detection:
+                self.ecg_processor.ecg_process(
+                    outlier_correction=None,
+                    outlier_params=None,
+                )
+            else:
+                self.ecg_processor.ecg_process(
+                    outlier_correction=self.outlier_methods,
+                    outlier_params=self.outlier_params,
+                )
             if type(self.data) == dict:
                 for key in self.data.keys():
                     ecg_results = pn.widgets.DataFrame(

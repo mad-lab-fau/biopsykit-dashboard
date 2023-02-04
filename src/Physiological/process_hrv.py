@@ -5,20 +5,36 @@ from src.Physiological.processing_and_preview import ProcessingAndPreview
 
 
 class AskToProcessHRV(ProcessingAndPreview):
-
-    skip_btn = pn.widgets.Button(name="Skip", button_type="primary")
-    process_hrv_btn = pn.widgets.Button(name="Process HRV")
+    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency", "all"]
+    hrv_types = pn.widgets.MultiChoice(
+        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
+    )
+    correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
+    index = pn.widgets.TextInput(name="Index", value="")
+    index_name = pn.widgets.TextInput(name="Index Name", value="")
+    skip_btn = pn.widgets.Button(name="Skip")
+    expert_mode_btn = pn.widgets.Button(
+        background="#d5433e", name="Expert Mode", button_type="success"
+    )
+    default_btn = pn.widgets.Button(name="Default", button_type="primary")
+    # process_hrv_btn = pn.widgets.Button(name="Process HRV")
     next_page = param.Selector(
         default="Process HRV",
         objects=["Process HRV", "Results"],
     )
     ready = param.Boolean(default=False)
+    skip_hrv = False
 
-    def skip_btn_click(self, _):
+    def click_skip(self, event):
         self.next_page = "Results"
+        self.skip_hrv = True
         self.ready = True
 
-    def process_hrv_btn_click(self, _):
+    def click_expert_hrv(self, event):
+        self.next_page = "Process HRV"
+        self.ready = True
+
+    def click_default_hrv(self, event):
         self.next_page = "Process HRV"
         self.ready = True
 
@@ -27,44 +43,39 @@ class AskToProcessHRV(ProcessingAndPreview):
             f = open("../assets/Markdown/ProcessHRV.md", "r")
             fileString = f.read()
             self.text = fileString
-        self.skip_btn.on_click(self.skip_btn_click)
-        self.process_hrv_btn.on_click(self.process_hrv_btn_click)
+        self.skip_btn.on_click(self.click_skip)
+        self.expert_mode_btn.on_click(self.click_expert_hrv)
+        self.default_btn.on_click(self.click_default_hrv)
         return pn.Column(
-            pn.pane.Markdown(self.text), pn.Row(self.process_hrv_btn, self.skip_btn)
+            pn.pane.Markdown(self.text),
+            pn.Row(self.skip_btn, self.expert_mode_btn, self.default_btn),
         )
 
 
 class ProcessHRV(AskToProcessHRV):
-    ecg_processor = param.Dynamic()
-    eeg_processor = param.Dynamic()
-    time_log_present = param.Boolean()
-    time_log = param.Dynamic()
-    sensors = param.Dynamic()
-    textHeader = ""
-    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency", "all"]
-    hrv_types = pn.widgets.MultiChoice(
-        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
-    )
-    correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
-    index = pn.widgets.TextInput(name="Index", value="")
-    index_name = pn.widgets.TextInput(name="Index Name", value="")
-    sampling_rate = pn.widgets.StaticText(name="Sampling Rate")
-    process_btn = pn.widgets.Button(name="Process HRV")
+    # ecg_processor = param.Dynamic()
+    # eeg_processor = param.Dynamic()
+    # time_log_present = param.Boolean()
+    # time_log = param.Dynamic()
+    # sensors = param.Dynamic()
+    # textHeader = ""
+
+    # sampling_rate = pn.widgets.StaticText(name="Sampling Rate")
+    # process_btn = pn.widgets.Button(name="Process HRV")
 
     def panel(self):
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessHRV.md", "r")
             fileString = f.read()
             self.textHeader = fileString
-        self.sampling_rate.value = self.ecg_processor.sampling_rate
-        self.process_btn.on_click(self.process_hrv)
+        # self.process_btn.on_click(self.process_hrv)
         return pn.Column(
             pn.pane.Markdown(self.textHeader),
             self.hrv_types,
             self.correct_rpeaks,
             self.index,
             self.index_name,
-            self.sampling_rate,
+            # self.sampling_rate,
         )
 
     def process_hrv(self):

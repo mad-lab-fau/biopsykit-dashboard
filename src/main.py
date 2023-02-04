@@ -169,11 +169,16 @@ def get_mainMenu(event):
         app.main.append(pane)
 
 
-def main():
-    app.sidebar.append(get_sidebar())
-    get_mainMenu(None)
-    app.servable().show()
+# def main():
 
 
 if __name__ == "__main__":
-    main()
+    app.sidebar.append(get_sidebar())
+    get_mainMenu(None)
+    app.servable().show(
+        port=5023,
+        verbose=True,
+        autoreload=True,
+    )
+# ssl_certfile = "localhost.crt",
+# ssl_keyfile = "localhost.key",

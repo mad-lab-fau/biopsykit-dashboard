@@ -1,4 +1,7 @@
 import panel as pn
+
+from src.Physiological.TestStage import TestInput
+from src.Physiological.result_preview import ResultsPreview
 from src.Physiological.sessions import Session
 from src.Physiological.recordings import Recordings
 from src.Physiological.compress_files import Compress
@@ -17,7 +20,7 @@ pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
-
+# TODO: Bug fixing in add_times, Stage Results Preview und Download Files ergänzen; Funktionalität: Code Datei erzeugen
 class ECGPipeline:
     pipeline = None
 
@@ -60,6 +63,7 @@ class ECGPipeline:
             next_parameter="next_page",
         )
         self.pipeline.add_stage("Process HRV", ProcessHRV())
+        self.pipeline.add_stage("Results", ResultsPreview())
 
         self.pipeline.define_graph(
             {
@@ -82,10 +86,10 @@ class ECGPipeline:
                 "Now the Files will be processed": "Preview",
                 "Preview": "Do you want to process the HRV also?",
                 "Do you want to process the HRV also?": (
-                   "Process HRV",
-                   "Result preview",
+                    "Process HRV",
+                    "Results",
                 ),
-                "Process HRV": "Result preview",
+                "Process HRV": "Results",
                 # Vorher noch fragen ob man das überhaupt will
                 # Zeiten hochladen oder eintragen
                 # Hier nun fragen, ob die Daten korrigiert werden sollen (Nein, Default, Expert Mode)

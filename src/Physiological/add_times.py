@@ -1,20 +1,12 @@
 import datetime as datetime
 from io import StringIO
-from typing import Optional, Union, Sequence, Tuple
-
-import numpy as np
 import pandas as pd
 import panel as pn
 import param
 from biopsykit.io.io import (
-    _get_subject_col,
     _sanitize_index_cols,
-    _apply_index_cols,
-    _parse_time_log_not_continuous,
 )
-from biopsykit.utils._datatype_validation_helper import (
-    _assert_is_dtype,
-)
+
 
 from src.Physiological.data_arrived import DataArrived
 
@@ -29,7 +21,8 @@ class AskToAddTimes(DataArrived):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
-    subject = ""
+    subject = param.Dynamic()
+    subj_time_dict = {}
 
     def click_skip(self, event):
         self.next = "Do you want to detect Outlier?"
@@ -73,11 +66,19 @@ class AddTimes(AskToAddTimes):
     subject_log = None
     times = None
     subject_timestamps = []
-    subj_time_dict = {}
     df = None
+    select_vp = pn.widgets.Select(
+        name="Select Subject",
+        visible=False,
+    )
+    select_subject = pn.widgets.Select(name="Select Subject column", visible=False)
+    select_condition = pn.widgets.Select(name="Select Condition column", visible=False)
 
     def parse_time_file(self, event):
         df = None
+        self.select_condition.visible = False
+        self.select_subject.visible = False
+        self.select_vp.visible = False
         if ".csv" in self.time_upload.filename:
             string_io = StringIO(self.time_upload.value.decode("utf8"))
             df = pd.read_csv(string_io)
@@ -91,45 +92,43 @@ class AddTimes(AskToAddTimes):
             row = pn.Row()
             cols = list(self.df.columns)
             cols.insert(0, " ")
-            slct_subject = pn.widgets.Select(name="Select Subject column", options=cols)
-            slct_subject.link(
+            self.select_subject.options = cols
+            self.select_subject.visible = True
+
+            self.select_subject.link(
                 "subject",
                 callbacks={"value": self.subject_column_changed},
             )
-            row.append(slct_subject)
-            slct_condition = pn.widgets.Select(
-                name="Select Condition column", options=cols
-            )
-            slct_condition.link(
+            self.select_condition.options = cols
+            self.select_condition.visible = True
+            self.select_condition.link(
                 "condition",
                 callbacks={"value": self.condition_column_changed},
             )
-            row.append(slct_condition)
             self.pane.append(row)
-            return
+            # return
         if df is None:
             pn.state.notifications.error("Could not parse the given time File")
-
+            return
         self.df = df
         self.set_subject_time_dict()
-        self.dict_to_column()
         if (
             self.session.value == "Single Session"
             and len(self.subj_time_dict.keys()) > 1
         ):
             # VP muss noch ausgewählt werden
-            select_vp = pn.widgets.Select(
-                name="Select Subject column",
-                options=list(self.subj_time_dict.keys()),
-            )
-            select_vp.link(
+            self.select_vp.options = list(self.subj_time_dict.keys())
+            self.select_vp.visible = True
+            self.select_vp.link(
                 "subject",
-                callbacks={"value": self.select_vp},
+                callbacks={"value": self.select_vp_changed},
             )
             self.subject = list(self.subj_time_dict.keys())[0]
-            self.pane.append(select_vp)
+            self.ready = True
 
-    def select_vp(self, _, event):
+        self.dict_to_column()
+
+    def select_vp_changed(self, _, event):
         self.subject = event.new
 
     def set_subject_time_dict(self):
@@ -323,5 +322,7 @@ class AddTimes(AskToAddTimes):
                 self.time_upload,
                 self.times,
             ),
+            self.select_vp,
+            pn.Row(self.select_subject, self.select_condition),
         )
         return self.pane
