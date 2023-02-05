@@ -1,18 +1,33 @@
+from datetime import datetime
+
 import pandas as pd
 import param
 import panel as pn
+import biopsykit as bp
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.eeg import EegProcessor
 from nilspodlib import Dataset
 import plotly.express as px
-
+from matplotlib.figure import Figure
+from matplotlib import cm
 from src.Physiological.outlier_detection import AskToDetectOutliers
+import matplotlib.pyplot as plt
 
 
 class ProcessingPreStep(AskToDetectOutliers):
 
     ready = param.Boolean(default=False)
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
+
+    def get_phases(self):
+        keys = []
+        if type(self.data) is dict:
+            keys = self.data.keys()
+        elif self.ecg_processor.phases:
+            keys = self.ecg_processor.phases
+        else:
+            keys = ["data"]
+        return keys
 
     def ready_btn_click(self, event):
         self.ready = True
@@ -42,19 +57,7 @@ class ProcessingAndPreview(ProcessingPreStep):
     sensors = param.Dynamic()
     time_log_present = param.Boolean()
     time_log = param.Dynamic()
-
-    def panel(self):
-        if self.textHeader == "":
-            f = open("../assets/Markdown/ProcessingAndPreview.md", "r")
-            fileString = f.read()
-            self.textHeader = fileString
-        column = pn.Column(self.textHeader)
-        accordion = self.get_dataframes_as_accordions()
-        stat_values = self.get_statistical_values()
-        for stat_value in stat_values:
-            accordion.append(stat_value)
-        column.append(accordion)
-        return column
+    phase_title = pn.widgets.StaticText(name="Phase", visible=False)
 
     def get_dataframes_as_accordions(self):
         accordion = pn.Accordion()
@@ -65,13 +68,18 @@ class ProcessingAndPreview(ProcessingPreStep):
             df = {}
             for key in self.data.keys():
                 df[key] = self.data[key]
-
         if "ecg" in self.sensors:
-            if self.time_log_present:
+            if self.subj_time_dict:
+                time_log = self.subj_time_dict
+                if self.session.value == "Single Session":
+                    time_log = self.subj_time_dict[self.subject]
+                    for key in time_log.keys():
+                        time_log[key] = time_log[key].apply(lambda dt: dt.time())
+                    time_log = time_log[list(time_log.keys())[0]]
                 self.ecg_processor = EcgProcessor(
                     data=df,
                     sampling_rate=self.sampling_rate,
-                    time_intervals=self.time_log,
+                    time_intervals=time_log,
                 )
             else:
                 self.ecg_processor = EcgProcessor(
@@ -87,114 +95,105 @@ class ProcessingAndPreview(ProcessingPreStep):
                     outlier_correction=self.outlier_methods,
                     outlier_params=self.outlier_params,
                 )
-            if type(self.data) == dict:
-                for key in self.data.keys():
-                    ecg_results = pn.widgets.DataFrame(
-                        name=key + " ECG Results",
-                        value=self.ecg_processor.ecg_result[key],
-                    )
-                    hr_results = pn.widgets.DataFrame(
-                        name=key + " HR Results",
-                        value=self.ecg_processor.hr_result[key],
-                    )
-                    rsp_signal = self.ecg_processor.ecg_estimate_rsp(
-                        self.ecg_processor, key=key, edr_type="peak_trough_diff"
-                    )
-                    rsa = self.ecg_processor.rsa_process(
-                        ecg_signal=self.ecg_processor.ecg_result[key],
-                        rsp_signal=rsp_signal,
-                        sampling_rate=self.sampling_rate,
-                    )
-                    accordion.append(ecg_results)
-                    accordion.append(hr_results)
-            else:
-                ecg_results = pn.widgets.DataFrame(
-                    name="ECG Results", value=self.ecg_processor.ecg_result["Data"]
-                )
-                hr_results = pn.widgets.DataFrame(
-                    name="HR Results", value=self.ecg_processor.hr_result["Data"]
-                )
-                rsp_signal = self.ecg_processor.ecg_estimate_rsp(
-                    self.ecg_processor, key="Data", edr_type="peak_trough_diff"
-                )
-                rsa = self.ecg_processor.rsa_process(
-                    ecg_signal=self.ecg_processor.ecg_result["Data"],
-                    rsp_signal=rsp_signal,
-                    sampling_rate=self.sampling_rate,
-                )
-                accordion.append(ecg_results)
-                accordion.append(hr_results)
-        if "eeg" in self.sensors:
-            self.eeg_processor = EegProcessor(df, self.sampling_rate)
-            self.eeg_processor.relative_band_energy()
-            if type(self.data) == dict:
-                for key in self.data.keys():
-                    df_bands = pn.widgets.DataFrame(
-                        name=key + " Frequency Bands",
-                        value=self.eeg_processor.eeg_result[key],
-                    )
-                    accordion.append(df_bands)
-            else:
-                df_bands = pn.widgets.DataFrame(
-                    name="Frequency Bands", value=self.eeg_processor.eeg_result["Data"]
-                )
-                accordion.append(df_bands)
+            # if type(self.data) == dict:
+            #     for key in self.data.keys():
+            #         ecg_results = pn.widgets.DataFrame(
+            #             name=key + " ECG Results",
+            #             value=self.ecg_processor.ecg_result[key],
+            #         )
+            #         hr_results = pn.widgets.DataFrame(
+            #             name=key + " HR Results",
+            #             value=self.ecg_processor.hr_result[key],
+            #         )
+            #         rsp_signal = self.ecg_processor.ecg_estimate_rsp(
+            #             self.ecg_processor, key=key, edr_type="peak_trough_diff"
+            #         )
+            #         rsa = self.ecg_processor.rsa_process(
+            #             ecg_signal=self.ecg_processor.ecg_result[key],
+            #             rsp_signal=rsp_signal,
+            #             sampling_rate=self.sampling_rate,
+            #         )
+            #         accordion.append(ecg_results)
+            #         accordion.append(hr_results)
+            # else:
+            #     ecg_results = pn.widgets.DataFrame(
+            #         name="ECG Results",
+            #         value=self.ecg_processor.ecg_result[self.get_phases()[0]],
+            #     )
+            #     hr_results = pn.widgets.DataFrame(
+            #         name="HR Results",
+            #         value=self.ecg_processor.hr_result[self.get_phases()[0]],
+            #     )
+            # rsp_signal = self.ecg_processor.ecg_estimate_rsp(
+            #     self.ecg_processor, key="Data", edr_type="peak_trough_diff"
+            # )
+            # rsa = self.ecg_processor.rsa_process(
+            #     ecg_signal=self.ecg_processor.ecg_result[
+            #         self.ecg_processor.ecg_result.keys()[0]
+            #     ],
+            #     rsp_signal=rsp_signal,
+            #     sampling_rate=self.sampling_rate,
+            # )
+        #         accordion.append(ecg_results)
+        #         accordion.append(hr_results)
+        # if "eeg" in self.sensors:
+        #     self.eeg_processor = EegProcessor(df, self.sampling_rate)
+        #     self.eeg_processor.relative_band_energy()
+        #     if type(self.data) == dict:
+        #         for key in self.data.keys():
+        #             df_bands = pn.widgets.DataFrame(
+        #                 name=key + " Frequency Bands",
+        #                 value=self.eeg_processor.eeg_result[key],
+        #             )
+        #             accordion.append(df_bands)
+        #     else:
+        #         df_bands = pn.widgets.DataFrame(
+        #             name="Frequency Bands",
+        #             value=self.eeg_processor.eeg_result[
+        #                 self.eeg_processor.eeg_result.keys()[0]
+        #             ],
+        #         )
+        #         accordion.append(df_bands)
         return accordion
 
     def get_statistical_values(self):
-        keys = []
         values = []
-        if type(self.data) is dict:
-            keys = self.data.keys()
-        else:
-            keys = ["Data"]
-
-        for key in keys:
-            ecg_stats = self.ecg_processor.ecg_result[key].agg(
-                {
-                    "ECG_Raw": ["min", "max", "min", "median"],
-                    "ECG_Clean": ["min", "max", "min", "median"],
-                    "ECG_Quality": ["min", "max", "min", "median"],
-                    "Heart_Rate": ["min", "max", "min", "median"],
-                }
-            )
-            values.append(
-                pn.widgets.DataFrame(
-                    name=key + " ECG Statistical Values", value=ecg_stats
-                )
-            )
+        for key in self.get_phases():
             for column in self.ecg_processor.ecg_result[key]:
+                if not "Rate" in column:
+                    continue
                 df = self.ecg_processor.ecg_result[key]
                 fig = px.box(df, y=column)
                 plotly_pane = pn.pane.Plotly(fig)
                 values.append(("Boxplot " + key + ": " + column, plotly_pane))
-
-            heart_rate_stats = self.ecg_processor.heart_rate[key].agg(
-                {
-                    "Heart_Rate": ["min", "max", "min", "median"],
-                }
-            )
-            values.append(
-                pn.widgets.DataFrame(
-                    name=key + " Heart Rate Statistical Values", value=heart_rate_stats
-                )
-            )
         return values
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("ecg_processor", param.Dynamic),
-        ("eeg_processor", param.Dynamic),
-        ("time_log_present", param.Boolean),
-        ("time_log", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sensors,
-            self.ecg_processor,
-            self.eeg_processor,
-            self.time_log_present,
-            self.time_log,
+    def phase_changed(self, target, event):
+        fig, axs = bp.signals.ecg.plotting.ecg_plot(self.ecg_processor, key=event.new)
+        target.object = fig
+        self.phase_title.value = event.new
+
+    def panel(self):
+        if self.textHeader == "":
+            f = open("../assets/Markdown/ProcessingAndPreview.md", "r")
+            fileString = f.read()
+            self.textHeader = fileString
+        column = pn.Column(self.textHeader)
+        accordion = self.get_dataframes_as_accordions()
+        stat_values = self.get_statistical_values()
+        for stat_value in stat_values:
+            accordion.append(stat_value)
+        column.append(accordion)
+        select_phase = pn.widgets.Select(name="Select Phase", options=self.get_phases())
+        ecg_plot = pn.pane.Matplotlib(plt.Figure(figsize=(15, 10)), tight=True)
+        fig, _ = bp.signals.ecg.plotting.ecg_plot(
+            self.ecg_processor, key=self.get_phases()[0]
         )
+        ecg_plot.object = fig
+        select_phase.link(ecg_plot, callbacks={"value": self.phase_changed})
+        column.append(select_phase)
+        self.phase_title.visible = True
+        self.phase_title.value = self.get_phases()[0]
+        column.append(self.phase_title)
+        column.append(ecg_plot)
+        return column

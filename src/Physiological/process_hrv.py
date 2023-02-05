@@ -53,15 +53,18 @@ class AskToProcessHRV(ProcessingAndPreview):
 
 
 class ProcessHRV(AskToProcessHRV):
-    # ecg_processor = param.Dynamic()
-    # eeg_processor = param.Dynamic()
-    # time_log_present = param.Boolean()
-    # time_log = param.Dynamic()
-    # sensors = param.Dynamic()
-    # textHeader = ""
-
-    # sampling_rate = pn.widgets.StaticText(name="Sampling Rate")
-    # process_btn = pn.widgets.Button(name="Process HRV")
+    def process_hrv(self):
+        keys = self.ecg_processor.ecg_result.keys()
+        for key in keys:
+            self.ecg_processor.hrv_process(
+                self.ecg_processor,
+                key,
+                index=self.index.value,
+                index_name=self.index_name.value,
+                hrv_types=self.hrv_types.value,
+                correct_rpeaks=self.correct_rpeaks.value,
+            )
+        pn.state.notifications.success("HRV processed successfully")
 
     def panel(self):
         if self.textHeader == "":
@@ -77,16 +80,3 @@ class ProcessHRV(AskToProcessHRV):
             self.index_name,
             # self.sampling_rate,
         )
-
-    def process_hrv(self):
-        keys = self.ecg_processor.ecg_result.keys()
-        for key in keys:
-            self.ecg_processor.hrv_process(
-                self.ecg_processor,
-                key,
-                index=self.index.value,
-                index_name=self.index_name.value,
-                hrv_types=self.hrv_types.value,
-                correct_rpeaks=self.correct_rpeaks.value,
-            )
-        pn.state.notifications.success("HRV processed successfully")
