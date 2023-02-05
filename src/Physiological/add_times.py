@@ -125,7 +125,6 @@ class AddTimes(AskToAddTimes):
             )
             self.subject = list(self.subj_time_dict.keys())[0]
             self.ready = True
-
         self.dict_to_column()
 
     def select_vp_changed(self, _, event):
@@ -134,30 +133,16 @@ class AddTimes(AskToAddTimes):
     def set_subject_time_dict(self):
         for subject_name in self.df.index:
             conditions = self.df.loc[subject_name]
-            col = pn.Column()
             cond_name = conditions.condition
+            t_condition = conditions.drop(labels=["condition"])
+            t_condition = t_condition.apply(
+                lambda time: datetime.datetime.combine(
+                    datetime.datetime.now().date(),
+                    time,
+                )
+            )
             self.subj_time_dict[subject_name] = {}
-            self.subj_time_dict[subject_name][cond_name] = {}
-            for dim in range(0, conditions.ndim):
-                if conditions.ndim == 1:
-                    condition = conditions.iloc[:]
-                else:
-                    condition = conditions.iloc[:, dim]
-                for index, value in condition.items():
-                    if isinstance(value, datetime.time):
-                        self.subj_time_dict[subject_name][cond_name][
-                            index
-                        ] = datetime.datetime.combine(
-                            datetime.datetime.now().date(),
-                            value,
-                        )
-                    elif isinstance(value, str) and value.isalpha():
-                        col.insert(
-                            0,
-                            pn.widgets.TextInput(
-                                placeholder="Name the timestamp", value=value
-                            ),
-                        )
+            self.subj_time_dict[subject_name][cond_name] = t_condition
 
     def dict_to_column(self):
         timestamps = []
@@ -170,7 +155,7 @@ class AddTimes(AskToAddTimes):
                     callbacks={"value": self.change_condition_name},
                 )
                 col.append(cond)
-                for phase in self.subj_time_dict[subject][condition].keys():
+                for phase, time in self.subj_time_dict[subject][condition].items():
                     row = pn.Row()
                     phase_name_input = pn.widgets.TextInput(value=phase)
                     phase_name_input.link(
@@ -178,9 +163,7 @@ class AddTimes(AskToAddTimes):
                         callbacks={"value": self.change_phase_name},
                     )
                     row.append(phase_name_input)
-                    dt_picker = pn.widgets.DatetimePicker(
-                        value=self.subj_time_dict[subject][condition][phase]
-                    )
+                    dt_picker = pn.widgets.DatetimePicker(value=time)
                     dt_picker.link(
                         (subject, condition, phase),
                         callbacks={"value": self.timestamp_changed},
@@ -204,7 +187,7 @@ class AddTimes(AskToAddTimes):
 
     def timestamp_changed(self, target, event):
         changed_timestamp = event.new
-        self.subj_time_dict[target[0]][target[1]][target[2]] = changed_timestamp
+        self.subj_time_dict[target[0]][target[1]].loc[target[2]] = changed_timestamp
         self.dict_to_column()
 
     def change_condition_name(self, target, event):
@@ -214,13 +197,13 @@ class AddTimes(AskToAddTimes):
         self.dict_to_column()
 
     def change_phase_name(self, target, event):
-        self.subj_time_dict[target[0]][target[1]][event.new] = self.subj_time_dict[
-            target[0]
-        ][target[1]].pop(target[2])
+        self.subj_time_dict[target[0]][target[1]].rename(
+            {target[2]: event.new}, inplace=True
+        )
         self.dict_to_column()
 
     def remove_btn_click(self, target, event):
-        self.subj_time_dict[target[0]][target[1]].pop(target[2])
+        self.subj_time_dict[target[0]][target[1]].drop(labels=target[2], inplace=True)
         self.dict_to_column()
 
     def add_timestamp(self, target, event):
@@ -264,15 +247,22 @@ class AddTimes(AskToAddTimes):
 
     def add_phase_btn_click(self, target, event):
         new_phase_name = "New Phase"
-        if new_phase_name in self.subj_time_dict[target[0]][target[1]].keys():
+        if new_phase_name in list(
+            self.subj_time_dict[target[0]][target[1]].index.values
+        ):
             i = 1
             new_phase_name = new_phase_name + " " + str(i)
-            while new_phase_name in self.subj_time_dict[target[0]][target[1]].keys():
+            while new_phase_name in list(
+                self.subj_time_dict[target[0]][target[1]].index.values
+            ):
                 i += 1
                 new_phase_name = new_phase_name + " " + str(i)
-        self.subj_time_dict[target[0]][target[1]][
-            new_phase_name
-        ] = datetime.datetime.now()
+        self.subj_time_dict[target[0]][target[1]] = pd.concat(
+            [
+                self.subj_time_dict[target[0]][target[1]],
+                pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
+            ]
+        )
         self.dict_to_column()
 
     def handle_time_file(self, df):
