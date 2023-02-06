@@ -3,10 +3,10 @@ import param
 import panel as pn
 import pandas as pd
 
-from src.Physiological.process_hrv import ProcessHRV
+from src.Physiological.process_hrv import SetHRVParameters
 
 # TODO: hier sollte es unterscheidung zwischen
-class SelectTimes(ProcessHRV):
+class SelectTimes(SetHRVParameters):
     sampling_rate = param.Dynamic()
     text = ""
     session_type = param.String()

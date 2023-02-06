@@ -1,4 +1,6 @@
 import datetime
+import re
+import string
 from zipfile import ZipFile
 
 import biopsykit.io.nilspod
@@ -34,6 +36,7 @@ class FileUpload(Recordings):
         value="Europe/Berlin",
     )
     data = None
+    hr_data = None
     sampling_rate = param.Dynamic(default=-1)
     hardware_select = pn.widgets.Select(
         name="Select the Hardware with which you recorded your data",
@@ -54,7 +57,7 @@ class FileUpload(Recordings):
 
     def parse_file_input(self, event):
         if self.data is None:
-            self.ready = True
+            self.ready = False
         self.data = None
         if self.file_input.value is None or len(self.file_input.value) <= 0:
             pn.state.notifications.error("No Files arrived")
@@ -76,58 +79,21 @@ class FileUpload(Recordings):
                 case "bin":
                     self.handle_bin_file(bytefile=self.file_input.value)
                     return
+                case "xlsx":
+                    self.handle_xlsx_file(
+                        bytefile=self.file_input.value,
+                        filename=self.file_input.filename,
+                    )
                 case _:
                     pn.state.notifications.error("No matching parser found")
         return
-
-        # if type(self.file_input.value) != list:
-        #     self.handle_single_session()
-        #     return
-        # self.set_time_log()
-        # if (
-        #     type(self.file_input.value) == list
-        #     and len(self.file_input.value) <= 2
-        #     and self.session.value == "Single Session"
-        # ):
-        #     self.handle_single_session()
-        # elif type(self.file_input.value) == list and not self.synced:
-        #     self.handle_multi_not_synced_sessions()
-        # elif type(self.file_input.value) == list and self.synced:
-        #     self.handle_synced_sessions()
 
     def extract_zip(self, input_zip):
         input_zip = ZipFile(input_zip)
         return {name: input_zip.read(name) for name in input_zip.namelist()}
 
-    def set_time_log(self):
-        if not any(".xls" in name for name in self.file_input.filename):
-            self.time_log_present = False
-            return
-
-        self.time_log_present = True
-        indices = [
-            i
-            for i in range(len(self.file_input.filename))
-            if ".xls" in self.file_input.filename[i]
-        ]
-        if len(indices) > 1:
-            pn.state.notifications.error("More than one Excel File")
-            self.time_log_present = False
-            return
-        self.time_log = pd.read_excel(self.file_input.value[indices[0]])
-
-    def get_signal_type(self):
-        if self.hardware_select.value == "NilsPod":
-            self.sensors = "Test"
-        if is_ecg_raw_dataframe(self.data, False):
-            self.sensors = "ecg"
-        elif is_gyr1d_dataframe(self.data, False):
-            self.sensors = "eeg"
-
     def handle_single_session(self):
         for val, fn in zip(self.file_input.value, self.file_input.filename):
-            if "xls" in fn:
-                continue
             self.handle_single_file(val, fn)
             if fn.endswith(".bin"):
                 (
@@ -202,6 +168,12 @@ class FileUpload(Recordings):
         else:
             pn.state.notifications.error("Not a matching file format")
 
+    def handle_xlsx_file(self, bytefile: bytes, filename: string):
+        if filename.endswith(".xlsx") and "hr_result" in filename:
+            subject_id = re.findall("hr_result_(Vp\w+).xlsx", filename)[0]
+            hr = pd.read_excel(BytesIO(bytefile), sheet_name=None, index_col="time")
+            self.hr_data[subject_id] = hr
+
     def handle_bin_file(self, bytefile: bytes):
         dataset = NilsPodAdapted.from_bin_file(
             filepath_or_buffer=BytesIO(bytefile),
@@ -245,25 +217,25 @@ class FileUpload(Recordings):
         for col in datetime_columns:
             self.data[col] = self.data[col].dt.tz_localize(self.timezone_select.value)
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("synced", param.Boolean),
-        ("session_type", param.String),
-        ("sensors", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.time_log_present,
-            self.time_log,
-            self.synced,
-            self.session_type,
-            self.sensors,
-        )
+    # @param.output(
+    #     ("data", param.Dynamic),
+    #     ("sampling_rate", param.Dynamic),
+    #     ("time_log_present", param.Dynamic),
+    #     ("time_log", param.Dynamic),
+    #     ("synced", param.Boolean),
+    #     ("session_type", param.String),
+    #     ("sensors", param.Dynamic),
+    # )
+    # def output(self):
+    #     return (
+    #         self.data,
+    #         self.sampling_rate,
+    #         self.time_log_present,
+    #         self.time_log,
+    #         self.synced,
+    #         self.session_type,
+    #         self.sensors,
+    #     )
 
     def panel(self):
         self.step = 3

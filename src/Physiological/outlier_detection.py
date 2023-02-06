@@ -9,8 +9,8 @@ class AskToDetectOutliers(AskToAddTimes):
     text = ""
     ready = param.Boolean(default=True)
     next = param.Selector(
-        default="Now the Files will be processed",
-        objects=["Now the Files will be processed", "Expert Processing"],
+        default="Do you want to process the HRV also?",
+        objects=["Do you want to process the HRV also?", "Expert Processing"],
     )
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip")
@@ -40,7 +40,7 @@ class AskToDetectOutliers(AskToAddTimes):
     skip_outlier_detection = False
 
     def click_skip(self, event):
-        self.next = "Now the Files will be processed"
+        self.next = "Do you want to process the HRV also?"
         self.skip_outlier_detection = True
         self.ready = True
 
@@ -49,7 +49,7 @@ class AskToDetectOutliers(AskToAddTimes):
         self.ready = True
 
     def click_default(self, event):
-        self.next = "Now the Files will be processed"
+        self.next = "Do you want to process the HRV also?"
         self.ready = True
 
     def panel(self):
@@ -132,22 +132,22 @@ class OutlierDetection(AskToDetectOutliers):
             ),
         }
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("outlier_params", param.Dynamic),
-        ("outlier_methods", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.get_outlier_params(),
-            self.outlier_methods.value,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-        )
+    # @param.output(
+    #     ("data", param.Dynamic),
+    #     ("sampling_rate", param.Dynamic),
+    #     ("outlier_params", param.Dynamic),
+    #     ("outlier_methods", param.Dynamic),
+    #     ("sensors", param.Dynamic),
+    #     ("time_log_present", param.Dynamic),
+    #     ("time_log", param.Dynamic),
+    # )
+    # def output(self):
+    #     return (
+    #         self.data,
+    #         self.sampling_rate,
+    #         self.get_outlier_params(),
+    #         self.outlier_methods.value,
+    #         self.sensors,
+    #         self.time_log_present,
+    #         self.time_log,
+    #     )

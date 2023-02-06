@@ -1,10 +1,10 @@
 import param
 import panel as pn
 
-from src.Physiological.process_hrv import ProcessHRV
+from src.Physiological.process_hrv import SetHRVParameters
 
 
-class ChooseSubtypes(ProcessHRV):
+class ChooseSubtypes(SetHRVParameters):
     sampling_rate = param.Dynamic()
     text = ""
     sensors = param.Dynamic()

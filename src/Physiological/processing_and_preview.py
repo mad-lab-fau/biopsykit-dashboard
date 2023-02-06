@@ -156,6 +156,54 @@ class ProcessingAndPreview(ProcessingPreStep):
         #         accordion.append(df_bands)
         return accordion
 
+    def process_ecg(self):
+        if "ecg" in self.sensors:
+            if self.subj_time_dict:
+                time_log = self.subj_time_dict
+                if self.session.value == "Single Session":
+                    time_log = self.subj_time_dict[self.subject]
+                    for key in time_log.keys():
+                        time_log[key] = time_log[key].apply(lambda dt: dt.time())
+                    time_log = time_log[list(time_log.keys())[0]]
+                self.ecg_processor = EcgProcessor(
+                    data=self.data,
+                    sampling_rate=self.sampling_rate,
+                    time_intervals=time_log,
+                )
+            else:
+                self.ecg_processor = EcgProcessor(
+                    data=self.data, sampling_rate=self.sampling_rate
+                )
+            if self.skip_outlier_detection:
+                self.ecg_processor.ecg_process(
+                    outlier_correction=None,
+                    outlier_params=None,
+                )
+            else:
+                self.ecg_processor.ecg_process(
+                    outlier_correction=self.outlier_methods,
+                    outlier_params=self.outlier_params,
+                )
+
+    # TODO: noch den Baseline abfragen, und abfragen welche Phasen gewählt werden sollen
+    def process_hr(self):
+        if self.hr_data is None:
+            return
+        dict_result = bp.utils.data_processing.resample_dict_sec(self.hr_data)
+        dict_result_norm = bp.utils.data_processing.normalize_to_phase(
+            dict_result, "Baseline"
+        )
+        dict_result_norm_selected = bp.utils.data_processing.select_dict_phases(
+            dict_result_norm, phases=["Intervention", "Stress", "Recovery"]
+        )
+        dict_study = bp.utils.data_processing.rearrange_subject_data_dict(
+            dict_result_norm
+        )
+        dict_result = bp.utils.data_processing.cut_phases_to_shortest(dict_study)
+        dict_merged = bp.utils.data_processing.merge_study_data_dict(dict_result)
+        # TODO: Condotion List bekommen wir im TimeLog
+        # dict_merged_cond = bp.utils.data_processing.split_subject_conditions(dict_merged, condition_list)
+
     def get_statistical_values(self):
         values = []
         for key in self.get_phases():

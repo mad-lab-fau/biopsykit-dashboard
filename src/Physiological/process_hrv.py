@@ -19,23 +19,23 @@ class AskToProcessHRV(ProcessingAndPreview):
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
     # process_hrv_btn = pn.widgets.Button(name="Process HRV")
     next_page = param.Selector(
-        default="Process HRV",
-        objects=["Process HRV", "Results"],
+        default="Set HRV Parameters",
+        objects=["Set HRV Parameters", "Now the Files will be processed"],
     )
     ready = param.Boolean(default=False)
     skip_hrv = False
 
     def click_skip(self, event):
-        self.next_page = "Results"
+        self.next_page = "Now the Files will be processed"
         self.skip_hrv = True
         self.ready = True
 
     def click_expert_hrv(self, event):
-        self.next_page = "Process HRV"
+        self.next_page = "Set HRV Parameters"
         self.ready = True
 
     def click_default_hrv(self, event):
-        self.next_page = "Process HRV"
+        self.next_page = "Now the Files will be processed"
         self.ready = True
 
     def panel(self):
@@ -48,24 +48,11 @@ class AskToProcessHRV(ProcessingAndPreview):
         self.default_btn.on_click(self.click_default_hrv)
         return pn.Column(
             pn.pane.Markdown(self.text),
-            pn.Row(self.skip_btn, self.expert_mode_btn, self.default_btn),
+            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
         )
 
 
-class ProcessHRV(AskToProcessHRV):
-    def process_hrv(self):
-        keys = self.ecg_processor.ecg_result.keys()
-        for key in keys:
-            self.ecg_processor.hrv_process(
-                self.ecg_processor,
-                key,
-                index=self.index.value,
-                index_name=self.index_name.value,
-                hrv_types=self.hrv_types.value,
-                correct_rpeaks=self.correct_rpeaks.value,
-            )
-        pn.state.notifications.success("HRV processed successfully")
-
+class SetHRVParameters(AskToProcessHRV):
     def panel(self):
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessHRV.md", "r")
@@ -78,5 +65,4 @@ class ProcessHRV(AskToProcessHRV):
             self.correct_rpeaks,
             self.index,
             self.index_name,
-            # self.sampling_rate,
         )

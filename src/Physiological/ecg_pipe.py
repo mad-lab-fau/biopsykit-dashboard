@@ -13,7 +13,7 @@ from src.Physiological.processing_and_preview import (
     ProcessingAndPreview,
     ProcessingPreStep,
 )
-from src.Physiological.process_hrv import ProcessHRV, AskToProcessHRV
+from src.Physiological.process_hrv import SetHRVParameters, AskToProcessHRV
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -62,7 +62,9 @@ class ECGPipeline:
             ready_parameter="ready",
             next_parameter="next_page",
         )
-        self.pipeline.add_stage("Process HRV", ProcessHRV())
+        self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())
+        # TODO: Heart Rate noch als extra step mit einbauen, aber nur wenn auch eine mit hochgeladen wurde
+        # TODO: ResultsPreview wird zu Download Results
         self.pipeline.add_stage("Results", ResultsPreview())
 
         self.pipeline.define_graph(
@@ -79,17 +81,30 @@ class ECGPipeline:
                 "Add Times": "Do you want to detect Outlier?",
                 "Do you want to detect Outlier?": (
                     "Expert Processing",
+                    "Do you want to process the HRV also?",
+                ),
+                "Expert Processing": "Do you want to process the HRV also?",
+                "Do you want to process the HRV also?": (
+                    "Set HRV Parameters",
                     "Now the Files will be processed",
                 ),
+                "Set HRV Parameters": "Now the Files will be processed",
                 "Now the Files will be processed": "Preview",
-                "Expert Processing": "Now the Files will be processed",
-                "Now the Files will be processed": "Preview",
-                "Preview": "Do you want to process the HRV also?",
-                "Do you want to process the HRV also?": (
-                    "Process HRV",
-                    "Results",
-                ),
-                "Process HRV": "Results",
+                "Preview": "Results"
+                #
+                # "Do you want to detect Outlier?": (
+                #     "Expert Processing",
+                #     "Now the Files will be processed",
+                # ),
+                # "Now the Files will be processed": "Preview",
+                # "Expert Processing": "Now the Files will be processed",
+                # "Now the Files will be processed": "Preview",
+                # "Preview": "Do you want to process the HRV also?",
+                # "Do you want to process the HRV also?": (
+                #     "Process HRV",
+                #     "Results",
+                # ),
+                # "Process HRV": "Results",
                 # Vorher noch fragen ob man das überhaupt will
                 # Zeiten hochladen oder eintragen
                 # Hier nun fragen, ob die Daten korrigiert werden sollen (Nein, Default, Expert Mode)
