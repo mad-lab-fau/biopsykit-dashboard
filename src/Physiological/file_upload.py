@@ -1,6 +1,7 @@
 import datetime
 import re
 import string
+from copy import copy, deepcopy
 from zipfile import ZipFile
 
 import biopsykit.io.nilspod
@@ -14,10 +15,8 @@ from src.Physiological.recordings import Recordings
 from src.utils import get_datetime_columns_of_data_frame
 from io import BytesIO
 from io import StringIO
-from typing import io
 from nilspodlib import SyncedSession
 from src.utils import _handle_counter_inconsistencies_dataset
-from biopsykit.utils.datatype_helper import *
 
 
 class FileUpload(Recordings):
@@ -35,7 +34,7 @@ class FileUpload(Recordings):
         options=["None Selected"] + list(pytz.all_timezones),
         value="Europe/Berlin",
     )
-    data = None
+    data = pd.DataFrame()
     hr_data = None
     sampling_rate = param.Dynamic(default=-1)
     hardware_select = pn.widgets.Select(
@@ -173,6 +172,7 @@ class FileUpload(Recordings):
             subject_id = re.findall("hr_result_(Vp\w+).xlsx", filename)[0]
             hr = pd.read_excel(BytesIO(bytefile), sheet_name=None, index_col="time")
             self.hr_data[subject_id] = hr
+        self.ready = True
 
     def handle_bin_file(self, bytefile: bytes):
         dataset = NilsPodAdapted.from_bin_file(
@@ -180,18 +180,13 @@ class FileUpload(Recordings):
             legacy_support="resolve",
             tz=self.timezone_select.value,
         )
-        if self.data is None:
-            self.data = []
         st = set(self.sensors)
         sensors = set(dataset.info.enabled_sensors)
         self.sensors = list(st.union(sensors))
-        if type(self.data) is dict:
-            return
-        if dataset in self.data:
-            return
         df, fs = biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
         self.sampling_rate = fs
         self.data = df
+        self.ready = True
 
     def handle_csv_file(self, bytefile: bytes):
         string_io = StringIO(bytefile.decode("utf8"))
@@ -211,31 +206,34 @@ class FileUpload(Recordings):
         self.data["ecg"] = self.data["ecg"].astype(float)
         self.sensors.append("ecg")
         pn.state.notifications.success("File uploaded successfully", duration=5000)
+        self.ready = True
 
     def set_timezone_of_datetime_columns_(self):
         datetime_columns = get_datetime_columns_of_data_frame(self.data)
         for col in datetime_columns:
             self.data[col] = self.data[col].dt.tz_localize(self.timezone_select.value)
 
-    # @param.output(
-    #     ("data", param.Dynamic),
-    #     ("sampling_rate", param.Dynamic),
-    #     ("time_log_present", param.Dynamic),
-    #     ("time_log", param.Dynamic),
-    #     ("synced", param.Boolean),
-    #     ("session_type", param.String),
-    #     ("sensors", param.Dynamic),
-    # )
-    # def output(self):
-    #     return (
-    #         self.data,
-    #         self.sampling_rate,
-    #         self.time_log_present,
-    #         self.time_log,
-    #         self.synced,
-    #         self.session_type,
-    #         self.sensors,
-    #     )
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("synced", param.Boolean),
+        ("session_type", param.String),
+        ("sensors", param.Dynamic),
+        ("timezone", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.time_log_present,
+            self.time_log,
+            self.synced,
+            self.session_type,
+            self.sensors,
+            self.timezone_select.value,
+        )
 
     def panel(self):
         self.step = 3
@@ -250,6 +248,8 @@ class FileUpload(Recordings):
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
         if self.data is not None:
             self.ready = True
+        else:
+            self.ready = False
         self.set_progress_value()
         return pn.Column(
             pn.pane.Markdown(self.text),

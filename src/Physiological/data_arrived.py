@@ -9,10 +9,6 @@ from src.utils import get_start_and_end_time
 
 
 class DataArrived(FileUpload):
-    synced = param.Boolean()
-    session_type = param.Dynamic()
-    data = param.Dynamic()
-    sampling_rate = param.Dynamic()
     sampling_rate_input = pn.widgets.TextInput(
         name="Sampling rate Input", placeholder="Enter your sampling rate here..."
     )
@@ -25,6 +21,7 @@ class DataArrived(FileUpload):
     ready = param.Boolean(default=True)
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
+    data = param.Dynamic()
     sensors = param.Dynamic()
     timezone = param.String()
 

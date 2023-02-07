@@ -1,7 +1,7 @@
 import panel as pn
 
 from src.Physiological.TestStage import TestInput
-from src.Physiological.result_preview import ResultsPreview
+from src.Physiological.download_results import DownloadResults
 from src.Physiological.sessions import Session
 from src.Physiological.recordings import Recordings
 from src.Physiological.compress_files import Compress
@@ -53,8 +53,6 @@ class ECGPipeline:
         self.pipeline.add_stage(
             "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
         )
-
-        self.pipeline.add_stage("Preview", ProcessingAndPreview())
         self.pipeline.add_stage(
             "Do you want to process the HRV also?",
             AskToProcessHRV(),
@@ -65,7 +63,8 @@ class ECGPipeline:
         self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())
         # TODO: Heart Rate noch als extra step mit einbauen, aber nur wenn auch eine mit hochgeladen wurde
         # TODO: ResultsPreview wird zu Download Results
-        self.pipeline.add_stage("Results", ResultsPreview())
+        self.pipeline.add_stage("Preview", ProcessingAndPreview())
+        self.pipeline.add_stage("Results", DownloadResults())
 
         self.pipeline.define_graph(
             {
