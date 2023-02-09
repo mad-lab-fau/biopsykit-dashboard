@@ -68,13 +68,17 @@ class ProcessingAndPreview(ProcessingPreStep):
             df = {}
             for key in self.data.keys():
                 df[key] = self.data[key]
+        if self.ecg_processed:
+            return accordion
         if "ecg" in self.sensors:
             if self.subj_time_dict:
                 time_log = self.subj_time_dict
                 if self.session.value == "Single Session":
                     time_log = self.subj_time_dict[self.subject]
                     for key in time_log.keys():
-                        time_log[key] = time_log[key].apply(lambda dt: dt.time())
+                        time_log[key] = time_log[key].apply(
+                            lambda dt: dt.time() if isinstance(dt, datetime) else dt
+                        )
                     time_log = time_log[list(time_log.keys())[0]]
                 self.ecg_processor = EcgProcessor(
                     data=df,
@@ -95,6 +99,7 @@ class ProcessingAndPreview(ProcessingPreStep):
                     outlier_correction=self.outlier_methods,
                     outlier_params=self.outlier_params,
                 )
+            self.ecg_processed = True
             # if type(self.data) == dict:
             #     for key in self.data.keys():
             #         ecg_results = pn.widgets.DataFrame(

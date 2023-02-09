@@ -76,6 +76,7 @@ class AddTimes(AskToAddTimes):
 
     def parse_time_file(self, event):
         df = None
+        self.ecg_processed = False
         self.select_condition.visible = False
         self.select_subject.visible = False
         self.select_vp.visible = False

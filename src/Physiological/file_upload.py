@@ -46,6 +46,7 @@ class FileUpload(Recordings):
     sensors = []
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
+    ecg_processed = False
 
     @pn.depends("hardware_select.value", watch=True)
     def hardware_selection_changed(self):
@@ -58,6 +59,7 @@ class FileUpload(Recordings):
         if self.data is None:
             self.ready = False
         self.data = None
+        self.ecg_processed = False
         if self.file_input.value is None or len(self.file_input.value) <= 0:
             pn.state.notifications.error("No Files arrived")
             return
