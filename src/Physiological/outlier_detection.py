@@ -74,7 +74,7 @@ class AskToDetectOutliers(AskToAddTimes):
         return self.get_outlier_params()
 
     def panel(self):
-        self.step = 7
+        self.step = 6
         self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/AskToDetectOutliers.md", "r")
@@ -105,8 +105,8 @@ class OutlierDetection(AskToDetectOutliers):
     outlier_params = param.Dynamic()
 
     def panel(self):
-        self.step = 8
-        self.max_steps = 22
+        self.step = 6
+        # self.max_steps = 22
         self.set_progress_value()
         if self.textHeader == "":
             f = open("../assets/Markdown/OutlierDetection.html", "r")
@@ -117,6 +117,8 @@ class OutlierDetection(AskToDetectOutliers):
             fileString = f.read()
             self.textParams = fileString
         return pn.Column(
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             pn.pane.HTML(self.textHeader),
             self.outlier_methods,
             pn.pane.Markdown(self.textParams),

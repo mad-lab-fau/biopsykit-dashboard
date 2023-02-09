@@ -294,8 +294,7 @@ class AddTimes(AskToAddTimes):
             return df
 
     def panel(self):
-        self.step = 6
-        self.max_steps = 21
+        self.step = 5
         self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/SelectTimes.md", "r")

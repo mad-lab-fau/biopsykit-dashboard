@@ -240,16 +240,21 @@ class ProcessingAndPreview(ProcessingPreStep):
                     hrv_types=self.hrv_types.value,
                     correct_rpeaks=self.correct_rpeaks.value,
                 )
-        pn.state.notifications.success("HRV processed successfully")
         # for vp in self.subj_time_dict.keys():
         #     self.dict_hr_subjects[vp] = self.ecg_processor.heart_rate
 
     def panel(self):
+        self.step = 9
+        self.set_progress_value()
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessingAndPreview.md", "r")
             fileString = f.read()
             self.textHeader = fileString
-        column = pn.Column(self.textHeader)
+        column = pn.Column(
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
+            pn.pane.Markdown(self.textHeader),
+        )
         accordion = self.get_dataframes_as_accordions()
         self.process_hrv()
         stat_values = self.get_statistical_values()

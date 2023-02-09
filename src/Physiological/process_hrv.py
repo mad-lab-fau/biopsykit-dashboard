@@ -17,7 +17,6 @@ class AskToProcessHRV(AskToDetectOutliers):
         background="#d5433e", name="Expert Mode", button_type="success"
     )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
-    # process_hrv_btn = pn.widgets.Button(name="Process HRV")
     next_page = param.Selector(
         default="Set HRV Parameters",
         objects=["Set HRV Parameters", "Now the Files will be processed"],
@@ -47,6 +46,8 @@ class AskToProcessHRV(AskToDetectOutliers):
         return self.skip_hrv
 
     def panel(self):
+        self.step = 7
+        self.set_progress_value()
         if self.text == "":
             f = open("../assets/Markdown/ProcessHRV.md", "r")
             fileString = f.read()
@@ -55,6 +56,8 @@ class AskToProcessHRV(AskToDetectOutliers):
         self.expert_mode_btn.on_click(self.click_expert_hrv)
         self.default_btn.on_click(self.click_default_hrv)
         return pn.Column(
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             pn.pane.Markdown(self.text),
             pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
         )
@@ -71,11 +74,15 @@ class SetHRVParameters(AskToProcessHRV):
         return self.skip_hrv
 
     def panel(self):
+        self.step = 7
+        self.set_progress_value()
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessHRV.md", "r")
             fileString = f.read()
             self.textHeader = fileString
         return pn.Column(
+            pn.Row(self.get_step_static_text()),
+            pn.Row(self.progress),
             pn.pane.Markdown(self.textHeader),
             self.hrv_types,
             self.correct_rpeaks,

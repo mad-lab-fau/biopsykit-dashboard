@@ -6,7 +6,7 @@ from src.Physiological.TestStage import TestInput
 
 class Session(param.Parameterized):
     step = 1
-    max_steps = 20
+    max_steps = 10
     session = pn.widgets.Select(
         name="", value="Single Session", options=["Multiple Sessions", "Single Session"]
     )
