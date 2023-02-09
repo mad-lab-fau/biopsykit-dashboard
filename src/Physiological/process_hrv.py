@@ -1,11 +1,11 @@
 import param
 import panel as pn
 
-from src.Physiological.processing_and_preview import ProcessingAndPreview
+from src.Physiological.outlier_detection import AskToDetectOutliers
 
 
-class AskToProcessHRV(ProcessingAndPreview):
-    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency", "all"]
+class AskToProcessHRV(AskToDetectOutliers):
+    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
     hrv_types = pn.widgets.MultiChoice(
         name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
     )
@@ -24,6 +24,8 @@ class AskToProcessHRV(ProcessingAndPreview):
     )
     ready = param.Boolean(default=False)
     skip_hrv = False
+    textHeader = ""
+    outlier_params = param.Dynamic()
 
     def click_skip(self, event):
         self.next_page = "Now the Files will be processed"
@@ -37,6 +39,12 @@ class AskToProcessHRV(ProcessingAndPreview):
     def click_default_hrv(self, event):
         self.next_page = "Now the Files will be processed"
         self.ready = True
+
+    @param.output(
+        ("skip_hrv", param.Dynamic),
+    )
+    def output(self):
+        return self.skip_hrv
 
     def panel(self):
         if self.text == "":
@@ -53,12 +61,20 @@ class AskToProcessHRV(ProcessingAndPreview):
 
 
 class SetHRVParameters(AskToProcessHRV):
+
+    skip_hrv = param.Boolean()
+
+    @param.output(
+        ("skip_hrv", param.Dynamic),
+    )
+    def output(self):
+        return self.skip_hrv
+
     def panel(self):
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessHRV.md", "r")
             fileString = f.read()
             self.textHeader = fileString
-        # self.process_btn.on_click(self.process_hrv)
         return pn.Column(
             pn.pane.Markdown(self.textHeader),
             self.hrv_types,

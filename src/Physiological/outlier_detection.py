@@ -10,7 +10,7 @@ class AskToDetectOutliers(AskToAddTimes):
     ready = param.Boolean(default=True)
     next = param.Selector(
         default="Do you want to process the HRV also?",
-        objects=["Do you want to process the HRV also?", "Expert Processing"],
+        objects=["Do you want to process the HRV also?", "Expert Outlier Detection"],
     )
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip")
@@ -38,6 +38,7 @@ class AskToDetectOutliers(AskToAddTimes):
     physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
     physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
     skip_outlier_detection = False
+    outlier_params = param.Dynamic()
 
     def click_skip(self, event):
         self.next = "Do you want to process the HRV also?"
@@ -45,12 +46,32 @@ class AskToDetectOutliers(AskToAddTimes):
         self.ready = True
 
     def click_detect_outlier(self, event):
-        self.next = "Expert Processing"
+        self.next = "Expert Outlier Detection"
         self.ready = True
 
     def click_default(self, event):
         self.next = "Do you want to process the HRV also?"
         self.ready = True
+
+    def get_outlier_params(self):
+        self.outlier_params = {
+            "correlation": self.correlation.value,
+            "quality": self.quality.value,
+            "artifact": self.artifact.value,
+            "statistical_rr": self.statistical_rr.value,
+            "statistical_rr_diff": self.statistical_rr_diff,
+            "physiological": (
+                self.physiological_lower.value,
+                self.physiological_upper.value,
+            ),
+        }
+        return self.outlier_params
+
+    @param.output(
+        ("outlier_params", param.Dynamic),
+    )
+    def output(self):
+        return self.get_outlier_params()
 
     def panel(self):
         self.step = 7
@@ -80,6 +101,8 @@ class OutlierDetection(AskToDetectOutliers):
 
     time_log = param.Dynamic()
     time_log_present = param.Boolean()
+
+    outlier_params = param.Dynamic()
 
     def panel(self):
         self.step = 8
@@ -119,18 +142,11 @@ class OutlierDetection(AskToDetectOutliers):
         if self.physiological_lower.value > self.physiological_upper.value:
             self.physiological_upper.value = self.physiological_lower.value
 
-    def get_outlier_params(self):
-        return {
-            "correlation": self.correlation.value,
-            "quality": self.quality.value,
-            "artifact": self.artifact.value,
-            "statistical_rr": self.statistical_rr.value,
-            "statistical_rr_diff": self.statistical_rr_diff,
-            "physiological": (
-                self.physiological_lower.value,
-                self.physiological_upper.value,
-            ),
-        }
+    @param.output(
+        ("outlier_params", param.Dynamic),
+    )
+    def output(self):
+        return self.get_outlier_params()
 
     # @param.output(
     #     ("data", param.Dynamic),

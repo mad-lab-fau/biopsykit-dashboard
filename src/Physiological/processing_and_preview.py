@@ -13,8 +13,10 @@ from matplotlib import cm
 from src.Physiological.outlier_detection import AskToDetectOutliers
 import matplotlib.pyplot as plt
 
+from src.Physiological.process_hrv import AskToProcessHRV
 
-class ProcessingPreStep(AskToDetectOutliers):
+
+class ProcessingPreStep(AskToProcessHRV):
 
     ready = param.Boolean(default=False)
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
@@ -226,6 +228,22 @@ class ProcessingAndPreview(ProcessingPreStep):
         target.object = fig
         self.phase_title.value = event.new
 
+    def process_hrv(self):
+        if self.skip_hrv:
+            return
+        for key in self.ecg_processor.ecg_result.keys():
+            for vp in self.subj_time_dict.keys():
+                self.ecg_processor.hrv_process(
+                    self.ecg_processor,
+                    key,
+                    index=vp,
+                    hrv_types=self.hrv_types.value,
+                    correct_rpeaks=self.correct_rpeaks.value,
+                )
+        pn.state.notifications.success("HRV processed successfully")
+        # for vp in self.subj_time_dict.keys():
+        #     self.dict_hr_subjects[vp] = self.ecg_processor.heart_rate
+
     def panel(self):
         if self.textHeader == "":
             f = open("../assets/Markdown/ProcessingAndPreview.md", "r")
@@ -233,6 +251,7 @@ class ProcessingAndPreview(ProcessingPreStep):
             self.textHeader = fileString
         column = pn.Column(self.textHeader)
         accordion = self.get_dataframes_as_accordions()
+        self.process_hrv()
         stat_values = self.get_statistical_values()
         for stat_value in stat_values:
             accordion.append(stat_value)

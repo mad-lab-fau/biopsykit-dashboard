@@ -49,10 +49,7 @@ class ECGPipeline:
             ready_parameter="ready",
             next_parameter="next",
         )
-        self.pipeline.add_stage("Expert Processing", OutlierDetection())
-        self.pipeline.add_stage(
-            "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
-        )
+        self.pipeline.add_stage("Expert Outlier Detection", OutlierDetection())
         self.pipeline.add_stage(
             "Do you want to process the HRV also?",
             AskToProcessHRV(),
@@ -60,8 +57,11 @@ class ECGPipeline:
             ready_parameter="ready",
             next_parameter="next_page",
         )
+        self.pipeline.add_stage(
+            "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
+        )
+
         self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())
-        # TODO: Heart Rate noch als extra step mit einbauen, aber nur wenn auch eine mit hochgeladen wurde
         # TODO: ResultsPreview wird zu Download Results
         self.pipeline.add_stage("Preview", ProcessingAndPreview())
         self.pipeline.add_stage("Results", DownloadResults())
@@ -79,63 +79,16 @@ class ECGPipeline:
                 ),
                 "Add Times": "Do you want to detect Outlier?",
                 "Do you want to detect Outlier?": (
-                    "Expert Processing",
+                    "Expert Outlier Detection",
                     "Do you want to process the HRV also?",
                 ),
-                "Expert Processing": "Do you want to process the HRV also?",
+                "Expert Outlier Detection": "Do you want to process the HRV also?",
                 "Do you want to process the HRV also?": (
                     "Set HRV Parameters",
                     "Now the Files will be processed",
                 ),
                 "Set HRV Parameters": "Now the Files will be processed",
                 "Now the Files will be processed": "Preview",
-                "Preview": "Results"
-                #
-                # "Do you want to detect Outlier?": (
-                #     "Expert Processing",
-                #     "Now the Files will be processed",
-                # ),
-                # "Now the Files will be processed": "Preview",
-                # "Expert Processing": "Now the Files will be processed",
-                # "Now the Files will be processed": "Preview",
-                # "Preview": "Do you want to process the HRV also?",
-                # "Do you want to process the HRV also?": (
-                #     "Process HRV",
-                #     "Results",
-                # ),
-                # "Process HRV": "Results",
-                # Vorher noch fragen ob man das überhaupt will
-                # Zeiten hochladen oder eintragen
-                # Hier nun fragen, ob die Daten korrigiert werden sollen (Nein, Default, Expert Mode)
-                # Sollen die Daten getrimmt werden?
-                # Preview
-                # Soll noch HRV? berechnet werden
-                #
+                "Preview": "Results",
             }
         )
-
-        # self.pipeline.add_stage(
-        #     "Session Kind",
-        #     SessionKind,
-        #     ready_parameter="ready",
-        #     show_header=False,
-        # )
-        # self.pipeline.add_stage("Upload File", FileUpload, ready_parameter="ready")
-        # self.pipeline.add_stage("Data arrived", DataArrived(), ready_parameter="ready")
-        # self.pipeline.add_stage("Trim Session", TrimSession())
-        # self.pipeline.add_stage("Outlier Processing", OutlierDetection())
-        # self.pipeline.add_stage("Preview", ProcessingAndPreview())
-        # self.pipeline.add_stage("Process HRV", ProcessHRV())
-        # self.pipeline.add_stage("Select Subtypes", ChooseSubtypes)
-
-        # self.pipeline.define_graph(
-        #     {
-        #         "Session Kind": "Upload File",
-        #         "Upload File": "Data arrived",
-        #         "Data arrived": "Trim Session",
-        #         "Trim Session": "Outlier Processing",
-        #         "Outlier Processing": "Preview",
-        #         "Preview": "Process HRV",
-        #         "Process HRV": "Select Subtypes",
-        #     }
-        # )
