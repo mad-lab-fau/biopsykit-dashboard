@@ -93,39 +93,28 @@ class AddTimes(AskToAddTimes):
             row = pn.Row()
             cols = list(self.df.columns)
             cols.insert(0, " ")
-            self.select_subject.options = cols
-            self.select_subject.visible = True
+            if "subject" not in self.df.columns:
+                self.select_subject.options = cols
+                self.select_subject.visible = True
 
-            self.select_subject.link(
-                "subject",
-                callbacks={"value": self.subject_column_changed},
-            )
-            self.select_condition.options = cols
-            self.select_condition.visible = True
-            self.select_condition.link(
-                "condition",
-                callbacks={"value": self.condition_column_changed},
-            )
+                self.select_subject.link(
+                    "subject",
+                    callbacks={"value": self.subject_column_changed},
+                )
+            if "condition" not in self.df.columns:
+                self.select_condition.options = cols
+                self.select_condition.visible = True
+                self.select_condition.link(
+                    "condition",
+                    callbacks={"value": self.condition_column_changed},
+                )
             self.pane.append(row)
-            # return
+            return
         if df is None:
             pn.state.notifications.error("Could not parse the given time File")
             return
         self.df = df
         self.set_subject_time_dict()
-        if (
-            self.session.value == "Single Session"
-            and len(self.subj_time_dict.keys()) > 1
-        ):
-            # VP muss noch ausgewählt werden
-            self.select_vp.options = list(self.subj_time_dict.keys())
-            self.select_vp.visible = True
-            self.select_vp.link(
-                "subject",
-                callbacks={"value": self.select_vp_changed},
-            )
-            self.subject = list(self.subj_time_dict.keys())[0]
-            self.ready = True
         self.dict_to_column()
 
     def select_vp_changed(self, _, event):
@@ -141,11 +130,26 @@ class AddTimes(AskToAddTimes):
                     datetime.datetime.now().date(),
                     time,
                 )
+                if not isinstance(time, datetime.datetime)
+                else time
             )
             self.subj_time_dict[subject_name] = {}
             self.subj_time_dict[subject_name][cond_name] = t_condition
 
     def dict_to_column(self):
+        if (
+            self.session.value == "Single Session"
+            and len(self.subj_time_dict.keys()) > 1
+        ):
+            # VP muss noch ausgewählt werden
+            self.select_vp.options = list(self.subj_time_dict.keys())
+            self.select_vp.visible = True
+            self.select_vp.link(
+                "subject",
+                callbacks={"value": self.select_vp_changed},
+            )
+            self.subject = list(self.subj_time_dict.keys())[0]
+            self.ready = True
         timestamps = []
         for subject in self.subj_time_dict.keys():
             col = pn.Column()
@@ -231,6 +235,7 @@ class AddTimes(AskToAddTimes):
         self.ready = True
         self.df = self.handle_time_file(self.df)
         self.set_subject_time_dict()
+        self.select_subject.visible = False
         self.dict_to_column()
 
     def condition_column_changed(self, target, event):
@@ -244,6 +249,7 @@ class AddTimes(AskToAddTimes):
         self.ready = True
         self.df = self.handle_time_file(self.df)
         self.set_subject_time_dict()
+        self.select_condition.visible = False
         self.dict_to_column()
 
     def add_phase_btn_click(self, target, event):
