@@ -90,8 +90,43 @@ class FileUpload(Recordings):
         return
 
     def extract_zip(self, input_zip):
-        input_zip = ZipFile(input_zip)
-        return {name: input_zip.read(name) for name in input_zip.namelist()}
+        input_zip = ZipFile(BytesIO(input_zip))
+        datasets = []
+        for name in input_zip.namelist():
+            if ".bin" in name and not name.startswith("__"):
+                dataset = NilsPodAdapted.from_bin_file(
+                    filepath_or_buffer=BytesIO(input_zip.read(name)),
+                    legacy_support="resolve",
+                    tz=self.timezone_select.value,
+                )
+                datasets.append(dataset)
+        try:
+            synced = SyncedSession(datasets)
+            synced.align_to_syncregion(inplace=True)
+            _handle_counter_inconsistencies_dataset(synced, "ignore")
+            df = synced.data_as_df(None, index="local_datetime", concat_df=True)
+            df.index.name = "time"
+            if len(set(synced.info.sampling_rate_hz)) > 1:
+                raise ValueError(
+                    f"Datasets in the sessions have different sampling rates! Got: {synced.info.sampling_rate_hz}."
+                )
+            fs = synced.info.sampling_rate_hz[0]
+            self.data = df
+            self.sampling_rate = fs
+            self.ready = True
+        except:
+            dataset_list = [
+                biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
+                for dataset in datasets
+            ]
+            fs_list = [fs for df, fs in dataset_list]
+            self.sampling_rate = fs_list[0]
+            phase_names = [f"Part{i}" for i in range(len(dataset_list))]
+            dataset_dict = {
+                phase: df for phase, (df, fs) in zip(phase_names, dataset_list)
+            }
+            self.data = dataset_dict
+            self.ready = True
 
     def handle_single_session(self):
         for val, fn in zip(self.file_input.value, self.file_input.filename):
