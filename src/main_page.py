@@ -1,6 +1,6 @@
 import panel as pn
 import param
-from Physiological.ecg_pipe import *
+from Physiological.physiological_pipeline import *
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -18,7 +18,7 @@ class MainPage(param.Parameterized):
     mainPage = None
 
     def start_physiological_pipeline(self, event):
-        ecg = ECGPipeline()
+        ecg = Phys()
         return self.mainPage.append(pn.Column(ecg.pipeline))
 
     def __init__(self, main_page, **params):

@@ -24,6 +24,14 @@ class DataArrived(FileUpload):
     data = param.Dynamic()
     sensors = param.Dynamic()
     timezone = param.String()
+    sampling_rate = param.Number()
+    next = param.Selector(
+        objects=["Do you want to add time logs?", "Select CFT Sheet"],
+        default="Do you want to add time logs?",
+    )
+    subject = param.Dynamic()
+    subj_time_dict = {}
+    skip_hrv = param.Boolean(default=True)
 
     @pn.depends("sampling_rate_input.value", watch=True)
     def set_sampling_rate_value(self):
@@ -48,23 +56,23 @@ class DataArrived(FileUpload):
         else:
             self.info_selected_value.object = self.info_dict[self.info_selection.value]
 
-    # @param.output(
-    #     ("data", param.Dynamic),
-    #     ("sampling_rate", param.Dynamic),
-    #     ("sensors", param.Dynamic),
-    #     ("time_log_present", param.Dynamic),
-    #     ("time_log", param.Dynamic),
-    #     ("timezone", param.String()),
-    # )
-    # def output(self):
-    #     return (
-    #         self.data,
-    #         self.sampling_rate,
-    #         self.sensors,
-    #         self.time_log_present,
-    #         self.time_log,
-    #         self.timezone,
-    #     )
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
+        )
 
     def get_session_start_and_end(self, pane):
         start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
@@ -101,6 +109,8 @@ class DataArrived(FileUpload):
                 )
             pane.append(accordion)
             return pane
+        else:
+            return pane
 
     def panel(self):
         self.step = 4
@@ -112,7 +122,9 @@ class DataArrived(FileUpload):
         pane = pn.Column(pn.Row(self.get_step_static_text()))
         pane.append(pn.Row(self.progress))
         pane.append(pn.pane.Markdown(self.text))
-        if self.sampling_rate == -1:
+        if self.selected_signal == "CFT":
+            self.next = "Select CFT Sheet"
+        if self.sampling_rate == -1 and self.selected_signal != "CFT":
             if self.sampling_rate != -1:
                 self.sampling_rate_input.value = str(self.sampling_rate)
             pane.append(self.sampling_rate_input)

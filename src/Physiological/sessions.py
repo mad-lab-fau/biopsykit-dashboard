@@ -1,10 +1,10 @@
 import param
 import panel as pn
-import os
-from src.Physiological.TestStage import TestInput
+
+from src.Physiological.signal_type import PhysSignalType
 
 
-class Session(param.Parameterized):
+class Session(PhysSignalType):
     step = 1
     max_steps = 10
     session = pn.widgets.Select(
@@ -17,6 +17,7 @@ class Session(param.Parameterized):
         height=20,
         sizing_mode="stretch_width",
     )
+    selected_signal = param.String()
 
     def get_step_static_text(self):
         return pn.widgets.StaticText(

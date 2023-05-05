@@ -1,7 +1,7 @@
 import datetime
 import re
 import string
-from copy import copy, deepcopy
+import zipfile
 from zipfile import ZipFile
 
 import biopsykit.io.nilspod
@@ -9,6 +9,8 @@ import param
 import panel as pn
 import pandas as pd
 import pytz
+from biopsykit.io.eeg import MuseDataset
+from biopsykit.utils.datatype_helper import HeartRatePhaseDict
 
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
 from src.Physiological.recordings import Recordings
@@ -46,7 +48,7 @@ class FileUpload(Recordings):
     sensors = []
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
-    ecg_processed = False
+    data_processed = False
 
     @pn.depends("hardware_select.value", watch=True)
     def hardware_selection_changed(self):
@@ -65,7 +67,7 @@ class FileUpload(Recordings):
             return
         if ".zip" in self.file_input.filename:
             # Daten noch entpacken und dann parsen
-            self.data = self.extract_zip(self.file_input.value)
+            self.extract_zip(self.file_input.value)
             pn.state.notifications.success("unzipped")
             return
         else:
@@ -92,40 +94,78 @@ class FileUpload(Recordings):
     def extract_zip(self, input_zip):
         input_zip = ZipFile(BytesIO(input_zip))
         datasets = []
-        for name in input_zip.namelist():
-            if ".bin" in name and not name.startswith("__"):
+        path = zipfile.Path(input_zip)
+        subject_data_dict = {}
+        for file_path in path.iterdir():
+            if file_path.name.startswith("__"):
+                continue
+            if file_path.is_dir():
+                subject_id = file_path.name
+                ds = []
+                for file in file_path.iterdir():
+                    if ".bin" in file.name:
+                        dataset = NilsPodAdapted.from_bin_file(
+                            filepath_or_buffer=BytesIO(input_zip.read(file.at)),
+                            legacy_support="resolve",
+                            tz=self.timezone_select.value,
+                        )
+                        ds.append(dataset)
+                subject_data_dict[subject_id] = ds
+            elif ".bin" in file_path.name:
+                subject_id = file_path.name.split(".")[0].split("_")[-1]
                 dataset = NilsPodAdapted.from_bin_file(
-                    filepath_or_buffer=BytesIO(input_zip.read(name)),
+                    filepath_or_buffer=BytesIO(input_zip.read(file_path.name)),
                     legacy_support="resolve",
                     tz=self.timezone_select.value,
                 )
                 datasets.append(dataset)
+                subject_data_dict[subject_id] = {}
+        # for name in input_zip.namelist():
+        #     if name.startswith("__"):
+        #         continue
+        #     subject_id = name.split(".")[0].split("_")[-1]
+        #     if ".bin" in name:
+        #         dataset = NilsPodAdapted.from_bin_file(
+        #             filepath_or_buffer=BytesIO(input_zip.read(name)),
+        #             legacy_support="resolve",
+        #             tz=self.timezone_select.value,
+        #         )
+        #         datasets.append(dataset)
         try:
-            synced = SyncedSession(datasets)
-            synced.align_to_syncregion(inplace=True)
-            _handle_counter_inconsistencies_dataset(synced, "ignore")
-            df = synced.data_as_df(None, index="local_datetime", concat_df=True)
-            df.index.name = "time"
-            if len(set(synced.info.sampling_rate_hz)) > 1:
-                raise ValueError(
-                    f"Datasets in the sessions have different sampling rates! Got: {synced.info.sampling_rate_hz}."
-                )
-            fs = synced.info.sampling_rate_hz[0]
-            self.data = df
+            subject_synced = {}
+            for subject in subject_data_dict.keys():
+                synced = SyncedSession(datasets)
+                synced.align_to_syncregion(inplace=True)
+                _handle_counter_inconsistencies_dataset(synced, "ignore")
+                df = synced.data_as_df(None, index="local_datetime", concat_df=True)
+                df.index.name = "time"
+                if len(set(synced.info.sampling_rate_hz)) > 1:
+                    raise ValueError(
+                        f"Datasets in the sessions have different sampling rates! Got: {synced.info.sampling_rate_hz}."
+                    )
+                fs = synced.info.sampling_rate_hz[0]
+                subject_synced[subject] = df
+            self.data = subject_synced
             self.sampling_rate = fs
             self.ready = True
-        except:
-            dataset_list = [
-                biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
-                for dataset in datasets
-            ]
-            fs_list = [fs for df, fs in dataset_list]
-            self.sampling_rate = fs_list[0]
-            phase_names = [f"Part{i}" for i in range(len(dataset_list))]
-            dataset_dict = {
-                phase: df for phase, (df, fs) in zip(phase_names, dataset_list)
-            }
-            self.data = dataset_dict
+        except Exception as e:
+            pn.state.notifications.warning("Could not sync data")
+            subject_phase_data_dict = {}
+            for subject in subject_data_dict.keys():
+                dataset_list = [
+                    biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
+                    for dataset in subject_data_dict[subject]
+                ]
+                fs_list = [fs for df, fs in dataset_list]
+                df_all = pd.concat([df for df, fs in dataset_list], axis=0)
+                self.sampling_rate = fs_list[0]
+                # phase_names = [f"Part{i}" for i in range(len(dataset_list))]
+                # dataset_dict = {
+                #     phase: df for phase, (df, fs) in zip(phase_names, dataset_list)
+                # }
+                # subject_phase_data_dict[subject] = dataset_dict
+                subject_phase_data_dict[subject] = df_all
+            self.data = subject_phase_data_dict
             self.ready = True
 
     def handle_single_session(self):
@@ -205,10 +245,19 @@ class FileUpload(Recordings):
             pn.state.notifications.error("Not a matching file format")
 
     def handle_xlsx_file(self, bytefile: bytes, filename: string):
+        if self.selected_signal == "CFT" and filename.endswith(".xlsx"):
+            dict_hr: HeartRatePhaseDict = pd.read_excel(
+                BytesIO(bytefile), index_col="time", sheet_name=None
+            )
+            dict_hr = {
+                k: v.tz_localize(self.timezone_select.value) for k, v in dict_hr.items()
+            }
+            self.data = dict_hr
         if filename.endswith(".xlsx") and "hr_result" in filename:
             subject_id = re.findall("hr_result_(Vp\w+).xlsx", filename)[0]
             hr = pd.read_excel(BytesIO(bytefile), sheet_name=None, index_col="time")
             self.hr_data[subject_id] = hr
+        pn.state.notifications.success("File uploaded successfully", duration=5000)
         self.ready = True
 
     def handle_bin_file(self, bytefile: bytes):
@@ -227,21 +276,37 @@ class FileUpload(Recordings):
 
     def handle_csv_file(self, bytefile: bytes):
         string_io = StringIO(bytefile.decode("utf8"))
-        self.data = pd.read_csv(string_io, parse_dates=["time"])
+        self.data = pd.read_csv(string_io)  # , parse_dates=["time"]
+        if self.selected_signal == "EEG":
+            self.data = MuseDataset(data=self.data, tz=self.timezone_select.value)
+        else:
+            for col in self.data.columns:
+                if "timestamp" in col.lower():
+                    try:
+                        self.data[col] = pd.Timestamp(self.data[col])
+                        self.data.set_index(col, inplace=True)
+                    except ValueError:
+                        pass
+                if "time" in col.lower():
+                    try:
+                        self.data[col] = pd.to_datetime(self.data[col])
+                        self.data.set_index(col, inplace=True)
+                    except ValueError:
+                        pass
         if self.data is None:
             pn.state.notifications.error("Empty csv File arrived", duration=10000)
-        if "ecg" not in self.data.columns:
-            pn.state.notifications.error(
-                "Uploaded csv File misses the column ecg", duration=10000
-            )
-            return
-        if "time" not in self.data.columns:
-            pn.state.notifications.error(
-                "Uploaded csv File misses the column time", duration=10000
-            )
-            return
-        self.data["ecg"] = self.data["ecg"].astype(float)
-        self.sensors.append("ecg")
+        # if "ecg" not in self.data.columns:
+        #     pn.state.notifications.error(
+        #         "Uploaded csv File misses the column ecg", duration=10000
+        #     )
+        #     return
+        # if "time" not in self.data.columns:
+        #     pn.state.notifications.error(
+        #         "Uploaded csv File misses the column time", duration=10000
+        #     )
+        #     return
+        # self.data["ecg"] = self.data["ecg"].astype(float)
+        # self.sensors.append("ecg")
         pn.state.notifications.success("File uploaded successfully", duration=5000)
         self.ready = True
 

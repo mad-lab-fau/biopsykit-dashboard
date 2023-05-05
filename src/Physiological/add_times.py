@@ -16,17 +16,21 @@ class AskToAddTimes(DataArrived):
     ready = param.Boolean(default=True)
     next = param.Selector(
         default="Do you want to detect Outlier?",
-        objects=["Do you want to detect Outlier?", "Add Times"],
+        objects=["Do you want to detect Outlier?", "Add Times", "Frequency Bands"],
     )
-    ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
     subject = param.Dynamic()
     subj_time_dict = {}
+    skip_hrv = param.Boolean(default=True)
 
     def click_skip(self, event):
-        self.next = "Do you want to detect Outlier?"
-        self.ready = True
+        if self.selected_signal == "EEG":
+            self.next = "Frequency Bands"
+            self.ready = True
+        else:
+            self.next = "Do you want to detect Outlier?"
+            self.ready = True
 
     def click_add_times(self, event):
         self.next = "Add Times"
@@ -73,6 +77,11 @@ class AddTimes(AskToAddTimes):
     )
     select_subject = pn.widgets.Select(name="Select Subject column", visible=False)
     select_condition = pn.widgets.Select(name="Select Condition column", visible=False)
+    next = param.Selector(
+        default="Do you want to detect Outlier?",
+        objects=["Do you want to detect Outlier?", "Frequency Bands"],
+    )
+    freq_bands = {}
 
     def parse_time_file(self, event):
         df = None
@@ -159,7 +168,14 @@ class AddTimes(AskToAddTimes):
                     (subject, condition),
                     callbacks={"value": self.change_condition_name},
                 )
-                col.append(cond)
+                btn_remove_phase = pn.widgets.Button(
+                    name="Remove Phase",
+                )
+                btn_remove_phase.link(
+                    (subject, condition),
+                    callbacks={"value": self.remove_btn_click},
+                )
+                col.append(pn.Row(cond, btn_remove_phase))
                 for phase, time in self.subj_time_dict[subject][condition].items():
                     row = pn.Row()
                     phase_name_input = pn.widgets.TextInput(value=phase)
@@ -174,20 +190,29 @@ class AddTimes(AskToAddTimes):
                         callbacks={"value": self.timestamp_changed},
                     )
                     row.append(dt_picker)
-                    remove_btn = pn.widgets.Button(name="Remove", button_type="primary")
+                    remove_btn = pn.widgets.Button(name="Remove")
                     remove_btn.link(
                         (subject, condition, phase),
                         callbacks={"value": self.remove_btn_click},
                     )
                     row.append(remove_btn)
                     col.append(row)
-                btn = pn.widgets.Button(name="Add Phase", button_type="primary")
-                btn.link(
-                    (subject, condition),
-                    callbacks={"value": self.add_phase_btn_click},
+                btn_subphase = pn.widgets.Button(
+                    name="Add Subphase", button_type="primary"
                 )
-                col.append(btn)
-                timestamps.append((subject, col))
+                btn_subphase.link(
+                    (subject, condition),
+                    callbacks={"value": self.add_subphase_btn_click},
+                )
+                row = pn.Row(pn.layout.HSpacer(), pn.layout.HSpacer(), btn_subphase)
+                col.append(row)
+            btn = pn.widgets.Button(name="Add Phase", button_type="primary")
+            btn.link(
+                (subject,),
+                callbacks={"value": self.add_phase_btn_click},
+            )
+            col.append(btn)
+            timestamps.append((subject, col))
         self.times.objects = [pn.Accordion(objects=timestamps)]
 
     def timestamp_changed(self, target, event):
@@ -208,8 +233,15 @@ class AddTimes(AskToAddTimes):
         self.dict_to_column()
 
     def remove_btn_click(self, target, event):
-        self.subj_time_dict[target[0]][target[1]].drop(labels=target[2], inplace=True)
+        if len(target) == 3:
+            self.subj_time_dict[target[0]][target[1]].drop(
+                labels=target[2], inplace=True
+            )
+        elif len(target) == 2:
+            self.subj_time_dict[target[0]].pop(target[1])
+        active = self.times.objects[0].active
         self.dict_to_column()
+        self.times.objects[0].active = active
 
     def add_timestamp(self, target, event):
         print(event)
@@ -224,7 +256,7 @@ class AddTimes(AskToAddTimes):
             return False
         return True
 
-    def subject_column_changed(self, target, event):
+    def subject_column_changed(self, _, event):
         col = event.new
         if col == " ":
             return
@@ -252,8 +284,17 @@ class AddTimes(AskToAddTimes):
         self.select_condition.visible = False
         self.dict_to_column()
 
-    def add_phase_btn_click(self, target, event):
+    def add_phase_btn_click(self, target, _):
         new_phase_name = "New Phase"
+        self.subj_time_dict[target[0]][new_phase_name] = pd.Series(
+            {"New Subphase": datetime.datetime.now()}
+        )
+        active = self.times.objects[0].active
+        self.dict_to_column()
+        self.times.objects[0].active = active
+
+    def add_subphase_btn_click(self, target, event):
+        new_phase_name = "New Subphase"
         if new_phase_name in list(
             self.subj_time_dict[target[0]][target[1]].index.values
         ):
@@ -270,7 +311,9 @@ class AddTimes(AskToAddTimes):
                 pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
             ]
         )
+        active = self.times.objects[0].active
         self.dict_to_column()
+        self.times.objects[0].active = active
 
     def handle_time_file(self, df):
         if not self.check_subject_condition_columns(df):
@@ -293,6 +336,16 @@ class AddTimes(AskToAddTimes):
             self.ready = True
             return df
 
+    def init_subject_time_dict(self):
+        if type(self.data) != dict:
+            return
+        for subject in self.data.keys():
+            self.subj_time_dict[subject] = {}
+            for condition in self.data[subject].keys():
+                self.subj_time_dict[subject][condition] = pd.Series(
+                    dtype="datetime64[ns]"
+                )
+
     def panel(self):
         self.step = 5
         self.set_progress_value()
@@ -306,6 +359,9 @@ class AddTimes(AskToAddTimes):
         self.times = pn.Column(
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
+        if self.selected_signal == "EEG":
+            self.next = "Frequency Bands"
+        self.init_subject_time_dict()
         self.pane = pn.Column(
             pn.Row(self.get_step_static_text()),
             pn.Row(self.progress),
@@ -321,4 +377,5 @@ class AddTimes(AskToAddTimes):
             self.select_vp,
             pn.Row(self.select_subject, self.select_condition),
         )
+        self.dict_to_column()
         return self.pane

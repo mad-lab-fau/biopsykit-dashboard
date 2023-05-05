@@ -40,10 +40,26 @@ class AskToProcessHRV(AskToDetectOutliers):
         self.ready = True
 
     @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("subj_time_dict", param.Dynamic),
+        ("selected_signal", param.Dynamic),
         ("skip_hrv", param.Dynamic),
+        ("session", param.Dynamic),
+        ("recording", param.Dynamic),
+        ("subject", param.Dynamic),
     )
     def output(self):
-        return self.skip_hrv
+        return (
+            self.data,
+            self.sampling_rate,
+            self.subj_time_dict,
+            self.selected_signal,
+            self.skip_hrv,
+            self.session,
+            self.recording,
+            self.subject,
+        )
 
     def panel(self):
         self.step = 7

@@ -6,15 +6,30 @@ from io import StringIO
 import pandas as pd
 import panel as pn
 import param
+import seaborn as sns
+from biopsykit.protocols import CFT
+from fau_colors import cmaps
+from matplotlib import pyplot as plt
 
 from src.Physiological.processing_and_preview import ProcessingAndPreview
+from src.utils import get_datetime_columns_of_data_frame
+
 
 # ECG_results (als xlsx), HRV_results + option für die Plots
+def delete_timezone_of_datetime_columns_(df):
+    datetime_columns = get_datetime_columns_of_data_frame(df)
+    for col in datetime_columns:
+        df[col] = df[col].dt.tz_localize(None)
+    return df
+
+
 class DownloadResults(ProcessingAndPreview):
     textHeader = ""
     dict_hr_subjects = {}
     load_plots_ecg = pn.widgets.Checkbox(name="Download ECG Plots")
+    load_plots_eeg = pn.widgets.Checkbox(name="Download EEG Plots")
     load_plots_hrv = pn.widgets.Checkbox(name="HRV")
+    load_plots_cft = pn.widgets.Checkbox(name="Download CFT Plots")
     load_plt_hr_ensemble = pn.widgets.Checkbox(name="HR Ensemble")
     zip_buffer = io.BytesIO()
     skip_hrv = param.Boolean()
@@ -23,24 +38,67 @@ class DownloadResults(ProcessingAndPreview):
         with zipfile.ZipFile(
             self.zip_buffer, "a", zipfile.ZIP_DEFLATED, False
         ) as zip_file:
-            if self.load_plots_ecg.value:
-                self.load_ecg_plots(zip_file)
-            if self.load_plots_hrv.value:
-                self.load_hrv_plots(zip_file)
-            if isinstance(self.ecg_processor.ecg_result, dict):
-                for key in self.ecg_processor.ecg_result.keys():
-                    df = self.ecg_processor.ecg_result[key]
+            if self.selected_signal == "ECG":
+                self.load_ecg_files(zip_file)
+            elif self.selected_signal == "EEG":
+                self.load_eeg_files(zip_file)
+            elif self.selected_signal == "CFT":
+                self.load_cft_files(zip_file)
+        self.zip_buffer.seek(0)
+        return self.zip_buffer
+
+    def load_eeg_files(self, zip_file):
+        for key in self.eeg_processor.keys():
+            df = self.eeg_processor[key].eeg_result["Data"]
+            df = df.tz_localize(None)
+            df.to_excel(f"eeg_result_{key}.xlsx", sheet_name=key)
+            zip_file.write(f"eeg_result_{key}.xlsx")
+        if self.load_plots_eeg.value:
+            self.load_eeg_plots(zip_file)
+
+    def load_cft_files(self, zip_file):
+        for key in self.cft_processor.keys():
+            df_cft = self.cft_processor[key]["CFT"]
+            df_cft = df_cft.tz_localize(None)
+            df_cft.to_excel(f"cft_{key}.xlsx", sheet_name=key)
+            zip_file.write(f"cft_{key}.xlsx")
+            df_hr = self.cft_processor[key]["HR"]
+            df_hr = df_hr.tz_localize(None)
+            df_hr.to_excel(f"cft_hr_{key}.xlsx", sheet_name=key)
+            zip_file.write(f"cft_hr_{key}.xlsx")
+            df_baseline = {
+                "Baseline": [
+                    self.cft_processor[key]["Baseline"],
+                ]
+            }
+            df_baseline = pd.DataFrame.from_dict(df_baseline)
+            df_baseline.to_excel(f"cft_baseline_{key}.xlsx", sheet_name=key)
+            zip_file.write(f"cft_baseline_{key}.xlsx")
+            df_cft_parameters = self.cft_processor[key]["CFT Parameters"]
+            df_cft_parameters = delete_timezone_of_datetime_columns_(df_cft_parameters)
+            df_cft_parameters.to_excel(f"cft_parameters_{key}.xlsx", sheet_name=key)
+            zip_file.write(f"cft_parameters_{key}.xlsx")
+        if self.load_plots_cft.value:
+            self.load_cft_plots(zip_file)
+
+    def load_ecg_files(self, zip_file):
+        if self.load_plots_ecg.value:
+            self.load_ecg_plots(zip_file)
+        if self.load_plots_hrv.value:
+            self.load_hrv_plots(zip_file)
+        for subject in self.ecg_processor.keys():
+            if isinstance(self.ecg_processor[subject].ecg_result, dict):
+                for key in self.ecg_processor[subject].ecg_result.keys():
+                    df = self.ecg_processor[subject].ecg_result[key]
                     df = df.tz_localize(None)
                     df.to_excel(f"ecg_result_{key}.xlsx", sheet_name=key)
                     zip_file.write(f"ecg_result_{key}.xlsx")
-            if isinstance(self.ecg_processor.hr_result, dict):
-                for key in self.ecg_processor.hr_result.keys():
-                    df = self.ecg_processor.hr_result[key]
+            if isinstance(self.ecg_processor[subject].hr_result, dict):
+                for key in self.ecg_processor[subject].hr_result.keys():
+                    df = self.ecg_processor[subject].hr_result[key]
                     df = df.tz_localize(None)
                     df.to_excel(f"hr_result_{key}.xlsx")
                     zip_file.write(f"hr_result_{key}.xlsx")
-        self.zip_buffer.seek(0)
-        return self.zip_buffer
 
     def load_hrv_plots(self, zip_file):
         for key in self.ecg_processor.ecg_result.keys():
@@ -55,11 +113,43 @@ class DownloadResults(ProcessingAndPreview):
             zip_file.writestr(f"HRV_{key}.png", buf.getvalue())
 
     def load_ecg_plots(self, zip_file):
-        for key in self.ecg_processor.ecg_result.keys():
+        if self.subject is not None:
+            for key in self.ecg_processor[self.subject].ecg_result.keys():
+                buf = io.BytesIO()
+                fig, axs = bp.signals.ecg.plotting.ecg_plot(
+                    self.ecg_processor[self.subject], key=key
+                )
+                fig.savefig(buf)
+                zip_file.writestr(f"ECG_{key}_{self.subject}.png", buf.getvalue())
+
+    def load_eeg_plots(self, zip_file):
+        for key in self.eeg_processor.keys():
             buf = io.BytesIO()
-            fig, axs = bp.signals.ecg.plotting.ecg_plot(self.ecg_processor, key=key)
+            palette = sns.color_palette(cmaps.faculties)
+            sns.set_theme(
+                context="notebook", style="ticks", font="sans-serif", palette=palette
+            )
+            fig, ax = plt.subplots(figsize=(10, 5))
+            self.eeg_processor[key].eeg_result["Data"].plot(ax=ax)
             fig.savefig(buf)
             zip_file.writestr(f"ECG_{key}.png", buf.getvalue())
+
+    def load_cft_plots(self, zip_file):
+        palette = sns.color_palette(cmaps.faculties)
+        sns.set_theme(
+            context="notebook", style="ticks", font="sans-serif", palette=palette
+        )
+        cft = CFT()
+        for key in self.cft_processor.keys():
+            buf = io.BytesIO()
+            fig, ax = plt.subplots(figsize=(10, 5))
+            fig, _ = bp.signals.ecg.plotting.hr_plot(self.cft_processor[key]["HR"])
+            fig.savefig(buf)
+            zip_file.writestr(f"HR_{key}.png", buf.getvalue())
+            fig, _ = cft.cft_plot(self.cft_processor[key]["HR"])
+            buf = io.BytesIO()
+            fig.savefig(buf)
+            zip_file.writestr(f"CFT_{key}.png", buf.getvalue())
 
     def panel(self):
         self.step = 10
@@ -76,7 +166,12 @@ class DownloadResults(ProcessingAndPreview):
         download = pn.widgets.FileDownload(
             callback=self.get_selected_files, filename="Results.zip"
         )
-        column.append(self.load_plots_ecg)
+        if self.selected_signal == "ECG":
+            column.append(self.load_plots_ecg)
+        elif self.selected_signal == "EEG":
+            column.append(self.load_plots_eeg)
+        elif self.selected_signal == "CFT":
+            column.append(self.load_plots_cft)
         if not self.skip_hrv:
             column.append(self.load_plots_hrv)
         column.append(download)

@@ -5,17 +5,6 @@ pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 from main_page import *
 
-# pn.config.raw_css = [
-#     """
-#     .sidenav .bk-root:nth-of-type(1) {
-#         z-index: 200
-#     }
-#     div.choices__list.choices__list--dropdown.is-active > div {
-#         background: var(--background-color);
-#     }
-#     """
-# ]
-
 
 app = pn.template.FastListTemplate(
     title="BioPysKit Dashboard",
@@ -31,7 +20,7 @@ current_page = MainPage(app.main)
 
 
 def startPhysPipeline(event):
-    ecg = ECGPipeline()
+    ecg = PhysiologicalPipeline()
     pane = pn.Column(
         pn.Row(
             # ecg.pipeline.title,
