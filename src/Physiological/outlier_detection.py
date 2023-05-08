@@ -37,7 +37,7 @@ class AskToDetectOutliers(AskToAddTimes):
     statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
     physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
     physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
-    skip_outlier_detection = False
+    skip_outlier_detection = param.Boolean(default=True)
     outlier_params = param.Dynamic()
 
     def click_skip(self, event):
@@ -47,10 +47,12 @@ class AskToDetectOutliers(AskToAddTimes):
 
     def click_detect_outlier(self, event):
         self.next = "Expert Outlier Detection"
+        self.skip_outlier_detection = False
         self.ready = True
 
     def click_default(self, event):
         self.next = "Do you want to process the HRV also?"
+        self.skip_outlier_detection = False
         self.ready = True
 
     def get_outlier_params(self):

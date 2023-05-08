@@ -33,10 +33,12 @@ class AskToProcessHRV(AskToDetectOutliers):
 
     def click_expert_hrv(self, event):
         self.next_page = "Set HRV Parameters"
+        self.skip_hrv = False
         self.ready = True
 
     def click_default_hrv(self, event):
         self.next_page = "Now the Files will be processed"
+        self.skip_hrv = False
         self.ready = True
 
     @param.output(

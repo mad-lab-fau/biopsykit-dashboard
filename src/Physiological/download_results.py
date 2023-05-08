@@ -86,6 +86,20 @@ class DownloadResults(ProcessingAndPreview):
             self.load_ecg_plots(zip_file)
         if self.load_plots_hrv.value:
             self.load_hrv_plots(zip_file)
+        if type(self.ecg_processor) != dict:
+            if isinstance(self.ecg_processor.ecg_result, dict):
+                for key in self.ecg_processor.ecg_result.keys():
+                    df = self.ecg_processor.ecg_result[key]
+                    df = df.tz_localize(None)
+                    df.to_excel(f"ecg_result.xlsx", sheet_name=key)
+                    zip_file.write(f"ecg_result.xlsx")
+            if isinstance(self.ecg_processor.hr_result, dict):
+                for key in self.ecg_processor.hr_result.keys():
+                    df = self.ecg_processor.hr_result[key]
+                    df = df.tz_localize(None)
+                    df.to_excel(f"hr_result.xlsx")
+                    zip_file.write(f"hr_result.xlsx")
+            return
         for subject in self.ecg_processor.keys():
             if isinstance(self.ecg_processor[subject].ecg_result, dict):
                 for key in self.ecg_processor[subject].ecg_result.keys():
@@ -121,6 +135,11 @@ class DownloadResults(ProcessingAndPreview):
                 )
                 fig.savefig(buf)
                 zip_file.writestr(f"ECG_{key}_{self.subject}.png", buf.getvalue())
+        elif type(self.ecg_processor) != dict:
+            buf = io.BytesIO()
+            fig, axs = bp.signals.ecg.plotting.ecg_plot(self.ecg_processor, key="Data")
+            fig.savefig(buf)
+            zip_file.writestr(f"ECG.png", buf.getvalue())
 
     def load_eeg_plots(self, zip_file):
         for key in self.eeg_processor.keys():

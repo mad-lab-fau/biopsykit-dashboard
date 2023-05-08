@@ -25,10 +25,14 @@ class ProcessingPreStep(param.Parameterized):
     session = param.Dynamic()
     recording = param.Dynamic()
     subject = param.Dynamic()
+    skip_outlier_detection = param.Boolean(default=True)
+    skip_hrv = param.Boolean(default=True)
 
     def get_phases(self) -> list:
         if self.subject is not None:
             return self.ecg_processor[self.subject].phases
+        if type(self.ecg_processor) != dict:
+            return self.ecg_processor.phases
         keys = list(self.ecg_processor.keys())
         if len(keys) == 1:
             return self.ecg_processor[keys[0]].phases
@@ -60,7 +64,6 @@ class ProcessingAndPreview(ProcessingPreStep):
     eeg_processor = {}
     cft_processor = {}
     selected_signal = param.Dynamic()
-    skip_hrv = param.Boolean(default=True)
     textHeader = ""
     data = param.Dynamic()
     sampling_rate = param.Dynamic()
@@ -221,8 +224,11 @@ class ProcessingAndPreview(ProcessingPreStep):
             col.append(cft_plot)
         return col
 
+    # TODO: Fix this -> shouldn't it return a dict with the names and the start times?
     def get_timelog(self):
         time_log = self.subj_time_dict
+        if not bool(time_log):
+            return None
         if self.session.value == "Single Session":
             time_log = self.subj_time_dict[self.subject]
             for key in time_log.keys():
@@ -296,7 +302,7 @@ class ProcessingAndPreview(ProcessingPreStep):
             # Multiple Phases single. subject
             self.ecg_processor = {}
             ep = EcgProcessor(
-                data=self.data[self.subject],
+                data=self.data,
                 sampling_rate=self.sampling_rate,
                 time_intervals=self.get_timelog(),
             )
@@ -305,14 +311,14 @@ class ProcessingAndPreview(ProcessingPreStep):
         elif self.session.value == "Multiple Sessions":
             # Multiple Subjects mult. phases
             self.ecg_processor = {}
-            for key in self.data.keys():
+            for subject in self.data.keys():
                 ep = EcgProcessor(
-                    data=self.data[key],
+                    data=self.data[subject],
                     sampling_rate=self.sampling_rate,
-                    time_intervals=self.get_timelog()[key],
+                    time_intervals=self.get_timelog()[subject],
                 )
-                ep.ecg_process(title=key)
-                self.ecg_processor[key] = ep
+                ep.ecg_process(title=subject)
+                self.ecg_processor[subject] = ep
         accordion = self.get_dataframes_as_accordions()
         stat_values = self.get_statistical_values()
         for stat_value in stat_values:
@@ -355,14 +361,23 @@ class ProcessingAndPreview(ProcessingPreStep):
 
     def get_statistical_values(self):
         values = []
-        for subject in self.ecg_processor.keys():
-            for column in self.ecg_processor[subject].ecg_result:
+        if type(self.ecg_processor) != dict:
+            for column in self.ecg_processor.ecg_result:
                 if not "Rate" in column:
                     continue
-                df = self.ecg_processor[subject].ecg_result[column]
+                df = self.ecg_processor.ecg_result[column]
                 fig = px.box(df, y=column)
                 plotly_pane = pn.pane.Plotly(fig)
-                values.append(("Boxplot " + subject + ": " + column, plotly_pane))
+                values.append(("Boxplot  : " + column, plotly_pane))
+        else:
+            for subject in self.ecg_processor.keys():
+                for column in self.ecg_processor[subject].ecg_result:
+                    if not "Rate" in column:
+                        continue
+                    df = self.ecg_processor[subject].ecg_result[column]
+                    fig = px.box(df, y=column)
+                    plotly_pane = pn.pane.Plotly(fig)
+                    values.append(("Boxplot " + subject + ": " + column, plotly_pane))
         return values
 
     def phase_changed(self, target, event):
