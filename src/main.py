@@ -1,5 +1,7 @@
 import panel as pn
 
+from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
+
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
@@ -33,15 +35,30 @@ def startPhysPipeline(event):
     app.main[0].objects = [pane]
 
 
+def startQuestionnairePipeline(event):
+    questionnaire = QuestionnairePipeline()
+    pane = pn.Column(
+        pn.Row(
+            pn.layout.HSpacer(),
+            questionnaire.pipeline.prev_button,
+            questionnaire.pipeline.next_button,
+        ),
+        questionnaire.pipeline.stage,
+    )
+    app.main[0].objects = [pane]
+
+
 def get_sidebar():
     homeBtn = pn.widgets.Button(name="Home", button_type="primary")
     homeBtn.on_click(get_mainMenu)
     physBtn = pn.widgets.Button(name="Physiological Data")
     physBtn.on_click(startPhysPipeline)
+    questionnaireBtn = pn.widgets.Button(name="Questionnaire Data")
+    questionnaireBtn.on_click(startQuestionnairePipeline)
     psychBtn = pn.widgets.Button(name="Psychological Data")
     sleepBtn = pn.widgets.Button(name="Sleep Data")
     salBtn = pn.widgets.Button(name="Saliva Data")
-    column = pn.Column(homeBtn, physBtn, psychBtn, sleepBtn, salBtn)
+    column = pn.Column(homeBtn, physBtn, psychBtn, questionnaireBtn, salBtn, sleepBtn)
     return column
 
 
@@ -58,6 +75,7 @@ def get_mainMenu(event):
     questionnaireBtn = pn.widgets.Button(
         name="Questionnaire Data", sizing_mode="stretch_width"
     )
+    questionnaireBtn.on_click(startQuestionnairePipeline)
     psychBtn = pn.widgets.Button(name="Psychological Data", sizing_mode="stretch_width")
     salBtn = pn.widgets.Button(name="Saliva Data", sizing_mode="stretch_width")
     pathToIcons = "../assets/Icons/"

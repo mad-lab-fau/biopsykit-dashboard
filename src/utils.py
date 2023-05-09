@@ -1,11 +1,15 @@
 import warnings
 from datetime import datetime
-from io import BytesIO
+from io import BytesIO, StringIO
+from os import PathLike
 from typing import Tuple, Optional, Union, Sequence, Dict
 from zipfile import ZipFile
+from pathlib import Path
 
+from biopsykit.io.io import _sanitize_index_cols, _apply_index_cols
 from biopsykit.io.nilspod import _handle_counter_inconsistencies_session
 from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.utils.dataframe_handling import convert_nan
 from biopsykit.utils.time import tz
 
 import panel as pn
@@ -13,6 +17,7 @@ import biopsykit
 import numpy as np
 import pandas as pd
 from nilspodlib import Dataset, SyncedSession
+from nilspodlib.utils import path_t
 from typing_extensions import Literal
 
 from src.Physiological.AdaptedNilspod import SyncedSessionAdapted, NilsPodAdapted
@@ -178,3 +183,53 @@ def load_folder_nilspod_zip(
 
     dataset_dict = {phase: df for phase, (df, fs) in zip(phase_names, dataset_list)}
     return dataset_dict, fs
+
+
+def _load_dataframe(
+    filepath_or_buffer: Path | StringIO,
+    file_name: Optional[str] = None,
+    **kwargs,
+):
+    if type(filepath_or_buffer) is not StringIO:
+        if filepath_or_buffer.suffix in [".csv"]:
+            return pd.read_csv(filepath_or_buffer, **kwargs)
+        return pd.read_excel(filepath_or_buffer, **kwargs)
+    else:
+        if file_name is None:
+            raise ValueError(
+                "If 'file' is of type BytesIO, 'file_name' must be supplied as parameter!"
+            )
+        if file_name.endswith(".csv"):
+            return pd.read_csv(filepath_or_buffer, **kwargs)
+        return pd.read_excel(filepath_or_buffer, **kwargs)
+
+
+def load_questionnaire_data(
+    file: StringIO | path_t,
+    file_name: Optional[str] = None,
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
+    replace_missing_vals: Optional[bool] = True,
+    remove_nan_rows: Optional[bool] = True,
+    sheet_name: Optional[Union[str, int]] = 0,
+    **kwargs,
+) -> pd.DataFrame:
+    if type(file) == StringIO:
+        file_path = Path(file_name)
+    else:
+        file_path = Path(file)
+        file = file_path
+        _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    if file_path.suffix != ".csv":
+        kwargs["sheet_name"] = sheet_name
+    data = _load_dataframe(file, file_name, **kwargs)
+    data, index_cols = _sanitize_index_cols(
+        data, subject_col, condition_col, additional_index_cols
+    )
+    data = _apply_index_cols(data, index_cols=index_cols)
+    if replace_missing_vals:
+        data = convert_nan(data)
+    if remove_nan_rows:
+        data = data.dropna(how="all")
+    return data
