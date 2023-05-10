@@ -11,7 +11,7 @@ class AskToSetLoadingParameters(param.Parameterized):
     ready = param.Boolean(default=False)
     default_btn = pn.widgets.Button(name="Default")
     set_parameters_manually = pn.widgets.Button(
-        background="#d5433e", name="Expert Mode", button_type="success"
+        background="#d5433e", name="Set Loading Parameters", button_type="success"
     )
 
     def click_default(self, _):
@@ -24,7 +24,7 @@ class AskToSetLoadingParameters(param.Parameterized):
 
     def panel(self):
         if self.text == "":
-            f = open("../assets/Markdown/AskToDetectOutliers.md", "r")
+            f = open("../assets/Markdown/AskToSetLoadingParameters.md", "r")
             fileString = f.read()
             self.text = fileString
         self.set_parameters_manually.on_click(self.click_set_parameters)

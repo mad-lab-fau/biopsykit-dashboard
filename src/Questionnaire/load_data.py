@@ -43,9 +43,17 @@ class LoadQuestionnaireData(param.Parameterized):
                     remove_nan_rows=self.remove_nan_rows,
                     sheet_name=self.sheet_name,
                 )
+                self.ready = True
+                pn.state.notifications.success("Files uploaded")
         except Exception as e:
             pn.state.notifications.error("Error while loading data: " + str(e))
             self.ready = False
+
+    @param.output(
+        ("data", param.String),
+    )
+    def output(self):
+        return (self.data,)
 
     def get_step_static_text(self):
         return pn.widgets.StaticText(
@@ -61,7 +69,6 @@ class LoadQuestionnaireData(param.Parameterized):
             f = open("../assets/Markdown/LoadQuestionnaireData.md", "r")
             fileString = f.read()
             self.text = fileString
-        self.ready = True
         self.set_progress_value()
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
         return pn.Column(

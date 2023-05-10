@@ -5,6 +5,7 @@ from src.Questionnaire.loading_parameters import (
     AskToSetLoadingParameters,
     SetLoadingParametersExpert,
 )
+from src.Questionnaire.select_scores import SuggestQuestionnaireScores
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -30,6 +31,8 @@ class QuestionnairePipeline:
             LoadQuestionnaireData(),
             ready_parameter="ready",
         )
+        self.pipeline.add_stage("Set Questionnaires", SuggestQuestionnaireScores())
+
         self.pipeline.define_graph(
             {
                 "Ask for additional parameters": (
@@ -37,5 +40,6 @@ class QuestionnairePipeline:
                     "Upload Questionnaire Data",
                 ),
                 "Set Loading Parameters": "Upload Questionnaire Data",
+                "Upload Questionnaire Data": "Set Questionnaires",
             }
         )
