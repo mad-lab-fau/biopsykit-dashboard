@@ -1,13 +1,20 @@
-import pandas as pd
 import panel as pn
 import param
 import biopsykit as bp
 
-# TODO: Rename Questionnaire, Linking
+
 class SuggestQuestionnaireScores(param.Parameterized):
     text = ""
     data = param.Dynamic(default=None)
     dict_scores = {}
+    accordion = pn.Accordion(sizing_mode="stretch_width")
+    select_questionnaire = pn.widgets.Select(
+        name="Choose Questionnaire:",
+        options=list(bp.questionnaires.utils.get_supported_questionnaires().keys()),
+    )
+    add_questionnaire_btn = pn.widgets.Button(
+        name="Add Questionnaire", button_type="primary", align="end"
+    )
 
     def init_dict_scores(self):
         for name in bp.questionnaires.utils.get_supported_questionnaires().keys():
@@ -15,43 +22,125 @@ class SuggestQuestionnaireScores(param.Parameterized):
                 data=self.data, regex_str=f"(?i)({name})"
             )
             if not data_filt.empty:
-                self.dict_scores[name] = cols
+                self.dict_scores[name] = bp.questionnaires.utils.find_cols(
+                    data=self.data, regex_str=f"(?i)({name})"
+                )
+
+    @staticmethod
+    def edit_mode_on(target, event):
+        target.disabled = (event.new % 2) == 0
+
+    def get_accordion(self, questionnaire_key):
+        col = pn.Column(name=questionnaire_key)
+        height = min(400, 100 + len(self.data.columns.tolist()) * 5)
+        edit_btn = pn.widgets.Button(name="Edit", button_type="primary")
+        remove_btn = pn.widgets.Button(
+            name="Remove", button_type="light", align="end", disabled=True
+        )
+        remove_btn.link(
+            questionnaire_key,
+            callbacks={"value": self.remove_questionnaire},
+        )
+        rename_field = pn.widgets.TextInput(name="Rename", disabled=True)
+        rename_field.link(
+            questionnaire_key,
+            callbacks={"value": self.rename_questionnaire},
+        )
+        edit_btn.link(remove_btn, callbacks={"clicks": self.edit_mode_on})
+        edit_btn.link(rename_field, callbacks={"clicks": self.edit_mode_on})
+        col.append(edit_btn)
+        col.append(remove_btn)
+        col.append(rename_field)
+        col.append(pn.layout.Divider())
+        # rename_btn = pn.widgets.Button(name="Rename", button_type="primary")
+        # rename_btn.link(
+        #     (questionnaire_key, rename_field.value),
+        #     callbacks={"value": self.rename_questionnaire},
+        # )
+        # row = pn.Row()
+        # row.append(rename_field)
+        # row.append(rename_btn)
+        # row.append(remove_btn)
+        # col.append(row)
+        cross_selector = pn.widgets.CrossSelector(
+            name="Columns",
+            value=self.dict_scores[questionnaire_key][1].tolist(),
+            options=self.data.columns.tolist(),
+            height=height,
+        )
+        col.append(cross_selector)
+        # starts_with = pn.widgets.TextInput(
+        #     name="Beginning of the column names", value=""
+        # )
+        # starts_with.link(
+        #     questionnaire_key,
+        #     callbacks={"value": self.change_starts_with},
+        # )
+        # ends_with = pn.widgets.TextInput(name="Ending of the column names", value="")
+        # regex = pn.widgets.TextInput(name="RegEx", value=f"(?i)({questionnaire_key})")
+        # contains = pn.widgets.TextInput(
+        #     name="Column names contain the substring", value=""
+        # )
+        # remove_btn = pn.widgets.Button(name="Remove", button_type="light")
+        # apply_changes_btn = pn.widgets.Button(
+        #     name="Apply Changes", button_type="primary"
+        # )
+        # r = pn.Row()
+        # r.append(f"# {questionnaire_key.upper()}")
+        # r.append(pn.widgets.Button(name="Rename", button_type="light", align="center"))
+        # lastRow = pn.Row()
+        # lastRow.append(apply_changes_btn)
+        # lastRow.append(remove_btn)
+        # col.append(starts_with)
+        # col.append(ends_with)
+        # col.append(contains)
+        # col.append(regex)
+        # col.append(
+        #     pn.Accordion(
+        #         (
+        #             "Preview",
+        #             pn.widgets.DataFrame(
+        #                 self.dict_scores[questionnaire_key][0].head(),
+        #                 autosize_mode="fit_columns",
+        #             ),
+        #         ),
+        #     )
+        # )
+        # col.append(lastRow)
+
+        return col
+
+        # return (
+        #     f"{questionnaire_key}",
+        #     col,
+        # )
+        # w = pn.WidgetBox(r, starts_with, ends_with, regex, remove_btn)
+        # return w
 
     def show_dict_scores(self):
         col = pn.Column()
-        add_questionnaire_btn = pn.widgets.Button(
-            name="Add Questionnaire", button_type="primary"
-        )
-        add_questionnaire_btn.link(
+        self.add_questionnaire_btn.link(
             None,
             callbacks={"value": self.add_questionnaire},
         )
-        col.append(add_questionnaire_btn)
-        gridBox = pn.GridBox(ncols=2)
-        for test in self.dict_scores:
-            w = self.get_widgetBox(test)
-
-            gridBox.append(w)
+        row = pn.Row()
+        row.append(self.select_questionnaire)
+        row.append(self.add_questionnaire_btn)
+        gridBox = pn.GridBox(ncols=1)
+        for test in self.dict_scores.keys():
+            acc = self.get_accordion(test)
+            self.accordion.append(acc)
+            # w = self.get_accordion(test)
+            # gridBox.append(w)
+        gridBox.append(self.accordion)
         col.append(gridBox)
+        col.append(pn.layout.Divider())
+        col.append(row)
         return col
 
-    def get_widgetbox(self, questionnaire_key) -> pn.WidgetBox:
-        starts_with = pn.widgets.TextInput(name="Starts With", value="")
-        starts_with.link(
-            questionnaire_key,
-            callbacks={"value": self.change_starts_with},
-        )
-        ends_with = pn.widgets.TextInput(name="Ends With", value="")
-        regex = pn.widgets.TextInput(name="RegEx", value=f"(?i)({questionnaire_key})")
-        remove_btn = pn.widgets.Button(name="Remove", button_type="primary")
-        r = pn.Row()
-        r.append(f"# {questionnaire_key.upper()}")
-        r.append(pn.widgets.Button(name="Rename", button_type="light", align="center"))
-        w = pn.WidgetBox(r, starts_with, ends_with, regex, remove_btn)
-        return w
-
-    def remove_questionnaire(self, target, event):
-        pass
+    def remove_questionnaire(self, target, _):
+        index = [x.name for x in self.accordion.objects].index(target)
+        self.accordion.pop(index)
 
     def change_reg_ex(self, target, event):
         pass
@@ -60,13 +149,34 @@ class SuggestQuestionnaireScores(param.Parameterized):
         pass
 
     def change_starts_with(self, target, event):
-        # data_filt, cols = bp.questionnaires.utils.find_cols(
-        #     data=self.data, regex_str=f"(?i)({target})"
-        # )
         pass
 
     def add_questionnaire(self, target, event):
-        pass
+        questionnaire = self.select_questionnaire.value
+        i = 0
+        while questionnaire in self.dict_scores.keys():
+            questionnaire = self.select_questionnaire.value + f"-New{i}"
+            i += 1
+        self.dict_scores[questionnaire] = bp.questionnaires.utils.find_cols(
+            data=self.data, contains=questionnaire
+        )
+        self.accordion.append(self.get_accordion(questionnaire))
+
+    def rename_questionnaire(self, target, event):
+        old_name, new_name = target, event.new
+        score = new_name
+        if "-" in score:
+            score_split = score.split("-")
+            score = score_split[0]
+        if score not in list(
+            bp.questionnaires.utils.get_supported_questionnaires().keys()
+        ):
+            pn.state.notifications.error(f"Questionnaire: {score} not supported")
+            return
+        index = [x.name for x in self.accordion.objects].index(old_name)
+        self.dict_scores[new_name] = self.dict_scores.pop(old_name)
+        a = self.get_accordion(new_name)
+        self.accordion.__setitem__(index, a)
 
     def panel(self):
         if self.text == "":
