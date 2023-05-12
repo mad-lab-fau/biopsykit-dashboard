@@ -2,7 +2,7 @@ import panel as pn
 import param
 import biopsykit as bp
 
-
+# TODO: Custom Filter Function
 class SuggestQuestionnaireScores(param.Parameterized):
     text = ""
     data = param.Dynamic(default=None)
@@ -17,18 +17,23 @@ class SuggestQuestionnaireScores(param.Parameterized):
     )
 
     def init_dict_scores(self):
+        if bool(self.dict_scores):
+            return
         for name in bp.questionnaires.utils.get_supported_questionnaires().keys():
             data_filt, cols = bp.questionnaires.utils.find_cols(
                 data=self.data, regex_str=f"(?i)({name})"
             )
             if not data_filt.empty:
-                self.dict_scores[name] = bp.questionnaires.utils.find_cols(
-                    data=self.data, regex_str=f"(?i)({name})"
-                )
+                self.dict_scores[name] = cols
 
     @staticmethod
     def edit_mode_on(target, event):
         target.disabled = (event.new % 2) == 0
+
+    def change_columns(self, target, event):
+        df = self.data[event.new]
+        cols = df.columns
+        self.dict_scores[target] = cols
 
     def get_accordion(self, questionnaire_key):
         col = pn.Column(name=questionnaire_key)
@@ -63,11 +68,12 @@ class SuggestQuestionnaireScores(param.Parameterized):
         # row.append(remove_btn)
         # col.append(row)
         cross_selector = pn.widgets.CrossSelector(
-            name="Columns",
-            value=self.dict_scores[questionnaire_key][1].tolist(),
+            name=questionnaire_key,
+            value=self.dict_scores[questionnaire_key].tolist(),
             options=self.data.columns.tolist(),
             height=height,
         )
+        cross_selector.link(questionnaire_key, callbacks={"value": self.change_columns})
         col.append(cross_selector)
         # starts_with = pn.widgets.TextInput(
         #     name="Beginning of the column names", value=""
@@ -141,6 +147,8 @@ class SuggestQuestionnaireScores(param.Parameterized):
     def remove_questionnaire(self, target, _):
         index = [x.name for x in self.accordion.objects].index(target)
         self.accordion.pop(index)
+        self.dict_scores.pop(target)
+        pn.state.notifications.warning(f"Questionnaire {target} was removed")
 
     def change_reg_ex(self, target, event):
         pass
@@ -159,7 +167,7 @@ class SuggestQuestionnaireScores(param.Parameterized):
             i += 1
         self.dict_scores[questionnaire] = bp.questionnaires.utils.find_cols(
             data=self.data, contains=questionnaire
-        )
+        )[1]
         self.accordion.append(self.get_accordion(questionnaire))
 
     def rename_questionnaire(self, target, event):
@@ -177,25 +185,22 @@ class SuggestQuestionnaireScores(param.Parameterized):
         self.dict_scores[new_name] = self.dict_scores.pop(old_name)
         a = self.get_accordion(new_name)
         self.accordion.__setitem__(index, a)
+        pn.state.notifications.success(
+            f"Questionnaire {old_name} was renamed to {new_name}"
+        )
+
+    @param.output(("data", param.Dynamic), ("dict_scores", param.Dict))
+    def output(self):
+        return (
+            self.data,
+            self.dict_scores,
+        )
 
     def panel(self):
+        self.accordion = pn.Accordion(sizing_mode="stretch_width")
         if self.text == "":
             f = open("../assets/Markdown/FillScoreDict.md", "r")
             fileString = f.read()
             self.text = fileString
         self.init_dict_scores()
         return pn.Column(pn.pane.Markdown(self.text), self.show_dict_scores())
-
-
-class SelectScores(param.Parameterized):
-    text = ""
-
-    def panel(self):
-        if self.text == "":
-            f = open("../assets/Markdown/FillScoreDict.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        return pn.Column(
-            pn.pane.Markdown(self.text),
-            self.scores,
-        )

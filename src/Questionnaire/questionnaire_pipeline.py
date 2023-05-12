@@ -1,18 +1,20 @@
 import panel as pn
 
+from src.Questionnaire.check_selected_questionnaires import CheckSelectedQuestionnaires
 from src.Questionnaire.load_data import LoadQuestionnaireData
 from src.Questionnaire.loading_parameters import (
     AskToSetLoadingParameters,
     SetLoadingParametersExpert,
 )
 from src.Questionnaire.select_scores import SuggestQuestionnaireScores
+from src.Questionnaire.show_results import ShowResults
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
-
+# TODO: Convert Scores into long Format, Convert Questionnaire Items
 class QuestionnairePipeline:
     pipeline = None
 
@@ -32,6 +34,10 @@ class QuestionnairePipeline:
             ready_parameter="ready",
         )
         self.pipeline.add_stage("Set Questionnaires", SuggestQuestionnaireScores())
+        self.pipeline.add_stage(
+            "Check selected Questionnaires", CheckSelectedQuestionnaires()
+        )
+        self.pipeline.add_stage("Show Results", ShowResults())
 
         self.pipeline.define_graph(
             {
@@ -41,5 +47,7 @@ class QuestionnairePipeline:
                 ),
                 "Set Loading Parameters": "Upload Questionnaire Data",
                 "Upload Questionnaire Data": "Set Questionnaires",
+                "Set Questionnaires": "Check selected Questionnaires",
+                "Check selected Questionnaires": "Show Results",
             }
         )
