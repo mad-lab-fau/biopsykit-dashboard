@@ -1,6 +1,7 @@
 import panel as pn
 
 from src.Questionnaire.check_selected_questionnaires import CheckSelectedQuestionnaires
+from src.Questionnaire.convert_scale import AskToConvertScales, ConvertScales
 from src.Questionnaire.load_data import LoadQuestionnaireData
 from src.Questionnaire.loading_parameters import (
     AskToSetLoadingParameters,
@@ -37,6 +38,16 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Check selected Questionnaires", CheckSelectedQuestionnaires()
         )
+        self.pipeline.add_stage(
+            "Ask to convert scales",
+            AskToConvertScales(),
+            ready_parameter="ready",
+            next_parameter="next_page",
+            auto_advance=True,
+        )
+
+        self.pipeline.add_stage("Convert Scales", ConvertScales())
+
         self.pipeline.add_stage("Show Results", ShowResults())
 
         self.pipeline.define_graph(
@@ -48,6 +59,8 @@ class QuestionnairePipeline:
                 "Set Loading Parameters": "Upload Questionnaire Data",
                 "Upload Questionnaire Data": "Set Questionnaires",
                 "Set Questionnaires": "Check selected Questionnaires",
-                "Check selected Questionnaires": "Show Results",
+                "Check selected Questionnaires": "Ask to convert scales",
+                "Ask to convert scales": ("Convert Scales", "Show Results"),
+                "Convert Scales": "Show Results",
             }
         )

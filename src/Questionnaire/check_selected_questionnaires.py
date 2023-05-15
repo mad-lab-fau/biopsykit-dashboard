@@ -34,16 +34,16 @@ class CheckSelectedQuestionnaires(param.Parameterized):
     @param.output(
         ("data", param.Dynamic),
         ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic()),
+        # ("data_scores", param.Dynamic()),
     )
     def output(self):
-        data_scores = bp.questionnaires.utils.compute_scores(
-            self.data, self.dict_scores
-        )
+        # data_scores = bp.questionnaires.utils.compute_scores(
+        #     self.data, self.dict_scores
+        # )
         return (
             self.data,
             self.dict_scores,
-            data_scores,
+            # data_scores,
         )
 
     def panel(self):
@@ -53,10 +53,7 @@ class CheckSelectedQuestionnaires(param.Parameterized):
             f = open("../assets/Markdown/CheckSelectedQuestionnaires.md", "r")
             fileString = f.read()
             self.text = fileString
-        self.init_questionnaire_panel(False)
-        self.check_btn.link(
-            self.accordion, callbacks={"clicks": self.check_questionnaires}
-        )
+        self.check_btn.link(None, callbacks={"clicks": self.check_questionnaires})
         self.col.append(pn.pane.Markdown(self.text))
         self.col.append(self.check_btn)
         self.col.append(self.init_questionnaire_panel(False))
