@@ -10,7 +10,7 @@ class AskToConvertScales(param.Parameterized):
     col = pn.Column(sizing_mode="stretch_width")
     next_page = param.Selector(
         default="Convert Scales",
-        objects=["Convert Scales", "Show Results"],
+        objects=["Convert Scales", "Ask To crop scales"],
     )
     convert_scales_btn = pn.widgets.Button(name="Yes")
     skip_converting_btn = pn.widgets.Button(name="No", button_type="primary")
@@ -21,7 +21,7 @@ class AskToConvertScales(param.Parameterized):
         self.ready = True
 
     def skip_converting(self, _):
-        self.next_page = "Show Results"
+        self.next_page = "Ask To crop scales"
         self.ready = True
 
     @param.output(
@@ -34,11 +34,13 @@ class AskToConvertScales(param.Parameterized):
             return (
                 self.data,
                 self.dict_scores,
-                bp.questionnaires.utils.compute_scores(
-                    data=self.data, quest_dict=self.dict_scores
-                ),
+                None,
             )
-        return (self.data, self.dict_scores, None)
+        return (
+            self.data,
+            self.dict_scores,
+            None,
+        )
 
     def panel(self):
         if self.text == "":
@@ -75,7 +77,8 @@ class ConvertScales(param.Parameterized):
         else:
             target.disabled = True
 
-    def activate_col_btn(self, target, event):
+    @staticmethod
+    def activate_col_btn(target, event):
         if type(event.new) is list:
             if len(event.new) == 0 or target[0].value is None:
                 target[1].disabled = True
@@ -151,6 +154,15 @@ class ConvertScales(param.Parameterized):
         )
         quest_col.append(btn)
         return quest_col
+
+    @param.output(
+        ("data", param.Dynamic),
+        ("dict_scores", param.Dict),
+        ("data_scores", param.Dynamic),
+        ("data_scaled", param.Dynamic),
+    )
+    def output(self):
+        return (self.data, self.dict_scores, self.data_score, self.data_scaled)
 
     def get_column_col(self) -> pn.Column:
         col = pn.Column()
