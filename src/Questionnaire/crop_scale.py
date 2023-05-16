@@ -8,7 +8,7 @@ import pandas as pd
 class AskToCropScale(param.Parameterized):
     data = param.Dynamic()
     dict_scores = param.Dict()
-    data_score = param.Dynamic()
+    data_scores = param.Dynamic()
     data_scaled = param.Dynamic()
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
@@ -33,7 +33,7 @@ class AskToCropScale(param.Parameterized):
         ("data_scaled", param.Dynamic),
     )
     def output(self):
-        return (self.data, self.dict_scores, self.data_score, self.data_scaled)
+        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
 
     def panel(self):
         text = "# Would you like to crop the scale(s) of your data?"
@@ -51,7 +51,7 @@ class AskToCropScale(param.Parameterized):
 class CropScales(param.Parameterized):
     data = param.Dynamic()
     dict_scores = param.Dict()
-    data_score = param.Dynamic()
+    data_scores = param.Dynamic()
     data_scaled = param.Dynamic()
     crop_btn = pn.widgets.Button(name="Crop Scale", button_type="primary")
     questionnaire_selector = pn.widgets.Select(name="Questionnaire")
@@ -123,7 +123,7 @@ class CropScales(param.Parameterized):
         ("data_scaled", param.Dynamic),
     )
     def output(self):
-        return (self.data, self.dict_scores, self.data_score, self.data_scaled)
+        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
 
     def panel(self):
         self.questionnaire_selector.options = [""] + list(self.dict_scores.keys())

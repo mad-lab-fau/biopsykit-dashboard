@@ -162,7 +162,7 @@ class ConvertScales(param.Parameterized):
         ("data_scaled", param.Dynamic),
     )
     def output(self):
-        return (self.data, self.dict_scores, self.data_score, self.data_scaled)
+        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
 
     def get_column_col(self) -> pn.Column:
         col = pn.Column()
