@@ -3,6 +3,7 @@ import panel as pn
 from src.Questionnaire.check_selected_questionnaires import CheckSelectedQuestionnaires
 from src.Questionnaire.convert_scale import AskToConvertScales, ConvertScales
 from src.Questionnaire.crop_scale import AskToCropScale, CropScales
+from src.Questionnaire.invert_scores import AskToInvertScores, InvertScores
 from src.Questionnaire.load_data import LoadQuestionnaireData
 from src.Questionnaire.loading_parameters import (
     AskToSetLoadingParameters,
@@ -49,8 +50,6 @@ class QuestionnairePipeline:
 
         self.pipeline.add_stage("Convert Scales", ConvertScales())
 
-        self.pipeline.add_stage("Show Results", ShowResults())
-
         self.pipeline.add_stage(
             "Ask To crop scales",
             AskToCropScale(),
@@ -60,6 +59,17 @@ class QuestionnairePipeline:
         )
 
         self.pipeline.add_stage("Crop Scales", CropScales())
+
+        self.pipeline.add_stage(
+            "Ask to invert scores",
+            AskToInvertScores(),
+            ready_parameter="ready",
+            next_parameter="next_page",
+            auto_advance=True,
+        )
+
+        self.pipeline.add_stage("Invert scores", InvertScores())
+        self.pipeline.add_stage("Show Results", ShowResults())
 
         self.pipeline.define_graph(
             {
@@ -73,7 +83,9 @@ class QuestionnairePipeline:
                 "Check selected Questionnaires": "Ask to convert scales",
                 "Ask to convert scales": ("Convert Scales", "Ask To crop scales"),
                 "Convert Scales": "Ask To crop scales",
-                "Ask To crop scales": ("Crop Scales", "Show Results"),
-                "Crop Scales": "Show Results",
+                "Ask To crop scales": ("Crop Scales", "Ask to invert scores"),
+                "Crop Scales": "Ask to invert scores",
+                "Ask to invert scores": ("Invert scores", "Show Results"),
+                "Invert scores": "Show Results",
             }
         )

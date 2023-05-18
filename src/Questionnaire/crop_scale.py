@@ -15,11 +15,11 @@ class AskToCropScale(param.Parameterized):
     crop_btn = pn.widgets.Button(name="Yes")
     next_page = param.Selector(
         default="Crop Scales",
-        objects=["Crop Scales", "Show Results"],
+        objects=["Crop Scales", "Ask to invert scores"],
     )
 
     def skip_crop(self, target, event):
-        self.next_page = "Show Results"
+        self.next_page = "Ask to invert scores"
         self.ready = True
 
     def crop_scales(self, target, event):
@@ -66,7 +66,6 @@ class CropScales(param.Parameterized):
     )
     score_range_arrayInput = pn.widgets.ArrayInput(name="Score Range")
 
-    # Target[0] = CheckBox Target[1] = DF Target[2]=ArrayInput event.new = questionnaire
     def selection_changed(self, target, event):
         if event.new == "":
             target[0].visible = False
