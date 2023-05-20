@@ -13,7 +13,7 @@ class AskToChangeFormat(param.Parameterized):
     convert_to_long_btn = pn.widgets.Button(name="Yes")
     next_page = param.Selector(
         default="Show Results",
-        objects=["Show Results", "Change Format"],
+        objects=["Show Results", "Change format"],
     )
 
     def skip_converting_to_long(self, target, event):
@@ -21,7 +21,7 @@ class AskToChangeFormat(param.Parameterized):
         self.ready = True
 
     def proceed_to_convert_to_long(self, target, event):
-        self.next_page = "Change Format"
+        self.next_page = "Change format"
         self.ready = True
 
     @param.output(
@@ -35,7 +35,7 @@ class AskToChangeFormat(param.Parameterized):
 
     def panel(self):
         self.skip_btn.link(None, callbacks={"clicks": self.skip_converting_to_long})
-        self.convert_to_long_btn(
+        self.convert_to_long_btn.link(
             None, callbacks={"clicks": self.proceed_to_convert_to_long}
         )
         text = (
@@ -46,8 +46,8 @@ class AskToChangeFormat(param.Parameterized):
         col = pn.Column()
         col.append(pn.pane.Markdown(text))
         row = pn.Row()
-        row.append(self.skip_btn)
         row.append(self.convert_to_long_btn)
+        row.append(self.skip_btn)
         col.append(row)
         return col
 
@@ -60,18 +60,45 @@ class ConvertToLong(param.Parameterized):
 
     def converting_panel(self) -> pn.pane:
         acc = pn.Accordion()
-        for questionnaire in self.data_scaled.keys():
-            if not all(x.contains("_") for x in self.data_scaled[questionnaire]):
+        for questionnaire in self.dict_scores.keys():
+            if not all("_" in x for x in self.dict_scores[questionnaire].to_list()):
                 continue
             col = pn.Column()
             array_input = pn.widgets.ArrayInput(
-                name="Index levels for your questionnaire"
+                name=f"Index levels for {questionnaire}",
+                placeholder='Enter your index levels. E.g. ["subscale","time"]',
             )
-            change_btn = pn.widgets.Button(name=f"Change format of {questionnaire}")
+
+            change_btn = pn.widgets.Button(
+                name=f"Change format of {questionnaire}",
+                button_type="primary",
+                disabled=True,
+            )
+            array_input.link(change_btn, callbacks={"value": self.validate_level_input})
+            change_btn.link(
+                (questionnaire, array_input), callbacks={"clicks": self.convert_to_long}
+            )
             col.append(array_input)
             col.append(change_btn)
             acc.append((questionnaire, col))
         return acc
+
+    def validate_level_input(self, target, event):
+        if event.new is not None and len(event.new) != 0:
+            target.disabled = False
+        else:
+            target.enabled = True
+
+    # TODO: in the ArrayInput field must be pressed enter in order to change the value of it :/
+    # ArrayInputValues target[1].value and the questionnaire = target[0]
+    def convert_to_long(self, target, event):
+        questionnaire = target[0]
+        levels = target[1].value
+        if levels is None or len(levels) == 0:
+            pn.state.notifications.error(
+                "Please type in your desired levels and confirm them with enter"
+            )
+        pass
 
     def panel(self):
         if self.data_scaled is None:

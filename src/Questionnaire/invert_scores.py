@@ -9,7 +9,7 @@ class AskToInvertScores(param.Parameterized):
     ready = param.Boolean(default=False)
     next_page = param.Selector(
         default="Invert Scores",
-        objects=["Invert Scores", "Show Results"],
+        objects=["Invert Scores", "Ask to change format", "Show Results"],
     )
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
     invert_scores_btn = pn.widgets.Button(name="Yes")
@@ -19,7 +19,13 @@ class AskToInvertScores(param.Parameterized):
     data_scores = param.Dynamic()
 
     def skip_inverting(self, target, event):
-        self.next_page = "Show Results"
+        if any(
+            all("_" in cols for cols in self.dict_scores[x].to_list())
+            for x in self.dict_scores.keys()
+        ):
+            self.next_page = "Ask to change format"
+        else:
+            self.next_page = "Show Results"
         self.ready = True
 
     def invert_scores(self, target, event):

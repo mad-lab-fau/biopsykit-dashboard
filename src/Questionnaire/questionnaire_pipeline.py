@@ -11,13 +11,14 @@ from src.Questionnaire.loading_parameters import (
 )
 from src.Questionnaire.select_scores import SuggestQuestionnaireScores
 from src.Questionnaire.show_results import ShowResults
+from src.Questionnaire.wide_to_long import AskToChangeFormat, ConvertToLong
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
-# TODO: Convert Scores into long Format, Convert Questionnaire Items
+# TODO: Convert Scores into long Format
 class QuestionnairePipeline:
     pipeline = None
 
@@ -70,6 +71,14 @@ class QuestionnairePipeline:
 
         self.pipeline.add_stage("Invert scores", InvertScores())
         self.pipeline.add_stage("Show Results", ShowResults())
+        self.pipeline.add_stage(
+            "Ask to change format",
+            AskToChangeFormat,
+            ready_parameter="ready",
+            next_parameter="next_page",
+            auto_advance=True,
+        )
+        self.pipeline.add_stage("Change format", ConvertToLong())
 
         self.pipeline.define_graph(
             {
@@ -85,7 +94,13 @@ class QuestionnairePipeline:
                 "Convert Scales": "Ask To crop scales",
                 "Ask To crop scales": ("Crop Scales", "Ask to invert scores"),
                 "Crop Scales": "Ask to invert scores",
-                "Ask to invert scores": ("Invert scores", "Show Results"),
+                "Ask to invert scores": (
+                    "Invert scores",
+                    "Ask to change format",
+                    "Show Results",
+                ),
+                "Ask to change format": ("Show Results", "Change format"),
+                "Change format": "Show Results",
                 "Invert scores": "Show Results",
             }
         )
