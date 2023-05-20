@@ -84,7 +84,7 @@ class CropScales(param.Parameterized):
         target[2].value = np.array(
             [questionnaire_data.to_numpy().min(), questionnaire_data.to_numpy().max()]
         )
-        target[1].value = questionnaire_data.describe().transpose()
+        target[1].value = questionnaire_data.describe().transpose()[["min", "max"]]
         target[1].visible = True
         self.crop_btn.visible = True
 

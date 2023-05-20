@@ -1,6 +1,9 @@
+import matplotlib
 import param
 import panel as pn
 import biopsykit as bp
+from fau_colors import cmaps
+import seaborn as sns
 
 
 class CheckSelectedQuestionnaires(param.Parameterized):
@@ -25,7 +28,30 @@ class CheckSelectedQuestionnaires(param.Parameterized):
                     ),
                 )
             )
+            test = self.data[list(self.dict_scores[questionnaire])].style.pipe(
+                self.make_pretty
+            )
+            cell_hover = {  # for row hover use <tr> instead of <td>
+                "selector": "td:hover",
+                "props": [("background-color", "#ffffb3")],
+            }
+            test.set_table_styles([cell_hover])
+            test.set_sticky(axis="index")
+            a = test.to_html()
+            html = pn.pane.HTML(a)
+            acc.append(html)
+            # acc.append(pn.pane.HTML(a))
         return acc
+
+    @staticmethod
+    def make_pretty(styler):
+        styler.set_caption("Questionnaire")
+        # styler.format_index(lambda v: v.strftime("%A"))
+        cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
+            "", cmaps.faculties_light
+        )
+        styler.background_gradient(axis=None, vmin=1, vmax=5, cmap=cmap)
+        return styler
 
     def check_questionnaires(self, _, event):
         acc = self.init_questionnaire_panel((event.new % 2) != 0)
@@ -34,16 +60,11 @@ class CheckSelectedQuestionnaires(param.Parameterized):
     @param.output(
         ("data", param.Dynamic),
         ("dict_scores", param.Dict),
-        # ("data_scores", param.Dynamic()),
     )
     def output(self):
-        # data_scores = bp.questionnaires.utils.compute_scores(
-        #     self.data, self.dict_scores
-        # )
         return (
             self.data,
             self.dict_scores,
-            # data_scores,
         )
 
     def panel(self):
