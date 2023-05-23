@@ -3,6 +3,7 @@ import panel as pn
 from src.Questionnaire.check_selected_questionnaires import CheckSelectedQuestionnaires
 from src.Questionnaire.convert_scale import AskToConvertScales, ConvertScales
 from src.Questionnaire.crop_scale import AskToCropScale, CropScales
+from src.Questionnaire.download_results import DownloadQuestionnaireResults
 from src.Questionnaire.invert_scores import AskToInvertScores, InvertScores
 from src.Questionnaire.load_data import LoadQuestionnaireData
 from src.Questionnaire.loading_parameters import (
@@ -70,7 +71,11 @@ class QuestionnairePipeline:
         )
 
         self.pipeline.add_stage("Invert scores", InvertScores())
-        self.pipeline.add_stage("Show Results", ShowResults())
+        self.pipeline.add_stage(
+            "Show Results",
+            ShowResults(),
+            next_parameter="next_page",
+        )
         self.pipeline.add_stage(
             "Ask to change format",
             AskToChangeFormat,
@@ -79,6 +84,8 @@ class QuestionnairePipeline:
             auto_advance=True,
         )
         self.pipeline.add_stage("Change format", ConvertToLong())
+
+        self.pipeline.add_stage("Download Results", DownloadQuestionnaireResults())
 
         self.pipeline.define_graph(
             {
@@ -96,11 +103,11 @@ class QuestionnairePipeline:
                 "Crop Scales": "Ask to invert scores",
                 "Ask to invert scores": (
                     "Invert scores",
-                    "Ask to change format",
                     "Show Results",
                 ),
-                "Ask to change format": ("Show Results", "Change format"),
-                "Change format": "Show Results",
                 "Invert scores": "Show Results",
+                "Show Results": ("Download Results", "Ask to change format"),
+                "Ask to change format": ("Download Results", "Change format"),
+                "Change format": "Download Results",
             }
         )

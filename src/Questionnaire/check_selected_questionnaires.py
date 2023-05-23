@@ -5,6 +5,8 @@ import biopsykit as bp
 from fau_colors import cmaps
 import seaborn as sns
 
+from src.Questionnaire.dataframe_styler import make_pretty
+
 
 class CheckSelectedQuestionnaires(param.Parameterized):
     data = param.Dynamic()
@@ -19,39 +21,24 @@ class CheckSelectedQuestionnaires(param.Parameterized):
     def init_questionnaire_panel(self, visible: bool) -> pn.Accordion:
         acc = pn.Accordion(sizing_mode="stretch_width", visible=visible)
         for questionnaire in self.dict_scores.keys():
+            df = self.data[list(self.dict_scores[questionnaire])].style.pipe(
+                make_pretty
+            )
+            cell_hover = {
+                "selector": "td:hover",
+                "props": [("background-color", "#040fe0")],
+            }
+            df.set_table_styles([cell_hover])
+            df.set_sticky(axis="index")
+            a = df.to_html()
+            html = pn.pane.HTML(a)
             acc.append(
                 (
                     questionnaire,
-                    pn.widgets.DataFrame(
-                        value=self.data[list(self.dict_scores[questionnaire])].head(),
-                        autosize_mode="fit_columns",
-                    ),
+                    html,
                 )
             )
-            test = self.data[list(self.dict_scores[questionnaire])].style.pipe(
-                self.make_pretty
-            )
-            cell_hover = {  # for row hover use <tr> instead of <td>
-                "selector": "td:hover",
-                "props": [("background-color", "#ffffb3")],
-            }
-            test.set_table_styles([cell_hover])
-            test.set_sticky(axis="index")
-            a = test.to_html()
-            html = pn.pane.HTML(a)
-            acc.append(html)
-            # acc.append(pn.pane.HTML(a))
         return acc
-
-    @staticmethod
-    def make_pretty(styler):
-        styler.set_caption("Questionnaire")
-        # styler.format_index(lambda v: v.strftime("%A"))
-        cmap = matplotlib.colors.LinearSegmentedColormap.from_list(
-            "", cmaps.faculties_light
-        )
-        styler.background_gradient(axis=None, vmin=1, vmax=5, cmap=cmap)
-        return styler
 
     def check_questionnaires(self, _, event):
         acc = self.init_questionnaire_panel((event.new % 2) != 0)

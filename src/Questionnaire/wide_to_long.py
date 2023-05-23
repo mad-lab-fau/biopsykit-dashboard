@@ -8,16 +8,17 @@ class AskToChangeFormat(param.Parameterized):
     dict_scores = param.Dict()
     data_scores = param.Dynamic()
     data_scaled = param.Dynamic()
+    results = param.Dynamic()
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
     convert_to_long_btn = pn.widgets.Button(name="Yes")
     next_page = param.Selector(
-        default="Show Results",
-        objects=["Show Results", "Change format"],
+        default="Download Results",
+        objects=["Download Results", "Change format"],
     )
 
     def skip_converting_to_long(self, target, event):
-        self.next_page = "Show Results"
+        self.next_page = "Download Results"
         self.ready = True
 
     def proceed_to_convert_to_long(self, target, event):
@@ -29,9 +30,16 @@ class AskToChangeFormat(param.Parameterized):
         ("dict_scores", param.Dict),
         ("data_scores", param.Dynamic),
         ("data_scaled", param.Dynamic),
+        ("results", param.Dynamic),
     )
     def output(self):
-        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
+        return (
+            self.data,
+            self.dict_scores,
+            self.data_scores,
+            self.data_scaled,
+            self.results,
+        )
 
     def panel(self):
         self.skip_btn.link(None, callbacks={"clicks": self.skip_converting_to_long})
@@ -57,11 +65,14 @@ class ConvertToLong(param.Parameterized):
     dict_scores = param.Dict()
     data_scores = param.Dynamic()
     data_scaled = param.Dynamic()
+    results = param.Dynamic()
 
     def converting_panel(self) -> pn.pane:
         acc = pn.Accordion()
         for questionnaire in self.dict_scores.keys():
-            if not all("_" in x for x in self.dict_scores[questionnaire].to_list()):
+            if not all(
+                "_" in x for x in list(self.results.filter(like=questionnaire).columns)
+            ):
                 continue
             col = pn.Column()
             array_input = pn.widgets.ArrayInput(
@@ -89,8 +100,6 @@ class ConvertToLong(param.Parameterized):
         else:
             target.enabled = True
 
-    # TODO: in the ArrayInput field must be pressed enter in order to change the value of it :/
-    # ArrayInputValues target[1].value and the questionnaire = target[0]
     def convert_to_long(self, target, event):
         questionnaire = target[0]
         levels = target[1].value
@@ -98,7 +107,32 @@ class ConvertToLong(param.Parameterized):
             pn.state.notifications.error(
                 "Please type in your desired levels and confirm them with enter"
             )
-        pass
+            return
+        try:
+            t = bp.utils.dataframe_handling.wide_to_long(
+                self.results, stubname=questionnaire.upper(), levels=levels
+            )
+            pn.state.notifications.success(
+                f"The format of {questionnaire} is now in long format"
+            )
+        except Exception as e:
+            pn.state.notifications.error(f"The error {e} occured")
+
+    @param.output(
+        ("data", param.Dynamic),
+        ("dict_scores", param.Dict),
+        ("data_scores", param.Dynamic),
+        ("data_scaled", param.Dynamic),
+        ("results", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.dict_scores,
+            self.data_scores,
+            self.data_scaled,
+            self.results,
+        )
 
     def panel(self):
         if self.data_scaled is None:
