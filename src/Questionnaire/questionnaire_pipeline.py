@@ -19,7 +19,7 @@ pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
-# TODO: Convert Scores into long Format
+
 class QuestionnairePipeline:
     pipeline = None
 

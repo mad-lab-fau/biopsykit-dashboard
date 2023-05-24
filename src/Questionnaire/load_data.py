@@ -34,7 +34,7 @@ class LoadQuestionnaireData(param.Parameterized):
                 self.ready = False
             else:
                 self.data = load_questionnaire_data(
-                    file=StringIO(self.file_input.value.decode("utf8")),
+                    file=self.file_input.value,
                     file_name=self.file_input.filename,
                     subject_col=self.subject_col,
                     condition_col=self.condition_col,

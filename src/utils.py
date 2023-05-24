@@ -8,8 +8,29 @@ from pathlib import Path
 
 from biopsykit.io.io import _sanitize_index_cols, _apply_index_cols
 from biopsykit.io.nilspod import _handle_counter_inconsistencies_session
-from biopsykit.utils._datatype_validation_helper import _assert_file_extension
+from biopsykit.io.saliva import (
+    _check_num_samples,
+    _apply_condition_list,
+    _get_id_columns,
+    _check_sample_times,
+    _get_condition_col,
+    _get_index_cols,
+)
+from biopsykit.utils._datatype_validation_helper import (
+    _assert_file_extension,
+    _assert_has_columns,
+)
 from biopsykit.utils.dataframe_handling import convert_nan
+from biopsykit.utils.datatype_helper import (
+    SalivaRawDataFrame,
+    is_saliva_raw_dataframe,
+    _SalivaRawDataFrame,
+    SubjectConditionDataFrame,
+    SubjectConditionDict,
+    is_subject_condition_dict,
+    is_subject_condition_dataframe,
+    _SubjectConditionDataFrame,
+)
 from biopsykit.utils.time import tz
 
 import panel as pn
@@ -23,6 +44,7 @@ from typing_extensions import Literal
 from src.Physiological.AdaptedNilspod import SyncedSessionAdapted, NilsPodAdapted
 
 COUNTER_INCONSISTENCY_HANDLING = Literal["raise", "warn", "ignore"]
+_DATA_COL_NAMES = {"cortisol": "cortisol (nmol/l)", "amylase": "amylase (U/ml)"}
 
 
 def get_datetime_columns_of_data_frame(df: pd.DataFrame):
@@ -186,11 +208,11 @@ def load_folder_nilspod_zip(
 
 
 def _load_dataframe(
-    filepath_or_buffer: Path | StringIO,
+    filepath_or_buffer: Path | bytes,
     file_name: Optional[str] = None,
     **kwargs,
 ):
-    if type(filepath_or_buffer) is not StringIO:
+    if type(filepath_or_buffer) is not bytes:
         if filepath_or_buffer.suffix in [".csv"]:
             return pd.read_csv(filepath_or_buffer, **kwargs)
         return pd.read_excel(filepath_or_buffer, **kwargs)
@@ -200,12 +222,12 @@ def _load_dataframe(
                 "If 'file' is of type BytesIO, 'file_name' must be supplied as parameter!"
             )
         if file_name.endswith(".csv"):
-            return pd.read_csv(filepath_or_buffer, **kwargs)
+            return pd.read_csv(StringIO(filepath_or_buffer.decode("utf8")), **kwargs)
         return pd.read_excel(filepath_or_buffer, **kwargs)
 
 
 def load_questionnaire_data(
-    file: StringIO | path_t,
+    file: bytes | path_t,
     file_name: Optional[str] = None,
     subject_col: Optional[str] = None,
     condition_col: Optional[str] = None,
@@ -215,12 +237,12 @@ def load_questionnaire_data(
     sheet_name: Optional[Union[str, int]] = 0,
     **kwargs,
 ) -> pd.DataFrame:
-    if type(file) == StringIO:
+    if type(file) == bytes:
         file_path = Path(file_name)
     else:
         file_path = Path(file)
         file = file_path
-        _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
     if file_path.suffix != ".csv":
         kwargs["sheet_name"] = sheet_name
     data = _load_dataframe(file, file_name, **kwargs)
@@ -233,3 +255,256 @@ def load_questionnaire_data(
     if remove_nan_rows:
         data = data.dropna(how="all")
     return data
+
+
+def load_saliva_plate(
+    file: pd.DataFrame | path_t,
+    saliva_type: str,
+    sample_id_col: Optional[str] = None,
+    data_col: Optional[str] = None,
+    id_col_names: Optional[Sequence[str]] = None,
+    regex_str: Optional[str] = None,
+    sample_times: Optional[Sequence[int]] = None,
+    condition_list: Optional[Union[Sequence, Dict[str, Sequence], pd.Index]] = None,
+    **kwargs,
+) -> SalivaRawDataFrame:
+
+    if type(file) != pd.DataFrame:
+        file = Path(file)
+        _assert_file_extension(file, (".xls", ".xlsx"))
+
+    # TODO add remove_nan option (all or any)
+    if regex_str is None:
+        regex_str = r"(Vp\d+) (S\w)"
+
+    if sample_id_col is None:
+        sample_id_col = "sample ID"
+
+    if data_col is None:
+        data_col = _DATA_COL_NAMES[saliva_type]
+
+    if type(file) == pd.DataFrame:
+        df_saliva = file[[sample_id_col, data_col]]
+    else:
+        df_saliva = pd.read_excel(
+            file, skiprows=2, usecols=[sample_id_col, data_col], **kwargs
+        )
+    cols = df_saliva[sample_id_col].str.extract(regex_str)
+    id_col_names = _get_id_columns(id_col_names, cols)
+
+    df_saliva[id_col_names] = cols
+
+    df_saliva = df_saliva.drop(columns=[sample_id_col], errors="ignore")
+    df_saliva = df_saliva.rename(columns={data_col: saliva_type})
+    df_saliva = df_saliva.set_index(id_col_names)
+
+    if condition_list is not None:
+        df_saliva = _apply_condition_list(df_saliva, condition_list)
+
+    num_subjects = len(df_saliva.index.get_level_values("subject").unique())
+
+    _check_num_samples(len(df_saliva), num_subjects)
+
+    if sample_times:
+        _check_sample_times(len(df_saliva), num_subjects, sample_times)
+        df_saliva["time"] = np.array(sample_times * num_subjects)
+
+    try:
+        df_saliva[saliva_type] = df_saliva[saliva_type].astype(float)
+    except ValueError as e:
+        raise ValueError(
+            """Error converting all saliva values into numbers: '{}'
+            Please check your saliva values whether there is any text etc. in the column '{}'
+            and delete the values or replace them by NaN!""".format(
+                e, data_col
+            )
+        ) from e
+
+    is_saliva_raw_dataframe(df_saliva, saliva_type)
+
+    return _SalivaRawDataFrame(df_saliva)
+
+
+def load_subject_condition_list(
+    file: bytes | path_t,
+    file_name: Optional[str] = None,
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
+    return_dict: Optional[bool] = False,
+    **kwargs,
+) -> Union[SubjectConditionDataFrame, SubjectConditionDict]:
+    """Load subject condition assignment from file.
+
+    This function can be used to load a file that contains the assignment of subject IDs to study conditions.
+    It will return a dataframe or a dictionary that complies with BioPsyKit's naming convention, i.e.,
+    the subject ID index will be named ``subject`` and the condition column will be named ``condition``.
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        path to time log file. Must either be an Excel or csv file
+    subject_col : str, optional
+        name of column containing subject IDs or ``None`` to use default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
+    condition_col : str, optional
+        name of column containing condition assignments or ``None`` to use default column name ``condition``.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
+        returned by this function.
+    return_dict : bool, optional
+        whether to return a dict with subject IDs per condition (``True``) or a dataframe (``False``).
+        Default: ``False``
+    **kwargs
+        Additional parameters that are passed tos :func:`pandas.read_csv` or :func:`pandas.read_excel`
+
+    Returns
+    -------
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or
+    :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
+        a standardized pandas dataframe with subject IDs and condition assignments (if ``return_dict`` is ``False``) or
+        a standardized dict with subject IDs per group (if ``return_dict`` is ``True``)
+
+    Raises
+    ------
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is not a csv or Excel file
+    :exc:`~biopsykit.utils.exceptions.ValidationError`
+        if result is not a :class:`~biopsykit.utils.datatype_helper.SubjectConditionDataFrame` or a
+        :class:`~biopsykit.utils.datatype_helper.SubjectConditionDict`
+
+    """
+    # ensure pathlib
+    if type(file) == bytes:
+        file_path = Path(file_name)
+    else:
+        file_path = Path(file)
+        file = file_path
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+
+    data = _load_dataframe(file, file_name, **kwargs)
+
+    if subject_col is None:
+        subject_col = "subject"
+
+    if condition_col is None:
+        condition_col = "condition"
+
+    _assert_has_columns(data, [[subject_col, condition_col]])
+
+    if subject_col != "subject":
+        # rename column
+        subject_col = {subject_col: "subject"}
+        data = data.rename(columns=subject_col)
+        subject_col = "subject"
+
+    if condition_col != "condition":
+        # rename column
+        condition_col = {condition_col: "condition"}
+        data = data.rename(columns=condition_col)
+        condition_col = "condition"
+    data = data.set_index(subject_col)
+
+    if return_dict:
+        data = data.groupby(condition_col).groups
+        is_subject_condition_dict(data)
+        return data
+    is_subject_condition_dataframe(data)
+    return _SubjectConditionDataFrame(data)
+
+
+def load_saliva_wide_format(
+    file: bytes | path_t,
+    saliva_type: str,
+    file_name: Optional[str] = None,
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
+    sample_times: Optional[Sequence[int]] = None,
+    **kwargs,
+) -> SalivaRawDataFrame:
+    """Load saliva data that is in wide-format from csv file.
+
+    It will return a `SalivaRawDataFrame`, a long-format dataframe that complies with BioPsyKit's naming convention,
+    i.e., the subject ID index will be named ``subject``, the sample index will be names ``sample``,
+    and the value column will be named after the saliva biomarker type.
+
+    Parameters
+    ----------
+    file_path: :class:`~pathlib.Path` or str
+        path to file
+    saliva_type: str
+        saliva type to load from file. Example: ``cortisol``
+    subject_col: str, optional
+        name of column containing subject IDs or ``None`` to use the default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
+    condition_col : str, optional
+        name of the column containing condition assignments or ``None`` if no conditions are present.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
+    additional_index_cols : str or list of str, optional
+        additional index levels to be added to the dataframe, e.g., "day" index. Can either be a string or a list
+        strings to indicate column name(s) that should be used as index level(s),
+        or ``None`` for no additional index levels. Default: ``None``
+    sample_times: list of int, optional
+        times at which saliva samples were collected or ``None`` if no sample times should be specified.
+        Default: ``None``
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+
+    Returns
+    -------
+    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in `SalivaRawDataFrame` format
+
+    Raises
+    ------
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no csv or Excel file
+
+    """
+    # ensure pathlib
+    if type(file) == bytes:
+        file_path = Path(file_name)
+    else:
+        file_path = Path(file)
+        file = file_path
+    _assert_file_extension(file_path, expected_extension=[".xls", ".xlsx", ".csv"])
+    data = _load_dataframe(file, file_name, **kwargs)
+
+    if subject_col is None:
+        subject_col = "subject"
+
+    _assert_has_columns(data, [[subject_col]])
+
+    if subject_col != "subject":
+        # rename column
+        data = data.rename(columns={subject_col: "subject"})
+        subject_col = "subject"
+
+    index_cols = [subject_col]
+
+    data, condition_col = _get_condition_col(data, condition_col)
+
+    index_cols = _get_index_cols(condition_col, index_cols, additional_index_cols)
+    data = _apply_index_cols(data, index_cols=index_cols)
+
+    num_subjects = len(data)
+    data.columns = pd.MultiIndex.from_product(
+        [[saliva_type], data.columns], names=[None, "sample"]
+    )
+    data = data.stack()
+
+    _check_num_samples(len(data), num_subjects)
+
+    if sample_times is not None:
+        _check_sample_times(len(data), num_subjects, sample_times)
+        data["time"] = np.array(sample_times * num_subjects)
+
+    is_saliva_raw_dataframe(data, saliva_type)
+
+    return _SalivaRawDataFrame(data)

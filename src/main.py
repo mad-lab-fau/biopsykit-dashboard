@@ -1,6 +1,7 @@
 import panel as pn
 
 from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
+from src.Saliva.saliva_pipeline import SalivaPipeline
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -48,6 +49,19 @@ def startQuestionnairePipeline(event):
     app.main[0].objects = [pane]
 
 
+def startSalivaPipeline(event):
+    questionnaire = SalivaPipeline()
+    pane = pn.Column(
+        pn.Row(
+            pn.layout.HSpacer(),
+            questionnaire.pipeline.prev_button,
+            questionnaire.pipeline.next_button,
+        ),
+        questionnaire.pipeline.stage,
+    )
+    app.main[0].objects = [pane]
+
+
 def get_sidebar():
     homeBtn = pn.widgets.Button(name="Home", button_type="primary")
     homeBtn.on_click(get_mainMenu)
@@ -58,6 +72,7 @@ def get_sidebar():
     psychBtn = pn.widgets.Button(name="Psychological Data")
     sleepBtn = pn.widgets.Button(name="Sleep Data")
     salBtn = pn.widgets.Button(name="Saliva Data")
+    salBtn.on_click(startSalivaPipeline)
     column = pn.Column(homeBtn, physBtn, psychBtn, questionnaireBtn, salBtn, sleepBtn)
     return column
 
@@ -78,6 +93,7 @@ def get_mainMenu(event):
     questionnaireBtn.on_click(startQuestionnairePipeline)
     psychBtn = pn.widgets.Button(name="Psychological Data", sizing_mode="stretch_width")
     salBtn = pn.widgets.Button(name="Saliva Data", sizing_mode="stretch_width")
+    salBtn.on_click(startSalivaPipeline)
     pathToIcons = "../assets/Icons/"
     iconNames = [
         "Physiological.svg",
