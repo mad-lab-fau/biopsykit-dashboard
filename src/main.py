@@ -58,6 +58,7 @@ def startSalivaPipeline(event):
             questionnaire.pipeline.next_button,
         ),
         questionnaire.pipeline.stage,
+        min_height=2000,
     )
     app.main[0].objects = [pane]
 

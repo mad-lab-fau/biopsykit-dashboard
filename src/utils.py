@@ -325,6 +325,100 @@ def load_saliva_plate(
     return _SalivaRawDataFrame(df_saliva)
 
 
+def load_saliva_wide_format(
+    file: pd.DataFrame | path_t,
+    saliva_type: str,
+    subject_col: Optional[str] = None,
+    condition_col: Optional[str] = None,
+    additional_index_cols: Optional[Union[str, Sequence[str]]] = None,
+    sample_times: Optional[Sequence[int]] = None,
+    **kwargs,
+) -> SalivaRawDataFrame:
+    """Load saliva data that is in wide-format from csv file.
+
+    It will return a `SalivaRawDataFrame`, a long-format dataframe that complies with BioPsyKit's naming convention,
+    i.e., the subject ID index will be named ``subject``, the sample index will be names ``sample``,
+    and the value column will be named after the saliva biomarker type.
+
+    Parameters
+    ----------
+    file_path: :class:`~pathlib.Path` or str
+        path to file
+    saliva_type: str
+        saliva type to load from file. Example: ``cortisol``
+    subject_col: str, optional
+        name of column containing subject IDs or ``None`` to use the default column name ``subject``.
+        According to BioPsyKit's convention, the subject ID column is expected to have the name ``subject``.
+        If the subject ID column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
+    condition_col : str, optional
+        name of the column containing condition assignments or ``None`` if no conditions are present.
+        According to BioPsyKit's convention, the condition column is expected to have the name ``condition``.
+        If the condition column in the file has another name, the column will be renamed in the dataframe
+        returned by this function. Default: ``None``
+    additional_index_cols : str or list of str, optional
+        additional index levels to be added to the dataframe, e.g., "day" index. Can either be a string or a list
+        strings to indicate column name(s) that should be used as index level(s),
+        or ``None`` for no additional index levels. Default: ``None``
+    sample_times: list of int, optional
+        times at which saliva samples were collected or ``None`` if no sample times should be specified.
+        Default: ``None``
+    **kwargs
+        Additional parameters that are passed to :func:`pandas.read_csv` or :func:`pandas.read_excel`
+
+    Returns
+    -------
+    data : :class:`~biopsykit.utils.datatype_helper.SalivaRawDataFrame`
+        saliva data in `SalivaRawDataFrame` format
+
+    Raises
+    ------
+    :exc:`~biopsykit.utils.exceptions.FileExtensionError`
+        if file is no csv or Excel file
+
+    """
+    # ensure pathlib
+    if type(file) != pd.DataFrame:
+        file = Path(file)
+        _assert_file_extension(file, (".xls", ".xlsx"))
+        data = _load_dataframe(file, **kwargs)
+    else:
+        data = file
+
+    if subject_col is None:
+        subject_col = "subject"
+
+    _assert_has_columns(data, [[subject_col]])
+
+    if subject_col != "subject":
+        # rename column
+        data = data.rename(columns={subject_col: "subject"})
+        subject_col = "subject"
+
+    index_cols = [subject_col]
+
+    data, condition_col = _get_condition_col(data, condition_col)
+
+    index_cols = _get_index_cols(condition_col, index_cols, additional_index_cols)
+    data = _apply_index_cols(data, index_cols=index_cols)
+
+    num_subjects = len(data)
+    data.columns = pd.MultiIndex.from_product(
+        [[saliva_type], data.columns], names=[None, "sample"]
+    )
+    data = data.stack()
+
+    _check_num_samples(len(data), num_subjects)
+
+    if sample_times is not None:
+        _check_sample_times(len(data), num_subjects, sample_times)
+        data["time"] = np.array(sample_times * num_subjects)
+
+    is_saliva_raw_dataframe(data, saliva_type)
+
+    return _SalivaRawDataFrame(data)
+
+
 def load_subject_condition_list(
     file: bytes | path_t,
     file_name: Optional[str] = None,

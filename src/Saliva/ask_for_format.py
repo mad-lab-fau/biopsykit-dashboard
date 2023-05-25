@@ -13,8 +13,14 @@ class AskForFormat(param.Parameterized):
     format = param.String(default=None)
 
     def format_changed(self, event):
-        self.ready = bool(event.new)
         self.format = event.new
+        self.ready = bool(event.new)
+
+    @param.output(
+        ("format", param.Dynamic),
+    )
+    def output(self):
+        return (self.format,)
 
     def panel(self):
         self.format_selector.param.watch(self.format_changed, "value")

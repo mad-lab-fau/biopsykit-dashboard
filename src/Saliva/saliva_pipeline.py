@@ -3,7 +3,7 @@ import param
 
 from src.Saliva.ask_for_format import AskForFormat
 from src.Saliva.condition_list import AskToLoadConditionList, AddConditionList
-from src.Saliva.load_saliva_data import LoadSalivaData
+from src.Saliva.load_saliva_data import LoadSalivaDataPlate, LoadSalivaDataWide
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -16,11 +16,7 @@ class SalivaPipeline:
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True)
-        self.pipeline.add_stage(
-            "Load Saliva Data",
-            LoadSalivaData(),
-            ready_parameter="ready",
-        )
+
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
             AskToLoadConditionList(),
@@ -36,14 +32,28 @@ class SalivaPipeline:
             "Ask for Format", AskForFormat(), ready_parameter="ready"
         )
 
+        self.pipeline.add_stage(
+            "Load Saliva Data Plate Format",
+            LoadSalivaDataPlate(),
+            ready_parameter="ready",
+        )
+
+        self.pipeline.add_stage(
+            "Load Saliva Data Wide Format",
+            LoadSalivaDataWide(),
+            ready_parameter="ready",
+        )
         self.pipeline.define_graph(
             {
-                # "Load Saliva Data": "Ask for Format",
                 "Ask for Format": "Ask for Subject Condition List",
                 "Ask for Subject Condition List": (
                     "Add Condition List",
-                    "Load Saliva Data",
+                    "Load Saliva Data Plate Format",
+                    "Load Saliva Data Wide Format",
                 ),
-                "Add Condition List": "Load Saliva Data",
+                "Add Condition List": (
+                    "Load Saliva Data",
+                    "Load Saliva Data Wide Format",
+                ),
             }
         )

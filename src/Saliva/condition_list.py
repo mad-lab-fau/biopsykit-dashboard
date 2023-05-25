@@ -8,17 +8,32 @@ class AskToLoadConditionList(param.Parameterized):
     no_condition_list_btn = pn.widgets.Button(name="No")
     add_condtion_list_btn = pn.widgets.Button(name="Yes")
     ready = param.Boolean(default=False)
+    format = param.String(default=None)
     next_page = param.Selector(
-        default="Add condition list", objects=["Add condition list", "Load Saliva Data"]
+        default="Add condition list",
+        objects=[
+            "Add condition list",
+            "Load Saliva Data Plate Format",
+            "Load Saliva Data Wide Format",
+        ],
     )
 
     def no_condition_list(self, target, event):
+        if "Wide" in self.format:
+            self.next_page = "Load Saliva Data Wide Format"
+        else:
+            self.next_page = "Load Saliva Data Plate Format"
         self.ready = True
-        self.next_page = "Load Saliva Data"
 
     def add_condition_list(self, target, event):
-        self.ready = True
         self.next_page = "Add condition list"
+        self.ready = True
+
+    @param.output(
+        ("format", param.String),
+    )
+    def output(self):
+        return (self.format,)
 
     def panel(self):
         self.no_condition_list_btn.link(
@@ -36,8 +51,16 @@ class AskToLoadConditionList(param.Parameterized):
 class AddConditionList(param.Parameterized):
     condition_list = param.Dynamic(default=None)
     ready = param.Boolean(default=False)
+    format = param.String(default=None)
     upload_condition_list_btn = pn.widgets.FileInput(
         name="Upload condition list", accept=".csv,.xls,.xlsx", multiple=False
+    )
+    next_page = param.Selector(
+        default="Load Saliva Data Plate Format",
+        objects=[
+            "Load Saliva Data Plate Format",
+            "Load Saliva Data Wide Format",
+        ],
     )
 
     def parse_file_input(self, target, event):
@@ -53,11 +76,19 @@ class AddConditionList(param.Parameterized):
 
     @param.output(
         ("condition_list", param.Dynamic),
+        ("format", param.String),
     )
     def output(self):
-        return (self.condition_list,)
+        return (
+            self.condition_list,
+            self.format,
+        )
 
     def panel(self):
+        if "Wide" in self.format:
+            self.next_page = "Load Saliva Data Wide Format"
+        else:
+            self.next_page = "Load Saliva Data Plate Format"
         self.upload_condition_list_btn.link(
             self, callbacks={"value": self.parse_file_input}
         )
