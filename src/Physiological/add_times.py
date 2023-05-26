@@ -55,7 +55,7 @@ class AskToAddTimes(DataArrived):
 
 class AddTimes(AskToAddTimes):
     time_upload = pn.widgets.FileInput(
-        background="WhiteSmoke", multiple=False, accept=".xls,.xlsx"
+        styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx"
     )
     datetime = [
         (

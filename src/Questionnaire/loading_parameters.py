@@ -11,7 +11,9 @@ class AskToSetLoadingParameters(param.Parameterized):
     ready = param.Boolean(default=False)
     default_btn = pn.widgets.Button(name="Default")
     set_parameters_manually = pn.widgets.Button(
-        background="#d5433e", name="Set Loading Parameters", button_type="success"
+        styles={"background": "whitesmoke"},
+        name="Set Loading Parameters",
+        button_type="success",
     )
 
     def click_default(self, _):

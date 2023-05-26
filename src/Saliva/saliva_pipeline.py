@@ -15,7 +15,9 @@ class SalivaPipeline:
     pipeline = None
 
     def __init__(self):
-        self.pipeline = pn.pipeline.Pipeline(debug=True)
+        self.pipeline = pn.pipeline.Pipeline(
+            debug=True,
+        )
 
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
@@ -52,7 +54,7 @@ class SalivaPipeline:
                     "Load Saliva Data Wide Format",
                 ),
                 "Add Condition List": (
-                    "Load Saliva Data",
+                    "Load Saliva Data Plate Format",
                     "Load Saliva Data Wide Format",
                 ),
             }

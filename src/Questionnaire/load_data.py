@@ -17,7 +17,9 @@ class LoadQuestionnaireData(param.Parameterized):
         sizing_mode="stretch_width",
     )
     file_input = pn.widgets.FileInput(
-        background="WhiteSmoke", multiple=False, accept=".csv,.bin,.xls,.xlsx,.zip"
+        styles={"background": "whitesmoke"},
+        multiple=False,
+        accept=".csv,.bin,.xls,.xlsx,.zip",
     )
     data = param.Dynamic(default=None)
     subject_col = param.String(default=None)

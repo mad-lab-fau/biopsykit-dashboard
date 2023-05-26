@@ -15,7 +15,9 @@ class AskToDetectOutliers(AskToAddTimes):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip")
     expert_mode_btn = pn.widgets.Button(
-        background="#d5433e", name="Expert Mode", button_type="success"
+        styles={"background": "#d5433e"},
+        name="Expert Mode",
+        button_type="success",
     )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
     methods = [

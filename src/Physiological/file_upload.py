@@ -27,7 +27,9 @@ class FileUpload(Recordings):
         name="File Type", options=["Multi Session", "Single Session"]
     )
     file_input = pn.widgets.FileInput(
-        background="WhiteSmoke", multiple=False, accept=".csv,.bin,.xls,.xlsx"
+        styles={"background": "whitesmoke"},
+        multiple=False,
+        accept=".csv,.bin,.xls,.xlsx",
     )
     session_type = param.Dynamic()
     synced = param.Boolean()

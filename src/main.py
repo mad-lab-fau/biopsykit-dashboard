@@ -9,11 +9,17 @@ pn.extension("plotly", "tabulator")
 from main_page import *
 
 
-app = pn.template.FastListTemplate(
+# app = pn.template.FastListTemplate(
+#     title="BioPysKit Dashboard",
+#     header_background="#186FEF",
+#     logo="../assets/Icons/biopsykit_Icon.png",
+#     favicon="../assets/Favicon/bio.ico",
+# )
+app = pn.template.BootstrapTemplate(
     title="BioPysKit Dashboard",
     header_background="#186FEF",
     logo="../assets/Icons/biopsykit_Icon.png",
-    favicon="../assets/Favicon/bio.ico",
+    # favicon="../assets/Favicon/bio.ico",
 )
 app.sidebar.constant = False
 app.main.constant = False
@@ -79,21 +85,45 @@ def get_sidebar():
 
 
 def get_mainMenu(event):
-    f = open("../assets/Markdown/WelcomeText.md", "r")
-    fileString = f.read()
+    # f = open("../assets/Markdown/WelcomeText.md", "r")
+    # fileString = f.read()
+    fileString = """
+        # Welcome to the BioPsyKit Dashboard
+        
+        ## Here you can analyse your Data using the BioPsyKit without any manual programming.
+        
+        Please select below one of the Signals you want to analyse. The corresponding guide will help you to get the best out of your data.
+        
+        """
     physBtn = pn.widgets.Button(
-        name="Physiological Data", sizing_mode="stretch_width", align="end"
+        name="Physiological Data",
+        sizing_mode="stretch_width",
+        align="end",
+        button_type="primary",
     )
     physBtn.on_click(startPhysPipeline)
     sleepBtn = pn.widgets.Button(
-        name="Sleep Data", sizing_mode="stretch_width", align="end"
+        name="Sleep Data",
+        sizing_mode="stretch_width",
+        align="end",
+        button_type="primary",
     )
     questionnaireBtn = pn.widgets.Button(
-        name="Questionnaire Data", sizing_mode="stretch_width"
+        name="Questionnaire Data",
+        sizing_mode="stretch_width",
+        button_type="primary",
     )
     questionnaireBtn.on_click(startQuestionnairePipeline)
-    psychBtn = pn.widgets.Button(name="Psychological Data", sizing_mode="stretch_width")
-    salBtn = pn.widgets.Button(name="Saliva Data", sizing_mode="stretch_width")
+    psychBtn = pn.widgets.Button(
+        name="Psychological Data",
+        sizing_mode="stretch_width",
+        button_type="primary",
+    )
+    salBtn = pn.widgets.Button(
+        name="Saliva Data",
+        sizing_mode="stretch_width",
+        button_type="primary",
+    )
     salBtn.on_click(startSalivaPipeline)
     pathToIcons = "../assets/Icons/"
     iconNames = [
@@ -103,88 +133,92 @@ def get_mainMenu(event):
         "Saliva.svg",
         "Sleep.svg",
     ]
-    physCard = pn.Card(
+    physCard = pn.GridBox(
         pn.pane.SVG(
             pathToIcons + iconNames[0],
-            align="center",
+            align=("center"),
             sizing_mode="stretch_both",
             max_height=150,
             max_width=200,
-            background="whitesmoke",
+            styles={"background": "whitesmoke"},
         ),
         pn.Spacer(height=45),
         physBtn,
-        collapsible=False,
+        ncols=1,
+        styles={"background": "whitesmoke", "align": "center"},
+        width=250,
         height=250,
-        background="whitesmoke",
-        hide_header=True,
     )
-    psychCard = pn.Card(
+    psychCard = pn.GridBox(
         pn.pane.SVG(
             pathToIcons + iconNames[1],
-            align="center",
+            align=("center"),
             sizing_mode="stretch_both",
             max_height=150,
             max_width=150,
-            background="whitesmoke",
+            styles={"background": "whitesmoke"},
         ),
         pn.Spacer(height=45),
         psychBtn,
-        collapsible=False,
+        ncols=1,
+        styles={"background": "whitesmoke", "align": "center"},
+        width=250,
         height=250,
-        background="whitesmoke",
-        hide_header=True,
     )
-    questionnaireCard = pn.Card(
+    questionnaireCard = pn.GridBox(
         pn.pane.SVG(
             pathToIcons + iconNames[2],
-            align="center",
+            align=("center"),
             sizing_mode="stretch_both",
             max_height=150,
             max_width=150,
-            background="whitesmoke",
+            styles={"background": "whitesmoke"},
         ),
         pn.Spacer(height=45),
         questionnaireBtn,
-        collapsible=False,
+        ncols=1,
+        styles={"background": "whitesmoke", "align": "center"},
+        width=250,
         height=250,
-        background="whitesmoke",
-        hide_header=True,
     )
-    salCard = pn.Card(
+    salCard = pn.GridBox(
         pn.pane.SVG(
             pathToIcons + iconNames[3],
-            align="center",
+            align=("center"),
             sizing_mode="stretch_both",
             max_height=150,
             max_width=150,
-            background="whitesmoke",
+            styles={"background": "whitesmoke"},
         ),
         pn.Spacer(height=45),
         salBtn,
-        collapsible=False,
+        ncols=1,
+        styles={"background": "whitesmoke", "align": "center"},
+        width=250,
         height=250,
-        background="whitesmoke",
-        hide_header=True,
     )
-    sleepCard = pn.Card(
+    sleepCard = pn.GridBox(
         pn.pane.SVG(
             pathToIcons + iconNames[4],
-            align="center",
+            align=("center"),
             sizing_mode="stretch_both",
             max_height=150,
             max_width=160,
-            background="whitesmoke",
+            fixed_aspect=False,
         ),
         pn.Spacer(height=45),
         sleepBtn,
-        collapsible=False,
+        ncols=1,
+        styles={"background": "whitesmoke", "align": "center"},
+        width=250,
         height=250,
-        background="whitesmoke",
-        hide_header=True,
     )
     signalSelection = pn.GridBox(
-        *[physCard, psychCard, questionnaireCard, salCard, sleepCard], ncols=3
+        *[physCard, psychCard, questionnaireCard, salCard, sleepCard],
+        ncols=3,
+        nrows=2,
+        max_width=1000,
+        height=600,
     )
     pane = pn.Column(pn.pane.Markdown(fileString), signalSelection)
     if len(app.main) > 0:

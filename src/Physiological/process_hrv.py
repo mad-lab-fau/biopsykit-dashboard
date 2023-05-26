@@ -14,7 +14,7 @@ class AskToProcessHRV(AskToDetectOutliers):
     index_name = pn.widgets.TextInput(name="Index Name", value="")
     skip_btn = pn.widgets.Button(name="Skip")
     expert_mode_btn = pn.widgets.Button(
-        background="#d5433e", name="Expert Mode", button_type="success"
+        styles={"background": "#d5433e"}, name="Expert Mode", button_type="success"
     )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
     next_page = param.Selector(

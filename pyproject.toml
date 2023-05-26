@@ -12,16 +12,16 @@ repository = "https://github.com/mad-lab-fau/biopsykit-dashboard"
 
 [tool.poetry.dependencies]
 python = ">=3.10,<3.11"
-panel = "^0.14.1"
+panel = "^1.0.3"
 nilspodlib = "^3.6.0"
-biopsykit = "^0.7.1"
+biopsykit = "^0.9.0"
 pandas = "^1.5.2"
 numpy = "^1.23.5"
 typing-extensions = "^4.4.0"
 packaging = "^21.3"
 param = "^1.12.2"
 pytz = "^2022.6"
-holoviews = "^1.15.2"
+holoviews = "^1.16.0"
 
 
 [build-system]
