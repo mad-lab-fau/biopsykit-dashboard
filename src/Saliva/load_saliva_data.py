@@ -43,17 +43,12 @@ class LoadSalivaDataPlate(param.Parameterized):
         placeholder="regular expression to extract subject ID, day ID and sample ID from the sample identifier",
         visible=False,
     )
-    condition_list_input = pn.widgets.ArrayInput(
-        name="Condition list",
-        placeholder="list of conditions which subjects were assigned to",
-        visible=False,
-    )
 
     def parse_file_input(self, target, event):
         try:
             self.df = pd.read_excel(self.upload_btn.value, skiprows=2)
             self.df.dropna(axis=1, how="all", inplace=True)
-            self.show_param_input()
+            self.show_param_input_plate()
             pn.state.notifications.success("Files uploaded")
         except Exception as e:
             pn.state.notifications.error("Error while loading data: " + str(e))
@@ -67,9 +62,8 @@ class LoadSalivaDataPlate(param.Parameterized):
         self.data_col_selector.visible = True
         self.data_col_selector.options = [""] + list(self.df.columns)
         self.id_col_names_multi_choice.visible = True
-        self.id_col_names_multi_choice.options = [""] + list(self.df.columns)
+        self.id_col_names_multi_choice.options = list(self.df.columns)
         self.regex_input.visible = True
-        self.condition_list_input.visible = True
 
     def hide_param_input(self):
         self.saliva_selector.visible = False
@@ -77,7 +71,6 @@ class LoadSalivaDataPlate(param.Parameterized):
         self.data_col_selector.visible = False
         self.id_col_names_multi_choice.visible = False
         self.regex_input.visible = False
-        self.condition_list_input.visible = False
 
     def get_param_col(self) -> pn.Column:
         return pn.Column(
@@ -85,7 +78,6 @@ class LoadSalivaDataPlate(param.Parameterized):
             self.sample_id_col,
             self.data_col_selector,
             self.regex_input,
-            self.condition_list_input,
             self.id_col_names_multi_choice,
         )
 
@@ -107,7 +99,7 @@ class LoadSalivaDataPlate(param.Parameterized):
             self.data_col_selector.value,
             self.id_col_names_multi_choice.value,
             self.regex_input.value,
-            self.condition_list_input.value,
+            self.condition_list,
         )
         return (self.data,)
 
