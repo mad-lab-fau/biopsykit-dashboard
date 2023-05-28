@@ -1,10 +1,8 @@
-from io import StringIO
-
 import pandas as pd
 import panel as pn
 import param
 import biopsykit as bp
-from src.utils import load_saliva_plate, _load_dataframe, load_saliva_wide_format
+from src.utils import load_saliva_plate, load_saliva_wide_format
 
 
 class LoadSalivaDataPlate(param.Parameterized):
@@ -23,7 +21,7 @@ class LoadSalivaDataPlate(param.Parameterized):
     plate_params_visible = False
     saliva_selector = pn.widgets.Select(
         name="Choose the saliva type",
-        options=["", "Cortisol", "Amylase"],
+        options=["", "cortisol", "amylase"],
         visible=False,
     )
     sample_id_col = pn.widgets.Select(
@@ -40,6 +38,7 @@ class LoadSalivaDataPlate(param.Parameterized):
     )
     regex_input = pn.widgets.TextInput(
         name="Regex for sample id",
+        value=None,
         placeholder="regular expression to extract subject ID, day ID and sample ID from the sample identifier",
         visible=False,
     )
@@ -90,18 +89,36 @@ class LoadSalivaDataPlate(param.Parameterized):
 
     @param.output(
         ("data", param.Dynamic),
+        ("saliva_type", param.String),
+        ("sample_times", param.List),
     )
     def output(self):
         self.data = load_saliva_plate(
             self.df,
             self.saliva_type,
-            self.sample_id_col.value,
-            self.data_col_selector.value,
-            self.id_col_names_multi_choice.value,
-            self.regex_input.value,
-            self.condition_list,
+            (self.sample_id_col.value if self.sample_id_col.value != "" else None),
+            (
+                self.data_col_selector.value
+                if self.data_col_selector.value != ""
+                else None
+            ),
+            (
+                self.id_col_names_multi_choice.value
+                if len(self.id_col_names_multi_choice.value) > 0
+                else None
+            ),
+            (self.regex_input.value if self.regex_input.value != "" else None),
+            (
+                self.condition_list
+                if self.condition_list is not None and len(self.condition_list) > 0
+                else None
+            ),
         )
-        return (self.data,)
+        return (
+            self.data,
+            self.saliva_type,
+            self.sample_times,
+        )
 
     def panel(self):
         text = (
@@ -120,6 +137,7 @@ class LoadSalivaDataPlate(param.Parameterized):
 class LoadSalivaDataWide(param.Parameterized):
     data = param.Dynamic()
     format = param.String(default=None)
+    saliva_type = param.String(default="")
     saliva_selector = pn.widgets.Select(
         name="Choose the saliva type",
         options=["", "Cortisol", "Amylase"],
@@ -177,6 +195,8 @@ class LoadSalivaDataWide(param.Parameterized):
 
     @param.output(
         ("data", param.Dynamic),
+        ("saliva_type", param.String),
+        ("sample_times", param.List),
     )
     def output(self):
         self.data = load_saliva_wide_format(
@@ -187,7 +207,11 @@ class LoadSalivaDataWide(param.Parameterized):
             self.additional_cols_multi_choice.value,
             self.sample_times_input.value,
         )
-        return (self.data,)
+        return (
+            self.data,
+            self.saliva_type,
+            self.sample_times_input.value,
+        )
 
     def panel(self):
         text = (
