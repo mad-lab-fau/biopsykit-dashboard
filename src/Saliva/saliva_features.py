@@ -1,12 +1,15 @@
+import matplotlib.figure
 import numpy as np
 import panel as pn
 import param
 import biopsykit as bp
 from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
+from fau_colors import cmaps
 
 
 class ShowSalivaFeatures(param.Parameterized):
     data = param.Dynamic(default=None)
+    data_features = param.Dynamic(default=None)
     saliva_type = param.String(default=None)
     sample_times = param.Dynamic(default=[-30, -1, 30, 40, 50, 60, 70])
     auc_args = {"remove_s0": False, "compute_auc_post": False, "sample_times": None}
@@ -17,6 +20,12 @@ class ShowSalivaFeatures(param.Parameterized):
         "sample_times_absolute": False,
         "test_title": "Test",
         "remove_s0": False,
+    }
+    feature_boxplot_args = {
+        "x": None,
+        "hue": None,
+        "feature": None,
+        "palette": cmaps.faculties_light,
     }
 
     def feature_accordion(self) -> pn.Accordion:
@@ -32,6 +41,7 @@ class ShowSalivaFeatures(param.Parameterized):
         acc.append(self.get_max_value())
         acc.append(self.get_standard_features())
         acc.append(self.get_initial_value())
+        acc.append(self.get_feature_boxplot_element())
         return acc
 
     def get_mean_se_element(self):
@@ -100,12 +110,59 @@ class ShowSalivaFeatures(param.Parameterized):
             self.mean_se_args["remove_s0"] = event.new
         target.object = self.get_mean_se_figure()
 
-    def get_mean_se_figure(self) -> pn.pane.Matplotlib:
+    def get_mean_se_figure(self) -> matplotlib.figure.Figure:
         fig, _ = bp.protocols.plotting.saliva_plot(
             self.get_mean_se_df(),
             saliva_type=self.saliva_type,
             sample_times=self.sample_times,
             **self.mean_se_args,
+        )
+        return fig
+
+    def get_feature_boxplot_element(self) -> pn.Column:
+        plot = pn.pane.Matplotlib(
+            self.get_feature_boxplot_figure(), format="svg", sizing_mode="scale_both"
+        )
+        col = pn.Column(name="Feature Boxplot")
+        x_select = pn.widgets.Select(
+            name="x",
+            value=None,
+            options=list(x.name for x in self.data_features.index.levels),
+        )
+        hue_textInput = pn.widgets.TextInput(name="hue", value="condition")
+        feature_multichoice = pn.widgets.MultiChoice(
+            name="feature", value=[], options=[]
+        )
+        hue_textInput.link(
+            plot, callbacks={"value": self.update_feature_boxplot_figure}
+        )
+        x_select.link(plot, callbacks={"value": self.update_feature_boxplot_figure})
+        feature_multichoice.link(
+            plot, callbacks={"value": self.update_feature_boxplot_figure}
+        )
+        col.append(
+            pn.Row(
+                pn.Column(hue_textInput, x_select, feature_multichoice),
+                plot,
+            )
+        )
+        return col
+
+    def update_feature_boxplot_figure(self, target, event):
+        if event.cls.name == "x":
+            self.feature_boxplot_args["x"] = event.new
+        elif event.cls.name == "hue":
+            self.feature_boxplot_args["hue"] = event.new
+        elif event.cls.name == "feature":
+            self.feature_boxplot_args["feature"] = event.new
+        target.object = self.get_feature_boxplot_figure()
+
+    def get_feature_boxplot_figure(self) -> pn.pane.Matplotlib:
+        # Data = self.data_features, x = a column, hue = None or str, feature = None or str (argmax, kurt, mean, skew, std) (stats_kwargs?)
+        fig, _ = bp.protocols.plotting.saliva_feature_boxplot(
+            data=self.data_features,
+            saliva_type=self.saliva_type,
+            **self.feature_boxplot_args,
         )
         return fig
 
@@ -358,6 +415,11 @@ class ShowSalivaFeatures(param.Parameterized):
         return col
 
     def panel(self):
+        if self.data_features is None and self.data is not None:
+            self.data_features = bp.saliva.standard_features(self.data)
+            self.data_features = bp.saliva.utils.saliva_feature_wide_to_long(
+                self.data_features, saliva_type=self.saliva_type
+            )
         co = pn.Column()
         co.append(pn.pane.Markdown("# Show Features"))
         acc = self.feature_accordion()
