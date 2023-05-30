@@ -108,10 +108,8 @@ class LoadSalivaDataPlate(param.Parameterized):
                 else None
             ),
             (self.regex_input.value if self.regex_input.value != "" else None),
-            (
-                self.condition_list
-                if self.condition_list is not None and len(self.condition_list) > 0
-                else None
+            condition_list=(
+                self.condition_list if self.condition_list is not None else None
             ),
         )
         return (

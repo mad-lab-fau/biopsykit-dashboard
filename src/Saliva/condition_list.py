@@ -10,9 +10,9 @@ class AskToLoadConditionList(param.Parameterized):
     ready = param.Boolean(default=False)
     format = param.String(default=None)
     next_page = param.Selector(
-        default="Add condition list",
+        default="Add Condition List",
         objects=[
-            "Add condition list",
+            "Add Condition List",
             "Load Saliva Data Plate Format",
             "Load Saliva Data Wide Format",
         ],
@@ -26,7 +26,7 @@ class AskToLoadConditionList(param.Parameterized):
         self.ready = True
 
     def add_condition_list(self, target, event):
-        self.next_page = "Add condition list"
+        self.next_page = "Add Condition List"
         self.ready = True
 
     @param.output(
@@ -55,7 +55,7 @@ class AddConditionList(param.Parameterized):
     upload_condition_list_btn = pn.widgets.FileInput(
         name="Upload condition list", accept=".csv,.xls,.xlsx", multiple=False
     )
-    next_page = param.Selector(
+    next = param.Selector(
         default="Load Saliva Data Plate Format",
         objects=[
             "Load Saliva Data Plate Format",
@@ -70,6 +70,7 @@ class AddConditionList(param.Parameterized):
                 self.upload_condition_list_btn.filename,
             )
             pn.state.notifications.success("Condition List successfully loaded")
+            self.ready = True
         except Exception as e:
             pn.state.notifications.error("Error while loading data: " + str(e))
             self.ready = False
@@ -86,9 +87,9 @@ class AddConditionList(param.Parameterized):
 
     def panel(self):
         if "Wide" in self.format:
-            self.next_page = "Load Saliva Data Wide Format"
+            self.next = "Load Saliva Data Wide Format"
         else:
-            self.next_page = "Load Saliva Data Plate Format"
+            self.next = "Load Saliva Data Plate Format"
         self.upload_condition_list_btn.link(
             self, callbacks={"value": self.parse_file_input}
         )

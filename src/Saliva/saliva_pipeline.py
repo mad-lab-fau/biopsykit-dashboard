@@ -29,7 +29,10 @@ class SalivaPipeline:
             auto_advance=True,
         )
         self.pipeline.add_stage(
-            "Add Condition List", AddConditionList(), ready_parameter="ready"
+            "Add Condition List",
+            AddConditionList(),
+            ready_parameter="ready",
+            next_parameter="next_page",
         )
 
         self.pipeline.add_stage(
