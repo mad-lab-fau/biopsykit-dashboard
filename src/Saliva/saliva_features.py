@@ -1,3 +1,6 @@
+import io
+import itertools
+
 import matplotlib.figure
 import numpy as np
 import panel as pn
@@ -5,6 +8,7 @@ import param
 import biopsykit as bp
 from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
 from fau_colors import cmaps
+from numpy import ndarray
 
 
 class ShowSalivaFeatures(param.Parameterized):
@@ -27,6 +31,12 @@ class ShowSalivaFeatures(param.Parameterized):
         "feature": None,
         "palette": cmaps.faculties_light,
     }
+    multi_feature_boxplot_args = {
+        "hue": None,
+        "hue_order": None,
+        "features": None,
+        "palette": cmaps.faculties_light,
+    }
 
     def feature_accordion(self) -> pn.Accordion:
         if self.data is None:
@@ -42,6 +52,7 @@ class ShowSalivaFeatures(param.Parameterized):
         acc.append(self.get_standard_features())
         acc.append(self.get_initial_value())
         acc.append(self.get_feature_boxplot_element())
+        acc.append(self.get_multi_feature_boxplot_element())
         return acc
 
     def get_mean_se_element(self):
@@ -140,13 +151,28 @@ class ShowSalivaFeatures(param.Parameterized):
         feature_multichoice.link(
             plot, callbacks={"value": self.update_feature_boxplot_figure}
         )
+        download_btn = pn.widgets.FileDownload(
+            label="Download",
+            button_type="primary",
+            callback=pn.bind(self.download_boxplot_figure),
+            filename="figure.png",
+        )
         col.append(
             pn.Row(
                 pn.Column(hue_textInput, x_select, feature_multichoice),
                 plot,
             )
         )
+        col.append(pn.layout.Divider())
+        col.append(download_btn)
         return col
+
+    def download_boxplot_figure(self):
+        buf = io.BytesIO()
+        fig = self.get_feature_boxplot_figure()
+        fig.savefig(buf, format="png")
+        buf.seek(0)
+        return buf
 
     def update_feature_boxplot_figure(self, target, event):
         if event.cls.name == "x":
@@ -165,6 +191,87 @@ class ShowSalivaFeatures(param.Parameterized):
             **self.feature_boxplot_args,
         )
         return fig
+
+    def get_multi_feature_boxplot_element(self) -> pn.Column:
+        plot = pn.pane.Matplotlib(
+            self.get_multi_feature_boxplot_figure(),
+            format="svg",
+            sizing_mode="scale_both",
+        )
+        col = pn.Column(name="Multi Feature Boxplot")
+        hue_multiChoice = pn.widgets.MultiChoice(
+            name="hue",
+            value=[],
+            options=list(x.name for x in self.data_features.index.levels),
+            max_items=1,
+        )
+        hue_order_multichoice = pn.widgets.MultiChoice(
+            name="hue_order",
+            value=[],
+            max_items=1,
+            options=list(x.values for x in self.data_features.index.levels),
+        )
+        features_multichoice = pn.widgets.MultiChoice(
+            name="features",
+            value=[],
+            options=list(
+                itertools.chain(
+                    *list(x.values for x in self.data_features.index.levels)
+                )
+            ),
+        )
+        hue_multiChoice.link(
+            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+        )
+        hue_order_multichoice.link(
+            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+        )
+        features_multichoice.link(
+            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+        )
+        download_btn = pn.widgets.FileDownload(
+            label="Download",
+            button_type="primary",
+            callback=pn.bind(self.download_multi_boxplot_figure),
+            filename="figure.png",
+        )
+        col.append(
+            pn.Row(
+                pn.Column(hue_multiChoice, hue_order_multichoice, features_multichoice),
+                plot,
+            )
+        )
+        col.append(pn.layout.Divider())
+        col.append(download_btn)
+        return col
+
+    def download_multi_boxplot_figure(self):
+        buf = io.BytesIO()
+        fig = self.get_multi_feature_boxplot_figure()
+        fig.savefig(buf, format="png")
+        buf.seek(0)
+        return buf
+
+    def update_multi_feature_boxplot_figure(self, target, event):
+        if event.cls.name == "features":
+            new_value = event.new if len(event.new) > 0 else None
+        else:
+            new_value = event.new[0] if len(event.new) > 0 else None
+        if isinstance(new_value, ndarray):
+            new_value = new_value.tolist()
+        self.multi_feature_boxplot_args[event.cls.name] = new_value
+        target.object = self.get_multi_feature_boxplot_figure()
+
+    def get_multi_feature_boxplot_figure(self) -> matplotlib.figure.Figure:
+        try:
+            fig, _ = bp.protocols.plotting.saliva_multi_feature_boxplot(
+                data=self.data_features,
+                saliva_type=self.saliva_type,
+                **self.multi_feature_boxplot_args,
+            )
+            return fig
+        except Exception as e:
+            return matplotlib.figure.Figure()
 
     def filter_auc(self, target, event):
         if event is None or event.cls is None:
