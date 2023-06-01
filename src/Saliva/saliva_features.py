@@ -15,7 +15,7 @@ class ShowSalivaFeatures(param.Parameterized):
     data = param.Dynamic(default=None)
     data_features = param.Dynamic(default=None)
     saliva_type = param.String(default=None)
-    sample_times = param.Dynamic(default=[-30, -1, 30, 40, 50, 60, 70])
+    sample_times = param.Dynamic(default=None)
     auc_args = {"remove_s0": False, "compute_auc_post": False, "sample_times": None}
     slope_args = {"sample_idx": None, "sample_labels": None}
     standard_features_args = {"group_cols": None, "keep_index": True}
@@ -72,7 +72,12 @@ class ShowSalivaFeatures(param.Parameterized):
                 "align": "end",
             },
         )
-
+        download_btn = pn.widgets.FileDownload(
+            label="Download",
+            button_type="primary",
+            callback=pn.bind(self.download_mean_se_figure),
+            filename="figure.png",
+        )
         col.append(tab)
         col.append(
             pn.Row(
@@ -82,6 +87,7 @@ class ShowSalivaFeatures(param.Parameterized):
         )
         col.append(pn.layout.Divider())
         col.append(self.edit_mean_se_figure())
+        col.append(download_btn)
         return col
 
     def get_mean_se_df(self) -> SalivaMeanSeDataFrame:
@@ -95,7 +101,6 @@ class ShowSalivaFeatures(param.Parameterized):
         sample_times_absolut = pn.widgets.Checkbox(
             name="Sample Times Absolute", value=False
         )
-        # [0, 30]
         test_times = pn.widgets.ArrayInput(name="Test Times", value=np.array([]))
         title = pn.widgets.TextInput(name="Title", value="TEST")
         plot = pn.pane.Matplotlib(
@@ -122,13 +127,23 @@ class ShowSalivaFeatures(param.Parameterized):
         target.object = self.get_mean_se_figure()
 
     def get_mean_se_figure(self) -> matplotlib.figure.Figure:
-        fig, _ = bp.protocols.plotting.saliva_plot(
-            self.get_mean_se_df(),
-            saliva_type=self.saliva_type,
-            sample_times=self.sample_times,
-            **self.mean_se_args,
-        )
-        return fig
+        try:
+            fig, _ = bp.protocols.plotting.saliva_plot(
+                self.get_mean_se_df(),
+                saliva_type=self.saliva_type,
+                sample_times=self.sample_times,
+                **self.mean_se_args,
+            )
+            return fig
+        except Exception:
+            return matplotlib.figure.Figure()
+
+    def download_mean_se_figure(self):
+        buf = io.BytesIO()
+        fig = self.get_mean_se_figure()
+        fig.savefig(buf, format="png")
+        buf.seek(0)
+        return buf
 
     def get_feature_boxplot_element(self) -> pn.Column:
         plot = pn.pane.Matplotlib(
@@ -155,7 +170,7 @@ class ShowSalivaFeatures(param.Parameterized):
             label="Download",
             button_type="primary",
             callback=pn.bind(self.download_boxplot_figure),
-            filename="figure.png",
+            filename="mean_se_figure.png",
         )
         col.append(
             pn.Row(
@@ -183,14 +198,17 @@ class ShowSalivaFeatures(param.Parameterized):
             self.feature_boxplot_args["feature"] = event.new
         target.object = self.get_feature_boxplot_figure()
 
-    def get_feature_boxplot_figure(self) -> pn.pane.Matplotlib:
+    def get_feature_boxplot_figure(self) -> matplotlib.figure.Figure:
         # Data = self.data_features, x = a column, hue = None or str, feature = None or str (argmax, kurt, mean, skew, std) (stats_kwargs?)
-        fig, _ = bp.protocols.plotting.saliva_feature_boxplot(
-            data=self.data_features,
-            saliva_type=self.saliva_type,
-            **self.feature_boxplot_args,
-        )
-        return fig
+        try:
+            fig, _ = bp.protocols.plotting.saliva_feature_boxplot(
+                data=self.data_features,
+                saliva_type=self.saliva_type,
+                **self.feature_boxplot_args,
+            )
+            return fig
+        except Exception:
+            return matplotlib.figure.Figure()
 
     def get_multi_feature_boxplot_element(self) -> pn.Column:
         plot = pn.pane.Matplotlib(
@@ -270,7 +288,7 @@ class ShowSalivaFeatures(param.Parameterized):
                 **self.multi_feature_boxplot_args,
             )
             return fig
-        except Exception as e:
+        except Exception:
             return matplotlib.figure.Figure()
 
     def filter_auc(self, target, event):

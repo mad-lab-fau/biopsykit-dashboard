@@ -18,7 +18,7 @@ class MainPage(param.Parameterized):
     mainPage = None
 
     def start_physiological_pipeline(self, event):
-        ecg = Phys()
+        ecg = PhysiologicalPipeline()
         return self.mainPage.append(pn.Column(ecg.pipeline))
 
     def __init__(self, main_page, **params):
