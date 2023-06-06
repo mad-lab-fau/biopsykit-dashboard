@@ -1,11 +1,5 @@
-import matplotlib
 import param
 import panel as pn
-import biopsykit as bp
-from fau_colors import cmaps
-import seaborn as sns
-
-from src.Questionnaire.dataframe_styler import make_pretty
 
 
 class CheckSelectedQuestionnaires(param.Parameterized):
@@ -21,23 +15,16 @@ class CheckSelectedQuestionnaires(param.Parameterized):
     def init_questionnaire_panel(self, visible: bool) -> pn.Accordion:
         acc = pn.Accordion(sizing_mode="stretch_width", visible=visible)
         for questionnaire in self.dict_scores.keys():
-            df = self.data[list(self.dict_scores[questionnaire])].style.pipe(
-                make_pretty
+            df = self.data[list(self.dict_scores[questionnaire])]
+            df_widget = pn.widgets.Tabulator(
+                df,
+                pagination="local",
+                layout="fit_data_stretch",
+                page_size=20,
+                header_align="right",
+                theme="midnight",
             )
-            cell_hover = {
-                "selector": "td:hover",
-                "props": [("background-color", "#040fe0")],
-            }
-            df.set_table_styles([cell_hover])
-            df.set_sticky(axis="index")
-            a = df.to_html()
-            html = pn.pane.HTML(a)
-            acc.append(
-                (
-                    questionnaire,
-                    html,
-                )
-            )
+            acc.append((questionnaire, df_widget))
         return acc
 
     def check_questionnaires(self, _, event):
