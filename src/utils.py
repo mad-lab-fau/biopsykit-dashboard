@@ -1,4 +1,5 @@
 import warnings
+from ast import literal_eval
 from datetime import datetime
 from io import BytesIO, StringIO
 from os import PathLike
@@ -16,6 +17,13 @@ from biopsykit.io.saliva import (
     _get_condition_col,
     _get_index_cols,
 )
+from biopsykit.io.sleep_analyzer import (
+    WITHINGS_RAW_DATA_SOURCES,
+    _localize_time,
+    _explode_timestamp,
+    _reindex_datetime_index,
+)
+from biopsykit.sleep.utils import split_nights
 from biopsykit.utils._datatype_validation_helper import (
     _assert_file_extension,
     _assert_has_columns,
@@ -602,3 +610,104 @@ def load_saliva_wide_format(
     is_saliva_raw_dataframe(data, saliva_type)
 
     return _SalivaRawDataFrame(data)
+
+
+def load_withings_sleep_analyzer_raw_file(
+    file: bytes | path_t,
+    data_source: str,
+    timezone: Optional[Union[datetime.tzinfo, str]] = None,
+    split_into_nights: Optional[bool] = True,
+    file_name: Optional[str] = None,
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Load single Withings Sleep Analyzer raw data file and convert into time-series data.
+
+    Parameters
+    ----------
+    file_path : :class:`~pathlib.Path` or str
+        path to file
+    data_source : str
+        data source of file specified by ``file_path``. Must be one of
+        ['heart_rate', 'respiration_rate', 'sleep_state', 'snoring'].
+    timezone : str or :class:`datetime.tzinfo`, optional
+        timezone of recorded data, either as string or as tzinfo object.
+        Default: 'Europe/Berlin'
+    split_into_nights : bool, optional
+        whether to split the dataframe into the different recording nights (and return a dictionary of dataframes)
+        or not.
+        Default: ``True``
+
+    Returns
+    -------
+    :class:`~pandas.DataFrame` or dict of such
+        dataframe (or dict of dataframes, if ``split_into_nights`` is ``True``) with Sleep Analyzer data
+
+    Raises
+    ------
+    ValueError
+        if unsupported data source was passed
+    `~biopsykit.utils.exceptions.FileExtensionError`
+        if ``file_path`` is not a csv file
+    `~biopsykit.utils.exceptions.ValidationError`
+        if file does not have the required columns ``start``, ``duration``, ``value``
+
+    """
+    if data_source not in WITHINGS_RAW_DATA_SOURCES.values():
+        raise ValueError(
+            "Unsupported data source {}! Must be one of {}.".format(
+                data_source, list(WITHINGS_RAW_DATA_SOURCES.values())
+            )
+        )
+
+    if type(file) == bytes:
+        file_path = Path(file_name)
+    else:
+        file_path = Path(file)
+        file = file_path
+
+    file_path = Path(file_path)
+    _assert_file_extension(file_path, ".csv")
+
+    data = _load_dataframe(file, file_name)
+
+    _assert_has_columns(data, [["start", "duration", "value"]])
+
+    if timezone is None:
+        timezone = tz
+
+    # convert string timestamps to datetime
+    data["start"] = pd.to_datetime(data["start"])
+    # sort index
+    data = data.set_index("start").sort_index()
+    # drop duplicate index values
+    data = data.loc[~data.index.duplicated()]
+
+    # convert it into the right time zone
+    data = data.groupby("start", group_keys=False).apply(
+        _localize_time, timezone=timezone
+    )
+    # convert strings of arrays to arrays
+    data["duration"] = data["duration"].apply(literal_eval)
+    data["value"] = data["value"].apply(literal_eval)
+
+    # rename index
+    data.index.name = "time"
+    # explode data and apply timestamp explosion to groups
+    data_explode = data.apply(pd.Series.explode)
+    data_explode = data_explode.groupby("time", group_keys=False).apply(
+        _explode_timestamp
+    )
+    # rename the value column
+    data_explode.columns = [data_source]
+    # convert dtypes from object into numerical values
+    data_explode = data_explode.astype(int)
+    # drop duplicate index values
+    data_explode = data_explode.loc[~data_explode.index.duplicated()]
+
+    if split_into_nights:
+        data_explode = split_nights(data_explode)
+        data_explode = {
+            key: _reindex_datetime_index(d) for key, d in data_explode.items()
+        }
+    else:
+        data_explode = _reindex_datetime_index(data_explode)
+    return data_explode
