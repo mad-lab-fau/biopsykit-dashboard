@@ -2,6 +2,7 @@ import panel as pn
 
 from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
 from src.Saliva.saliva_pipeline import SalivaPipeline
+from src.Sleep.sleep_pipeline import SleepPipeline
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -69,6 +70,32 @@ def startSalivaPipeline(event):
     app.main[0].objects = [pane]
 
 
+def startPipeline(event):
+    btn_name = event.obj.name
+    pipeline = None
+    if "Sleep" in btn_name:
+        pipeline = SleepPipeline()
+    elif "Physiological" in btn_name:
+        pipeline = PhysiologicalPipeline()
+    elif "Questionnaire" in btn_name:
+        pipeline = QuestionnairePipeline()
+    elif "Saliva" in btn_name:
+        pipeline = SalivaPipeline()
+    else:
+        pn.state.notifications.error("No Pipeline found for this Button")
+        return
+    pane = pn.Column(
+        pn.Row(
+            pn.layout.HSpacer(),
+            pipeline.pipeline.prev_button,
+            pipeline.pipeline.next_button,
+        ),
+        pipeline.pipeline.stage,
+        min_height=2000,
+    )
+    app.main[0].objects = [pane]
+
+
 def get_sidebar():
     homeBtn = pn.widgets.Button(name="Home", button_type="primary")
     homeBtn.on_click(get_mainMenu)
@@ -108,6 +135,7 @@ def get_mainMenu(event):
         align="end",
         button_type="primary",
     )
+    sleepBtn.on_click(startPipeline)
     questionnaireBtn = pn.widgets.Button(
         name="Questionnaire Data",
         sizing_mode="stretch_width",

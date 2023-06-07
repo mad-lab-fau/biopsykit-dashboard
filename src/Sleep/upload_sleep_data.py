@@ -16,9 +16,9 @@ class UploadSleepData(param.Parameterized):
     fs = param.Dynamic(default=None)
     ready = param.Boolean(default=False)
     accepted_file_types = {
-        "Polysomnography": [".edf, .zip"],
-        "Other IMU Device": [".bin, .zip"],
-        "Withings": [".csv, .zip"],
+        "Polysomnography": ".edf, .zip",
+        "Other IMU Device": ".bin, .zip",
+        "Withings": ".csv, .zip",
     }
     upload_data = pn.widgets.FileInput(
         name="Upload sleep data",
@@ -124,7 +124,10 @@ class UploadSleepData(param.Parameterized):
         )
         return dataset
 
-    @param.output("selected_device", param.String, "data", param.Dynamic)
+    @param.output(
+        ("selected_device", param.String),
+        ("data", param.Dynamic),
+    )
     def output(self):
         return (
             self.selected_device,

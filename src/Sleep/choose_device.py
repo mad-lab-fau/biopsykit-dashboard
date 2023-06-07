@@ -16,7 +16,7 @@ class ChooseRecordingDevice(param.Parameterized):
         self.selected_device = event.new
         self.ready = bool(event.new)
 
-    @param.output("selected_device", param.String)
+    @param.output(("selected_device", param.String))
     def output(self):
         return (self.selected_device,)
 

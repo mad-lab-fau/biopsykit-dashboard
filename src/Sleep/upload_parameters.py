@@ -29,9 +29,11 @@ class SetSleepDataParameters(param.Parameterized):
             + list(pytz.all_timezones),
         },
     }
-    selected_parameters = param.Dict(default={})
+    selected_parameters = {}
 
     def show_parameters(self) -> pn.Column:
+        if self.selected_device == "":
+            return pn.Column()
         possible_parameters = self.parameters[self.selected_device]
         col = pn.Column()
         for parameter, options in possible_parameters.items():
@@ -56,7 +58,9 @@ class SetSleepDataParameters(param.Parameterized):
     def parameter_changed(self, event):
         self.selected_parameters[event.obj.name] = event.new
 
-    @param.output("selected_device", param.String, "selected_parameters", param.Dict)
+    @param.output(
+        ("selected_device", param.String), ("selected_parameters", param.Dict)
+    )
     def output(self):
         return (
             self.selected_device,
@@ -65,5 +69,6 @@ class SetSleepDataParameters(param.Parameterized):
 
     def panel(self):
         text = "# Set sleep data parameters \n Below you can set the parameters for the sleep data. If you are unsure, you can leave the default values."
-        self.selected_parameters = self.parameters[self.selected_device]
+        if self.selected_device != "":
+            self.selected_parameters = self.parameters[self.selected_device]
         return pn.Column(pn.pane.Markdown(text), self.show_parameters())

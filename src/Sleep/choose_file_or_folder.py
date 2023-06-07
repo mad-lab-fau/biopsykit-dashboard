@@ -5,7 +5,7 @@ import param
 class ZipFolder(param.Parameterized):
     selected_device = param.String(default="")
 
-    @param.output("selected_device", param.String)
+    @param.output(("selected_device", param.String))
     def output(self):
         return (self.selected_device,)
 

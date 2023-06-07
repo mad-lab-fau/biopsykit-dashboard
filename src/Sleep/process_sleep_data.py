@@ -63,12 +63,9 @@ class ProcessDataParameters(param.Parameterized):
 
     # TODO brauchen noch sampling_rate und zuordnung zwischen data
     @param.output(
-        "selected_device",
-        param.String,
-        "data",
-        param.Dynamic,
-        "processed_data",
-        param.Dynamic,
+        ("selected_device", param.String),
+        ("data", param.Dynamic),
+        ("processed_data", param.Dynamic),
     )
     def output(self):
         self.processed_data = []

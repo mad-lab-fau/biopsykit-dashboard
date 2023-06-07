@@ -615,7 +615,7 @@ def load_saliva_wide_format(
 def load_withings_sleep_analyzer_raw_file(
     file: bytes | path_t,
     data_source: str,
-    timezone: Optional[Union[datetime.tzinfo, str]] = None,
+    timezone: Optional[Union[type(datetime.tzinfo), str]] = None,
     split_into_nights: Optional[bool] = True,
     file_name: Optional[str] = None,
 ) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
