@@ -1,5 +1,6 @@
 import panel as pn
 
+from src.Psychological.psychological_pipeline import PsychologicalPipeline
 from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
 from src.Saliva.saliva_pipeline import SalivaPipeline
 from src.Sleep.sleep_pipeline import SleepPipeline
@@ -81,6 +82,8 @@ def startPipeline(event):
         pipeline = QuestionnairePipeline()
     elif "Saliva" in btn_name:
         pipeline = SalivaPipeline()
+    elif "Psychological" in btn_name:
+        pipeline = PsychologicalPipeline()
     else:
         pn.state.notifications.error("No Pipeline found for this Button")
         return
@@ -147,6 +150,7 @@ def get_mainMenu(event):
         sizing_mode="stretch_width",
         button_type="primary",
     )
+    psychBtn.on_click(startPipeline)
     salBtn = pn.widgets.Button(
         name="Saliva Data",
         sizing_mode="stretch_width",

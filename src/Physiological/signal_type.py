@@ -1,35 +1,48 @@
 import panel as pn
 import param
 
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
-class PhysSignalType(param.Parameterized):
-    text = ""
+
+class PhysSignalType(PhysiologicalBase):
+    text = "# Selecting Physiological Signal Type"
     ready = param.Boolean(default=False)
+    run = param.Event(doc="Runs for click_delay seconds when clicked")
     pane = pn.Column()
-    selected_signal = param.String(default="ECG")
-    options = ["ECG", "CFT", "RSP", "EEG"]
+    options = ["", "ECG", "CFT", "RSP", "EEG"]
+    selected_signal = param.Selector(
+        default="", objects=options, label="Select Signal Type"
+    )
 
-    def signal_selected(self, event):
-        self.selected_signal = event.obj.name
-        self.ready = True
+    def __init__(self, **params):
+        super().__init__(**params)
+        self.step = 1
+        # self.select.param.watch(self.signal_selected, "value")
+        self.set_progress_value(self.step)
+        select = pn.widgets.Select.from_param(self.param.selected_signal)
+        self._view = pn.Column(
+            pn.Row(self.get_step_static_text(self.step)),
+            pn.Row(self.progress),
+            pn.pane.Markdown(self.text),
+            select,
+        )
+
+    @param.depends("selected_signal", watch=True)
+    def signal_selected(self):
+        if self.selected_signal != "":
+            self.ready = True
+        else:
+            self.ready = False
 
     @param.output(
-        ("selected_signal", param.String()),
+        ("selected_signal", param.String),
+        ("progress_step", param.Integer),
     )
     def output(self):
-        return (self.selected_signal,)
+        return (
+            self.selected_signal,
+            (self.step + 1),
+        )
 
     def panel(self):
-        self.step = 5
-        if self.text == "":
-            f = open("../assets/Markdown/PhysSignalType.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.pane = pn.Column(pn.pane.Markdown(self.text))
-        row = pn.Row()
-        for option in self.options:
-            btn = pn.widgets.Button(name=option, button_type="primary")
-            btn.on_click(self.signal_selected)
-            row.append(btn)
-        self.pane.append(row)
-        return self.pane
+        return self._view

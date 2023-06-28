@@ -22,7 +22,6 @@ pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
 
-# TODO: Bug fixing in add_times, Stage Results Preview und Download Files ergänzen; Funktionalität: Code Datei erzeugen
 class PhysiologicalPipeline:
     pipeline = None
 
@@ -76,7 +75,6 @@ class PhysiologicalPipeline:
         )
 
         self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())
-        # TODO: ResultsPreview wird zu Download Results
         self.pipeline.add_stage("Preview", ProcessingAndPreview())
         self.pipeline.add_stage("Results", DownloadResults())
         self.pipeline.define_graph(

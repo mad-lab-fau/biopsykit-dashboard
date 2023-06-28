@@ -1,16 +1,22 @@
 import param
 import panel as pn
 
-from src.Physiological.signal_type import PhysSignalType
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class Session(PhysSignalType):
-    step = 1
-    max_steps = 10
-    session = pn.widgets.Select(
-        name="", value="Single Session", options=["Multiple Sessions", "Single Session"]
+class Session(PhysiologicalBase):
+    progress_step = param.Integer()
+    session = param.Selector(
+        label="Select session type",
+        default="Single Session",
+        objects=["Multiple Sessions", "Single Session"],
     )
-    text = ""
+    text = (
+        "# Number of Sessions \n"
+        "In this step you can define if your data consists of a single Session or multiple Sessions. \n\n"
+        "In this context a single Session is defined that only one Sensor is used, "
+        "while multiple Sessions describe that two or more sensors are used. \n"
+    )
     ready = param.Boolean(default=True)
     progress = pn.indicators.Progress(
         name="Progress",
@@ -19,31 +25,28 @@ class Session(PhysSignalType):
     )
     selected_signal = param.String()
 
-    def get_step_static_text(self):
-        return pn.widgets.StaticText(
-            name="Progress",
-            value="Step " + str(self.step) + " of " + str(self.max_steps),
-        )
-
-    def set_progress_value(self):
-        self.progress.value = int((self.step / self.max_steps) * 100)
+    def __init__(self):
+        super().__init__()
+        self.ready = True
+        self._select = pn.widgets.Select.from_param(self.param.session)
 
     def panel(self):
-        if self.text == "":
-            f = open("../assets/Markdown/number_of_sessions.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.ready = True
-        self.set_progress_value()
+        self.set_progress_value(self.progress_step)
         return pn.Column(
-            pn.Row(self.get_step_static_text()),
+            pn.Row(self.get_step_static_text(self.progress_step)),
             pn.Row(self.progress),
             pn.pane.Markdown(self.text),
-            self.session,
+            self._select,
         )
 
     @param.output(
-        ("sess", param.Dynamic),
+        ("selected_session", param.Dynamic),
+        ("next_step", param.Integer),
+        ("selected_signal", param.String),
     )
     def output(self):
-        return self.session
+        return (
+            self.session,
+            self.progress_step + 1,
+            self.selected_signal,
+        )
