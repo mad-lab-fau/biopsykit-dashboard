@@ -2,10 +2,20 @@ import numpy as np
 import panel as pn
 import param
 
-from src.Physiological.add_times import AskToAddTimes
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class FrequencyBands(AskToAddTimes):
+class FrequencyBands(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
+    subject_time_dict = param.Dynamic()
     text = ""
     band_panel = pn.Column()
 
@@ -15,6 +25,25 @@ class FrequencyBands(AskToAddTimes):
         "beta": [13, 30],
         "gamma": [30, 44],
     }
+
+    def __init__(self):
+        super().__init__()
+        self.step = 9
+        text = (
+            "# Set Frequency Bands"
+            "In this step you can set the frequency bands for the analysis. "
+            "The default values are the standard frequency bands for EEG analysis. "
+            "You can change the values by clicking on the text field and entering the desired value. "
+            "The values are in Hz."
+        )
+        self.set_progress_value(self.step)
+        pane = pn.Column(
+            pn.Row(self.get_step_static_text(self.step)),
+            pn.Row(self.progress),
+            pn.pane.Markdown(self.text),
+            self.band_panel,
+        )
+        self._view = pane
 
     def show_freq_bands(self):
         pane = pn.Column()
@@ -59,7 +88,7 @@ class FrequencyBands(AskToAddTimes):
         self.show_freq_bands()
 
     def change_phase_name(self, target, event):
-        self.subj_time_dict[target[0]][target[1]].rename(
+        self.subject_time_dict[target[0]][target[1]].rename(
             {target[2]: event.new}, inplace=True
         )
         self.dict_to_column()
@@ -89,7 +118,7 @@ class FrequencyBands(AskToAddTimes):
             self.freq_bands,
             self.data,
             self.sampling_rate,
-            self.subj_time_dict,
+            self.subject_time_dict,
             self.selected_signal,
         )
 
@@ -112,17 +141,18 @@ class FrequencyBands(AskToAddTimes):
         )
 
     def panel(self):
-        # self.step = 8
-        # self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/ChangeFreqBands.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.show_freq_bands()
-        return pn.Column(
-            # pn.Row(self.get_step_static_text()),
-            # pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
-            # pn.Row(self.yes_btn, self.no_btn),
-            self.band_panel,
-        )
+        return self._view
+        # # self.step = 8
+        # # self.set_progress_value()
+        # if self.text == "":
+        #     f = open("../assets/Markdown/ChangeFreqBands.md", "r")
+        #     fileString = f.read()
+        #     self.text = fileString
+        # self.show_freq_bands()
+        # return pn.Column(
+        #     # pn.Row(self.get_step_static_text()),
+        #     # pn.Row(self.progress),
+        #     pn.pane.Markdown(self.text),
+        #     # pn.Row(self.yes_btn, self.no_btn),
+        #     self.band_panel,
+        # )

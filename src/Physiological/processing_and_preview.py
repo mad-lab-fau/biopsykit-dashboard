@@ -8,11 +8,11 @@ from nilspodlib import Dataset
 import plotly.express as px
 import matplotlib.pyplot as plt
 from fau_colors import cmaps
-from src.Physiological.add_times import AskToAddTimes
-from src.Physiological.data_arrived import DataArrived
+
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class ProcessingPreStep(param.Parameterized):
+class ProcessingPreStep(PhysiologicalBase):
     text = ""
     ready = param.Boolean(default=False)
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
@@ -25,8 +25,30 @@ class ProcessingPreStep(param.Parameterized):
     session = param.Dynamic()
     recording = param.Dynamic()
     subject = param.Dynamic()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    synced = param.Boolean(default=False)
+    sensors = param.Dynamic()
+    timezone = param.String()
+    outlier_params = param.Dynamic()
     skip_outlier_detection = param.Boolean(default=True)
     skip_hrv = param.Boolean(default=True)
+
+    def __init__(self):
+        super().__init__()
+        self.step = 8
+        text = (
+            "# Processing \n"
+            "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
+        )
+        self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
+        self.set_progress_value(self.step)
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(self.progress))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(pn.Column(self.text))
+        pane.append(self.ready_btn)
+        self._view = pane
 
     def get_phases(self) -> list:
         if self.subject is not None:
@@ -43,22 +65,33 @@ class ProcessingPreStep(param.Parameterized):
     def ready_btn_click(self, _):
         self.ready = True
 
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+        ("subject_time_dict", param.Dynamic),
+        ("outlier_params", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
+            self.subject_time_dict,
+            self.outlier_params,
+        )
+
     def panel(self):
-        self.step = 8
-        # self.set_progress_value()
-        self.ready_btn.on_click(self.ready_btn_click)
-        if self.text == "":
-            f = open("../assets/Markdown/ProcessingPreSteps.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        column = pn.Column(self.text)
-        # column = pn.Column(pn.Row(self.get_step_static_text()))
-        # column.append(self.progress)
-        # column.append(self.text)
-        return column
+        return self._view
 
 
-class ProcessingAndPreview(ProcessingPreStep):
+class ProcessingAndPreview(PhysiologicalBase):
     ecg_processor = param.Dynamic()
     data_processed = param.Boolean(default=False)
     eeg_processor = {}
@@ -224,7 +257,6 @@ class ProcessingAndPreview(ProcessingPreStep):
             col.append(cft_plot)
         return col
 
-    # TODO: Fix this -> shouldn't it return a dict with the names and the start times?
     def get_timelog(self):
         time_log = self.subj_time_dict
         if not bool(time_log):

@@ -40,7 +40,7 @@ class Session(PhysiologicalBase):
         )
 
     @param.output(
-        ("selected_session", param.Dynamic),
+        ("session", param.Dynamic),
         ("next_step", param.Integer),
         ("selected_signal", param.String),
     )

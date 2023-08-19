@@ -1,13 +1,21 @@
 import param
 import panel as pn
-from biopsykit.signals.ecg import EcgProcessor
 
-from src.Physiological.add_times import AskToAddTimes
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class AskToDetectOutliers(AskToAddTimes):
-    text = ""
-    ready = param.Boolean(default=True)
+class AskToDetectOutliers(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
+    subject_time_dict = param.Dynamic()
+
     next = param.Selector(
         default="Do you want to process the HRV also?",
         objects=["Do you want to process the HRV also?", "Expert Outlier Detection"],
@@ -15,9 +23,8 @@ class AskToDetectOutliers(AskToAddTimes):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="Skip")
     expert_mode_btn = pn.widgets.Button(
-        styles={"background": "#d5433e"},
         name="Expert Mode",
-        button_type="success",
+        button_type="warning",
     )
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
     methods = [
@@ -42,12 +49,26 @@ class AskToDetectOutliers(AskToAddTimes):
     skip_outlier_detection = param.Boolean(default=True)
     outlier_params = param.Dynamic()
 
-    def click_skip(self, event):
+    def __init__(self):
+        super().__init__()
+        self.step = 7
+        text = "# Do you want to check for outliers?"
+        self.set_progress_value(self.step)
+        self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
+        self.expert_mode_btn.link(self, callbacks={"clicks": self.click_detect_outlier})
+        self._view = pn.Column(
+            pn.Row(self.get_step_static_text(self.step)),
+            pn.Row(self.progress),
+            pn.pane.Markdown(self.text),
+            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
+        )
+
+    def click_skip(self, target, event):
         self.next = "Do you want to process the HRV also?"
         self.skip_outlier_detection = True
         self.ready = True
 
-    def click_detect_outlier(self, event):
+    def click_detect_outlier(self, target, event):
         self.next = "Expert Outlier Detection"
         self.skip_outlier_detection = False
         self.ready = True
@@ -72,27 +93,29 @@ class AskToDetectOutliers(AskToAddTimes):
         return self.outlier_params
 
     @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+        ("subject_time_dict", param.Dynamic),
         ("outlier_params", param.Dynamic),
     )
     def output(self):
-        return self.get_outlier_params()
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
+            self.subject_time_dict,
+            self.get_outlier_params(),
+        )
 
     def panel(self):
-        self.step = 6
-        self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/AskToDetectOutliers.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.expert_mode_btn.on_click(self.click_detect_outlier)
-        self.skip_btn.on_click(self.click_skip)
-        self.default_btn.on_click(self.click_default)
-        return pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
-            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
-        )
+        return self._view
 
 
 class OutlierDetection(AskToDetectOutliers):
@@ -111,7 +134,7 @@ class OutlierDetection(AskToDetectOutliers):
     def panel(self):
         self.step = 6
         # self.max_steps = 22
-        self.set_progress_value()
+        self.set_progress_value(self.step)
         if self.textHeader == "":
             f = open("../assets/Markdown/OutlierDetection.html", "r")
             fileString = f.read()
@@ -121,7 +144,7 @@ class OutlierDetection(AskToDetectOutliers):
             fileString = f.read()
             self.textParams = fileString
         return pn.Column(
-            pn.Row(self.get_step_static_text()),
+            pn.Row(self.get_step_static_text(self.step)),
             pn.Row(self.progress),
             pn.pane.HTML(self.textHeader),
             self.outlier_methods,

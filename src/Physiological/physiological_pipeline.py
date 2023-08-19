@@ -6,7 +6,7 @@ from src.Physiological.select_cft_sheet import SelectCFTSheet
 from src.Physiological.sessions import Session
 from src.Physiological.recordings import Recordings
 from src.Physiological.compress_files import Compress
-from src.Physiological.add_times import AddTimes, AskToAddTimes
+from src.Physiological.add_times import AskToAddTimes, AddTimes
 from src.Physiological.file_upload import FileUpload
 from src.Physiological.data_arrived import DataArrived
 from src.Physiological.outlier_detection import OutlierDetection, AskToDetectOutliers
@@ -21,6 +21,7 @@ pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 pn.extension("katex")
+
 
 class PhysiologicalPipeline:
     pipeline = None
@@ -40,7 +41,12 @@ class PhysiologicalPipeline:
         )
         self.pipeline.add_stage("Multiple Files", Compress())
         self.pipeline.add_stage("Upload Files", FileUpload(), ready_parameter="ready")
-        self.pipeline.add_stage("Data arrived", DataArrived(), next_parameter="next")
+        self.pipeline.add_stage(
+            "Data arrived",
+            DataArrived(),
+            next_parameter="next_page",
+            ready_parameter="proceed",
+        )
         self.pipeline.add_stage(
             "Select CFT Sheet", SelectCFTSheet(), ready_parameter="ready"
         )

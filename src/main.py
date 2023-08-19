@@ -23,6 +23,9 @@ app = pn.template.BootstrapTemplate(
     logo="../assets/Icons/biopsykit_Icon.png",
     # favicon="../assets/Favicon/bio.ico",
 )
+
+app.config.console_output = "disable"
+app.config.log_level = "NOTSET"
 app.sidebar.constant = False
 app.main.constant = False
 app.theme_toggle = False

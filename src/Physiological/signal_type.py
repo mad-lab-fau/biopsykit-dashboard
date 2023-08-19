@@ -7,7 +7,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 class PhysSignalType(PhysiologicalBase):
     text = "# Selecting Physiological Signal Type"
     ready = param.Boolean(default=False)
-    run = param.Event(doc="Runs for click_delay seconds when clicked")
     pane = pn.Column()
     options = ["", "ECG", "CFT", "RSP", "EEG"]
     selected_signal = param.Selector(
@@ -17,7 +16,6 @@ class PhysSignalType(PhysiologicalBase):
     def __init__(self, **params):
         super().__init__(**params)
         self.step = 1
-        # self.select.param.watch(self.signal_selected, "value")
         self.set_progress_value(self.step)
         select = pn.widgets.Select.from_param(self.param.selected_signal)
         self._view = pn.Column(

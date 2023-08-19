@@ -2,11 +2,11 @@ import panel as pn
 import param
 
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
-from src.Physiological.sessions import Session
 
 
 class Recordings(PhysiologicalBase):
     next_step = param.Integer()
+    session = param.Dynamic()
     text = (
         "# Number of Recordings \n"
         "After you defined the kind of Sessions, in this step you will set if your data"
@@ -37,14 +37,14 @@ class Recordings(PhysiologicalBase):
             self.next = "Multiple Files"
 
     @param.output(
-        ("selected_session", param.Dynamic),
+        ("session", param.Dynamic),
         ("selected_signal", param.String),
         ("progress_step", param.Integer),
         ("recordings", param.String),
     )
     def output(self):
         return (
-            self.selected_session,
+            self.session,
             self.selected_signal,
             self.next_step + 1,
             self.recording,

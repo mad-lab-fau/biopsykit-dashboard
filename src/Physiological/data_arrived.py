@@ -4,34 +4,60 @@ import panel as pn
 import pandas as pd
 from nilspodlib import Session
 
-from src.Physiological.file_upload import FileUpload
-from src.utils import get_start_and_end_time
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class DataArrived(FileUpload):
+class DataArrived(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    synced = param.Boolean(default=False)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    ready = param.Boolean(default=True)
+    subject_selector = pn.widgets.Select()
     sampling_rate_input = pn.widgets.TextInput(
         name="Sampling rate Input", placeholder="Enter your sampling rate here..."
     )
-    text = ""
     info_dict = None
     info_selection = pn.widgets.Select(
         name="Info header", options=[], visible=False, value=""
     )
     info_selected_value = pn.pane.Str("")
-    ready = param.Boolean(default=True)
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    data = param.Dynamic()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    sampling_rate = param.Number()
     next = param.Selector(
         objects=["Do you want to add time logs?", "Select CFT Sheet"],
         default="Do you want to add time logs?",
     )
-    subject = param.Dynamic()
-    subj_time_dict = {}
-    skip_hrv = param.Boolean(default=True)
+    data_view = pn.widgets.Tabulator(
+        pagination="local",
+        layout="fit_data_stretch",
+        page_size=20,
+        header_align="right",
+        visible=False,
+    )
+    session_start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
+    session_end = pn.widgets.DatetimePicker(name="Session end:", disabled=True)
+
+    def __init__(self):
+        super().__init__()
+        self.step = 5
+        text = (
+            "# Files uploaded successfully \n"
+            "Below is a short summary of the files which you uploaded."
+            "These files can be further analysed in the following steps."
+        )
+        self.set_progress_value(self.step)
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(self.progress))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(self.subject_selector)
+        pane.append(self.sampling_rate_input)
+        pane.append(self.session_start)
+        pane.append(self.session_end)
+        pane.append(self.data_view)
+        self._view = pane
 
     @pn.depends("sampling_rate_input.value", watch=True)
     def set_sampling_rate_value(self):
@@ -56,42 +82,20 @@ class DataArrived(FileUpload):
         else:
             self.info_selected_value.object = self.info_dict[self.info_selection.value]
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-        )
+    def subject_selected(self, event):
+        if not event.new:
+            return
+        if self.data is None:
+            return
+        if isinstance(self.data[event.new], pd.DataFrame):
+            self.data_view.value = self.data[event.new]
+            self.data_view.visible = True
 
     def get_session_start_and_end(self, pane):
         start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
         end = pn.widgets.DatetimePicker(name="Session end:", disabled=True)
         accordion = pn.Accordion()
-        if type(self.data) == pd.DataFrame:
-            start_end = get_start_and_end_time(self.data)
-            if start_end is None:
-                pn.state.notifications.error(
-                    "Error: Failure at searching for start and end time."
-                )
-                return
-            start.value = start_end[0]
-            end.value = start_end[1]
-            accordion.append(start)
-            accordion.append(end)
-            pane.append(accordion)
-            return pane
-        elif isinstance(self.data, dict) and all(
+        if isinstance(self.data, dict) and all(
             isinstance(x, pd.DataFrame) for x in self.data.values()
         ):
             for key in self.data.keys():
@@ -112,36 +116,48 @@ class DataArrived(FileUpload):
         else:
             return pane
 
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
+        )
+
     def panel(self):
-        self.step = 4
-        self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/ECG_FilesUploaded.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        pane = pn.Column(pn.Row(self.get_step_static_text()))
-        pane.append(pn.Row(self.progress))
-        pane.append(pn.pane.Markdown(self.text))
         if self.selected_signal == "CFT":
             self.next = "Select CFT Sheet"
         if self.sampling_rate == -1 and self.selected_signal != "CFT":
             if self.sampling_rate != -1:
                 self.sampling_rate_input.value = str(self.sampling_rate)
-            pane.append(self.sampling_rate_input)
             if self.sampling_rate_input.value == "":
                 self.ready = False
             else:
                 self.ready = True
         else:
             self.ready = True
-        pane = self.get_session_start_and_end(pane)
+        self.sampling_rate_input.value = str(self.sampling_rate)
+        self.subject_selector.options = [""] + list(self.data.keys())
+        self.subject_selector.value = ""
+        self.subject_selector.visible = self.data is not None
+        self.subject_selector.param.watch(self.subject_selected, "value")
 
         if type(self.data) == pd.DataFrame:
-            pane.append(pn.widgets.DataFrame(name="Data", value=self.data.head(100)))
-        elif type(self.data) == Session:
-            pane.append(
-                pn.widgets.DataFrame(
-                    name="Session", value=self.data.data_as_df()[0].head(20)
-                )
-            )
-        return pane
+            self.data_view.value = self.data
+            self.data_view.visible = True
+        # elif type(self.data) == Session:
+        #     self.data_view.value = self.data.data_as_df()[0]
+        #     self.data_view.visible = True
+        elif type(self.data) == dict:
+            self.data_view.visible = False
+        return self._view

@@ -28,7 +28,7 @@ class SessionKind(param.Parameterized):
             setattr(self, "ready", False)
 
     @param.output(
-        ("session_type", param.Dynamic),
+        ("session", param.Dynamic),
         ("synced", param.Boolean),
         ("timezone", param.String),
     )

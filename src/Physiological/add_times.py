@@ -7,24 +7,49 @@ from biopsykit.io.io import (
     _sanitize_index_cols,
 )
 
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
-from src.Physiological.data_arrived import DataArrived
 
+class AskToAddTimes(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
 
-class AskToAddTimes(DataArrived):
     text = ""
-    ready = param.Boolean(default=True)
+    ready = param.Boolean(default=False)
     next = param.Selector(
-        default="Do you want to detect Outlier?",
+        default="Add Times",
         objects=["Do you want to detect Outlier?", "Add Times", "Frequency Bands"],
     )
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
-    subject = param.Dynamic()
-    subj_time_dict = {}
-    skip_hrv = param.Boolean(default=True)
+    subject_time_dict = {}
 
-    def click_skip(self, event):
+    def __init__(self):
+        super().__init__()
+        self.step = 6
+        text = (
+            "# Do you want to add Phases for your Data?"
+            "If you want to upload an Excel oder CSV File, or if you want to manually add Phases "
+            "to your data then click on the Add Times Button otherwise skip"
+        )
+        self.set_progress_value(self.step)
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(self.progress))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(pn.Row(self.add_times_btn, self.skip_btn))
+        self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
+        self.add_times_btn.link(self, callbacks={"clicks": self.click_add_times})
+        self.ready = False
+        self._view = pane
+
+    def click_skip(self, target, event):
         if self.selected_signal == "EEG":
             self.next = "Frequency Bands"
             self.ready = True
@@ -32,28 +57,44 @@ class AskToAddTimes(DataArrived):
             self.next = "Do you want to detect Outlier?"
             self.ready = True
 
-    def click_add_times(self, event):
+    def click_add_times(self, target, event):
         self.next = "Add Times"
         self.ready = True
 
-    def panel(self):
-        self.step = 5
-        self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/AskToAddTimes.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.add_times_btn.on_click(self.click_add_times)
-        self.skip_btn.on_click(self.click_skip)
-        return pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
-            pn.Row(self.add_times_btn, self.skip_btn),
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
         )
 
+    def panel(self):
+        return self._view
 
-class AddTimes(AskToAddTimes):
+
+class AddTimes(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
+    subject_time_dict = {}
+
     time_upload = pn.widgets.FileInput(
         styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx"
     )
@@ -64,7 +105,7 @@ class AddTimes(AskToAddTimes):
         )
     ]
     add_button = pn.widgets.Button(name="Add timestamp", button_type="danger")
-    remove_button = pn.widgets.Button(name="Remove last Phase")
+    remove_button = pn.widgets.Button(name="Remove last Phase", button_type="danger")
     pane = pn.Column()
     time_log = None
     subject_log = None
@@ -82,6 +123,45 @@ class AddTimes(AskToAddTimes):
         objects=["Do you want to detect Outlier?", "Frequency Bands"],
     )
     freq_bands = {}
+
+    def __init__(self):
+        super().__init__()
+        self.step = 6
+        text = "# Select Times"
+        self.time_upload.link(self, callbacks={"value": self.parse_time_file})
+        self.add_button.link(self, callbacks={"clicks": self.add_timestamp})
+        self.set_progress_value(self.step)
+        self.times = pn.Column(
+            self.datetime[0][0], self.datetime[0][1], self.add_button
+        )
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(self.progress))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(
+            pn.Row(
+                pn.widgets.StaticText(
+                    name="Add Times",
+                    value="Here you can add Time sections manually or you can upload an Excel File",
+                )
+            )
+        )
+        pane.append(
+            pn.Row(
+                self.time_upload,
+                self.times,
+            )
+        )
+        pane.append(pn.Row(self.select_vp))
+        pane.append(pn.Row(self.select_subject, self.select_condition))
+        self._view = pane
+
+    def panel(self):
+        self.ready = False
+        if self.selected_signal == "EEG":
+            self.next = "Frequency Bands"
+        self.init_subject_time_dict()
+        self.dict_to_column()
+        return self._view
 
     def parse_time_file(self, event):
         df = None
@@ -142,103 +222,99 @@ class AddTimes(AskToAddTimes):
                 if not isinstance(time, datetime.datetime)
                 else time
             )
-            self.subj_time_dict[subject_name] = {}
-            self.subj_time_dict[subject_name][cond_name] = t_condition
+            self.subject_time_dict[subject_name] = {}
+            self.subject_time_dict[subject_name][cond_name] = t_condition
 
-    def dict_to_column(self):
-        if (
-            self.session.value == "Single Session"
-            and len(self.subj_time_dict.keys()) > 1
-        ):
-            # VP muss noch ausgewählt werden
-            self.select_vp.options = list(self.subj_time_dict.keys())
-            self.select_vp.visible = True
-            self.select_vp.link(
-                "subject",
-                callbacks={"value": self.select_vp_changed},
-            )
-            self.subject = list(self.subj_time_dict.keys())[0]
-            self.ready = True
-        timestamps = []
-        for subject in self.subj_time_dict.keys():
-            col = pn.Column()
-            for condition in self.subj_time_dict[subject].keys():
-                cond = pn.widgets.TextInput(value=condition)
-                cond.link(
-                    (subject, condition),
-                    callbacks={"value": self.change_condition_name},
-                )
-                btn_remove_phase = pn.widgets.Button(
-                    name="Remove Phase",
-                )
-                btn_remove_phase.link(
-                    (subject, condition),
-                    callbacks={"value": self.remove_btn_click},
-                )
-                col.append(pn.Row(cond, btn_remove_phase))
-                for phase, time in self.subj_time_dict[subject][condition].items():
-                    row = pn.Row()
-                    phase_name_input = pn.widgets.TextInput(value=phase)
-                    phase_name_input.link(
-                        (subject, condition, phase),
-                        callbacks={"value": self.change_phase_name},
-                    )
-                    row.append(phase_name_input)
-                    dt_picker = pn.widgets.DatetimePicker(value=time)
-                    dt_picker.link(
-                        (subject, condition, phase),
-                        callbacks={"value": self.timestamp_changed},
-                    )
-                    row.append(dt_picker)
-                    remove_btn = pn.widgets.Button(name="Remove")
-                    remove_btn.link(
-                        (subject, condition, phase),
-                        callbacks={"value": self.remove_btn_click},
-                    )
-                    row.append(remove_btn)
-                    col.append(row)
-                btn_subphase = pn.widgets.Button(
-                    name="Add Subphase", button_type="primary"
-                )
-                btn_subphase.link(
-                    (subject, condition),
-                    callbacks={"value": self.add_subphase_btn_click},
-                )
-                row = pn.Row(pn.layout.HSpacer(), pn.layout.HSpacer(), btn_subphase)
-                col.append(row)
-            btn = pn.widgets.Button(name="Add Phase", button_type="primary")
-            btn.link(
-                (subject,),
-                callbacks={"value": self.add_phase_btn_click},
-            )
-            col.append(btn)
-            timestamps.append((subject, col))
-        self.times.objects = [pn.Accordion(objects=timestamps)]
+    # def dict_to_column(self):
+    #     if self.session == "Single Session" and len(self.subject_time_dict.keys()) > 1:
+    #         self.select_vp.options = list(self.subject_time_dict.keys())
+    #         self.select_vp.visible = True
+    #         self.select_vp.link(
+    #             "subject",
+    #             callbacks={"value": self.select_vp_changed},
+    #         )
+    #         self.subject = list(self.subject_time_dict.keys())[0]
+    #         self.ready = True
+    #     timestamps = []
+    #     for subject in self.subject_time_dict.keys():
+    #         col = pn.Column()
+    #         for condition in self.subject_time_dict[subject].keys():
+    #             cond = pn.widgets.TextInput(value=condition)
+    #             cond.link(
+    #                 (subject, condition),
+    #                 callbacks={"value": self.change_condition_name},
+    #             )
+    #             btn_remove_phase = pn.widgets.Button(
+    #                 name="Remove Phase", button_type="danger"
+    #             )
+    #             btn_remove_phase.link(
+    #                 (subject, condition),
+    #                 callbacks={"value": self.remove_btn_click},
+    #             )
+    #             col.append(pn.Row(cond, btn_remove_phase))
+    #             for phase, time in self.subject_time_dict[subject][condition].items():
+    #                 row = pn.Row()
+    #                 phase_name_input = pn.widgets.TextInput(value=phase)
+    #                 phase_name_input.link(
+    #                     (subject, condition, phase),
+    #                     callbacks={"value": self.change_phase_name},
+    #                 )
+    #                 row.append(phase_name_input)
+    #                 dt_picker = pn.widgets.DatetimePicker(value=time)
+    #                 dt_picker.link(
+    #                     (subject, condition, phase),
+    #                     callbacks={"value": self.timestamp_changed},
+    #                 )
+    #                 row.append(dt_picker)
+    #                 remove_btn = pn.widgets.Button(name="Remove", button_type="danger")
+    #                 remove_btn.link(
+    #                     (subject, condition, phase),
+    #                     callbacks={"value": self.remove_btn_click},
+    #                 )
+    #                 row.append(remove_btn)
+    #                 col.append(row)
+    #             btn_subphase = pn.widgets.Button(
+    #                 name="Add Subphase", button_type="primary"
+    #             )
+    #             btn_subphase.link(
+    #                 (subject, condition),
+    #                 callbacks={"value": self.add_subphase_btn_click},
+    #             )
+    #             row = pn.Row(pn.layout.HSpacer(), pn.layout.HSpacer(), btn_subphase)
+    #             col.append(row)
+    #         btn = pn.widgets.Button(name="Add Phase", button_type="primary")
+    #         btn.link(
+    #             (subject,),
+    #             callbacks={"value": self.add_phase_btn_click},
+    #         )
+    #         col.append(btn)
+    #         timestamps.append((subject, col))
+    #     self.times.objects = [pn.Accordion(objects=timestamps)]
 
     def timestamp_changed(self, target, event):
         changed_timestamp = event.new
-        self.subj_time_dict[target[0]][target[1]].loc[target[2]] = changed_timestamp
+        self.subject_time_dict[target[0]][target[1]].loc[target[2]] = changed_timestamp
         self.dict_to_column()
 
     def change_condition_name(self, target, event):
-        self.subj_time_dict[target[0]][event.new] = self.subj_time_dict[target[0]].pop(
-            target[1]
-        )
+        self.subject_time_dict[target[0]][event.new] = self.subject_time_dict[
+            target[0]
+        ].pop(target[1])
         self.dict_to_column()
 
     def change_phase_name(self, target, event):
-        self.subj_time_dict[target[0]][target[1]].rename(
+        self.subject_time_dict[target[0]][target[1]].rename(
             {target[2]: event.new}, inplace=True
         )
         self.dict_to_column()
 
     def remove_btn_click(self, target, event):
         if len(target) == 3:
-            self.subj_time_dict[target[0]][target[1]].drop(
+            self.subject_time_dict[target[0]][target[1]].drop(
                 labels=target[2], inplace=True
             )
         elif len(target) == 2:
-            self.subj_time_dict[target[0]].pop(target[1])
+            self.subject_time_dict[target[0]].pop(target[1])
         active = self.times.objects[0].active
         self.dict_to_column()
         self.times.objects[0].active = active
@@ -286,7 +362,7 @@ class AddTimes(AskToAddTimes):
 
     def add_phase_btn_click(self, target, _):
         new_phase_name = "New Phase"
-        self.subj_time_dict[target[0]][new_phase_name] = pd.Series(
+        self.subject_time_dict[target[0]][new_phase_name] = pd.Series(
             {"New Subphase": datetime.datetime.now()}
         )
         active = self.times.objects[0].active
@@ -296,18 +372,18 @@ class AddTimes(AskToAddTimes):
     def add_subphase_btn_click(self, target, event):
         new_phase_name = "New Subphase"
         if new_phase_name in list(
-            self.subj_time_dict[target[0]][target[1]].index.values
+            self.subject_time_dict[target[0]][target[1]].index.values
         ):
             i = 1
             new_phase_name = new_phase_name + " " + str(i)
             while new_phase_name in list(
-                self.subj_time_dict[target[0]][target[1]].index.values
+                self.subject_time_dict[target[0]][target[1]].index.values
             ):
                 i += 1
                 new_phase_name = new_phase_name + " " + str(i)
-        self.subj_time_dict[target[0]][target[1]] = pd.concat(
+        self.subject_time_dict[target[0]][target[1]] = pd.concat(
             [
-                self.subj_time_dict[target[0]][target[1]],
+                self.subject_time_dict[target[0]][target[1]],
                 pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
             ]
         )
@@ -321,7 +397,7 @@ class AddTimes(AskToAddTimes):
             return df
         subject_col = "subject"
         condition_col = "condition"
-        if self.session.value == "Single Session":
+        if self.session == "Single Session":
             df, index_cols = _sanitize_index_cols(
                 data=df,
                 subject_col=subject_col,
@@ -340,42 +416,30 @@ class AddTimes(AskToAddTimes):
         if type(self.data) != dict:
             return
         for subject in self.data.keys():
-            self.subj_time_dict[subject] = {}
+            self.subject_time_dict[subject] = {}
+            if self.session == "Single Session":
+                continue
             for condition in self.data[subject].keys():
-                self.subj_time_dict[subject][condition] = pd.Series(
+                self.subject_time_dict[subject][condition] = pd.Series(
                     dtype="datetime64[ns]"
                 )
 
-    def panel(self):
-        self.step = 5
-        self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/SelectTimes.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.progress.width_policy = "max"
-        pn.bind(self.parse_time_file, self.time_upload.param.value, watch=True)
-        self.add_button.on_click(self.add_timestamp)
-        self.times = pn.Column(
-            self.datetime[0][0], self.datetime[0][1], self.add_button
+    @param.output(
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Dynamic),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Dynamic),
+        ("time_log", param.Dynamic),
+        ("timezone", param.String()),
+        ("subject_time_dict", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.timezone,
+            self.subject_time_dict,
         )
-        if self.selected_signal == "EEG":
-            self.next = "Frequency Bands"
-        self.init_subject_time_dict()
-        self.pane = pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
-            pn.widgets.StaticText(
-                name="Add Times",
-                value="Here you can add Time sections manually or you can upload an Excel File",
-            ),
-            pn.Row(
-                self.time_upload,
-                self.times,
-            ),
-            self.select_vp,
-            pn.Row(self.select_subject, self.select_condition),
-        )
-        self.dict_to_column()
-        return self.pane

@@ -21,13 +21,13 @@ from src.utils import _handle_counter_inconsistencies_dataset
 
 class FileUpload(PhysiologicalBase):
     selected_signal = param.String()
+    session = param.Dynamic()
     recording = param.String()
     file_input = pn.widgets.FileInput(
         styles={"background": "whitesmoke"},
         multiple=False,
         accept=".csv,.bin,.xlsx",
     )
-    session_type = param.Dynamic()
     synced = param.Boolean()
     timezone = param.Selector(
         default="Europe/Berlin",
@@ -99,21 +99,22 @@ class FileUpload(PhysiologicalBase):
             match fileType:
                 case "zip":
                     self.handle_zip_file(self.file_input.value)
-                    return
                 case "csv":
                     self.handle_csv_file(file_content=self.file_input.value)
-                    return
                 case "bin":
-                    self.handle_bin_file(file_content=self.file_input.value)
-                    return
+                    self.handle_bin_file(
+                        file_name=self.file_input.filename,
+                        file_content=self.file_input.value,
+                    )
                 case "xlsx":
                     self.handle_xlsx_file(
                         file_content=self.file_input.value,
                         filename=self.file_input.filename,
                     )
-                    return
                 case _:
                     pn.state.notifications.error("No matching parser found")
+                    self.ready = False
+                    return
             if self.ready:
                 pn.state.notifications.success(
                     "File uploaded successfully", duration=5000
@@ -211,13 +212,13 @@ class FileUpload(PhysiologicalBase):
         else:
             Exception("The archive has the wrong structure")
 
-    def handle_csv_file(self, file_content: bytes):
+    def handle_csv_file(self, file_name: string, file_content: bytes):
         string_io = StringIO(file_content.decode("utf8"))
-        self.data = pd.read_csv(string_io)
+        df = pd.read_csv(string_io)
         if self.selected_signal == "EEG":
-            self.data = MuseDataset(data=self.data, tz=self.timezone)
+            self.data = {file_name: MuseDataset(data=df, tz=self.timezone)}
         else:
-            self.data = self.convert_columns(self.data)
+            self.data = {file_name: self.convert_columns(df)}
         if self.data is None or len(self.data) == 0:
             Exception("No data found in file")
         self.ready = True
@@ -239,7 +240,7 @@ class FileUpload(PhysiologicalBase):
                     pass
         return df
 
-    def handle_bin_file(self, file_content: bytes):
+    def handle_bin_file(self, file_name: string, file_content: bytes):
         dataset = NilsPodAdapted.from_bin_file(
             filepath_or_buffer=BytesIO(file_content),
             legacy_support="resolve",
@@ -248,7 +249,7 @@ class FileUpload(PhysiologicalBase):
         self.sensors = set(dataset.info.enabled_sensors)
         df, fs = bp.io.nilspod.load_dataset_nilspod(dataset=dataset)
         self.sampling_rate = fs
-        self.data = df
+        self.data = {file_name: df}
         self.ready = True
 
     def handle_xlsx_file(self, file_content: bytes, filename: string):
@@ -275,7 +276,7 @@ class FileUpload(PhysiologicalBase):
         ("time_log_present", param.Dynamic),
         ("time_log", param.Dynamic),
         ("synced", param.Boolean),
-        ("session_type", param.String),
+        ("session", param.Dynamic),
         ("sensors", param.Dynamic),
         ("timezone", param.Dynamic),
     )
@@ -286,7 +287,7 @@ class FileUpload(PhysiologicalBase):
             self.time_log_present,
             self.time_log,
             self.synced,
-            self.session_type,
+            self.session,
             self.sensors,
             self.timezone,
         )
