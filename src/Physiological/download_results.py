@@ -11,7 +11,7 @@ from biopsykit.protocols import CFT
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
 
-from src.Physiological.processing_and_preview import ProcessingAndPreview
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 
 
@@ -23,7 +23,7 @@ def delete_timezone_of_datetime_columns_(df):
     return df
 
 
-class DownloadResults(ProcessingAndPreview):
+class DownloadResults(PhysiologicalBase):
     textHeader = ""
     dict_hr_subjects = {}
     load_plots_ecg = pn.widgets.Checkbox(name="Download ECG Plots")

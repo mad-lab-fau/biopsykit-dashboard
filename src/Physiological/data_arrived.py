@@ -16,6 +16,7 @@ class DataArrived(PhysiologicalBase):
     session = param.String()
     sensors = param.Dynamic()
     timezone = param.String()
+    selected_signal = param.String()
     ready = param.Boolean(default=True)
     subject_selector = pn.widgets.Select()
     sampling_rate_input = pn.widgets.TextInput(
@@ -48,9 +49,8 @@ class DataArrived(PhysiologicalBase):
             "Below is a short summary of the files which you uploaded."
             "These files can be further analysed in the following steps."
         )
-        self.set_progress_value(self.step)
         pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(self.progress))
+        pane.append(pn.Row(self.get_progress(self.step)))
         pane.append(pn.pane.Markdown(text))
         pane.append(self.subject_selector)
         pane.append(self.sampling_rate_input)

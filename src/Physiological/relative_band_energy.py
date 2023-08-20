@@ -36,10 +36,9 @@ class FrequencyBands(PhysiologicalBase):
             "You can change the values by clicking on the text field and entering the desired value. "
             "The values are in Hz."
         )
-        self.set_progress_value(self.step)
         pane = pn.Column(
             pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
+            pn.Row(pn.Row(self.get_progress(self.step))),
             pn.pane.Markdown(self.text),
             self.band_panel,
         )

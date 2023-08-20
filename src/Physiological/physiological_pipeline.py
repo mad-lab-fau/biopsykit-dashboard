@@ -77,7 +77,10 @@ class PhysiologicalPipeline:
             next_parameter="next_page",
         )
         self.pipeline.add_stage(
-            "Now the Files will be processed", ProcessingPreStep(), auto_advance=True
+            "Now the Files will be processed",
+            ProcessingPreStep(),
+            auto_advance=True,
+            ready_parameter="ready",
         )
 
         self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())

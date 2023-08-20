@@ -6,6 +6,7 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 class Recordings(PhysiologicalBase):
     next_step = param.Integer()
+    selected_signal = param.String()
     session = param.Dynamic()
     text = (
         "# Number of Recordings \n"
@@ -54,7 +55,7 @@ class Recordings(PhysiologicalBase):
         self.set_progress_value(self.next_step)
         return pn.Column(
             pn.Row(self.get_step_static_text(self.next_step)),
-            pn.Row(self.progress),
+            pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
             self._select,
         )

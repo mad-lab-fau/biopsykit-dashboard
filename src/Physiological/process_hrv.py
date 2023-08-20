@@ -1,10 +1,22 @@
 import param
 import panel as pn
 
-from src.Physiological.outlier_detection import AskToDetectOutliers
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class AskToProcessHRV(AskToDetectOutliers):
+class AskToProcessHRV(PhysiologicalBase):
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    sensors = param.Dynamic()
+    timezone = param.String()
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
+    subject_time_dict = param.Dynamic()
+    selected_signal = param.String()
+
     methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
     hrv_types = pn.widgets.MultiChoice(
         name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
@@ -26,7 +38,28 @@ class AskToProcessHRV(AskToDetectOutliers):
     textHeader = ""
     outlier_params = param.Dynamic()
 
-    def click_skip(self, event):
+    def __init__(self):
+        super().__init__()
+        self.recording = param.String()
+        self.step = 7
+        text = (
+            "# Processing HRV \n \n"
+            "If you want to additionally process the Heart Rate variability, "
+            "you can select the matching parameters and then "
+            "hit the process button, and then proceed. "
+            "Otherwise, you can skip this step and go to the next stage. \n \n"
+        )
+        self.set_progress_value(self.step)
+        self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
+        self.default_btn.link(self, callbacks={"clicks": self.click_default_hrv})
+        self.expert_mode_btn.link(self, callbacks={"clicks": self.click_expert_hrv})
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
+        pane.append(pn.pane.Markdown(text))
+        pane.append((pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn)))
+        self._view = pane
+
+    def click_skip(self, target, event):
         self.next_page = "Now the Files will be processed"
         self.skip_hrv = True
         self.ready = True
@@ -44,7 +77,7 @@ class AskToProcessHRV(AskToDetectOutliers):
     @param.output(
         ("data", param.Dynamic),
         ("sampling_rate", param.Dynamic),
-        ("subj_time_dict", param.Dynamic),
+        ("subject_time_dict", param.Dynamic),
         ("selected_signal", param.Dynamic),
         ("skip_hrv", param.Dynamic),
         ("session", param.Dynamic),
@@ -55,7 +88,7 @@ class AskToProcessHRV(AskToDetectOutliers):
         return (
             self.data,
             self.sampling_rate,
-            self.subj_time_dict,
+            self.subject_time_dict,
             self.selected_signal,
             self.skip_hrv,
             self.session,
@@ -64,21 +97,7 @@ class AskToProcessHRV(AskToDetectOutliers):
         )
 
     def panel(self):
-        self.step = 7
-        self.set_progress_value()
-        if self.text == "":
-            f = open("../assets/Markdown/ProcessHRV.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.skip_btn.on_click(self.click_skip)
-        self.expert_mode_btn.on_click(self.click_expert_hrv)
-        self.default_btn.on_click(self.click_default_hrv)
-        return pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
-            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
-        )
+        return self._view
 
 
 class SetHRVParameters(AskToProcessHRV):

@@ -20,7 +20,7 @@ class Compress(Recordings):
         self.set_progress_value(self.step)
         self._view = pn.Column(
             pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
+            pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
         )
 

@@ -18,15 +18,15 @@ class PhysSignalType(PhysiologicalBase):
         self.step = 1
         self.set_progress_value(self.step)
         select = pn.widgets.Select.from_param(self.param.selected_signal)
+        select.link(self, callbacks={"value": self.signal_selected})
         self._view = pn.Column(
             pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
+            pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
             select,
         )
 
-    @param.depends("selected_signal", watch=True)
-    def signal_selected(self):
+    def signal_selected(self, target, event):
         if self.selected_signal != "":
             self.ready = True
         else:
@@ -43,4 +43,5 @@ class PhysSignalType(PhysiologicalBase):
         )
 
     def panel(self):
+        self.ready = False
         return self._view

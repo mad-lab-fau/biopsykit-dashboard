@@ -13,14 +13,15 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class ProcessingPreStep(PhysiologicalBase):
-    text = ""
     ready = param.Boolean(default=False)
+    hr_data = param.Dynamic()
+    ecg_processor = param.Dynamic()
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
     freq_bands = param.Dynamic()
     cft_sheets = param.Dynamic()
     selected_signal = param.Dynamic()
     data = param.Dynamic()
-    subj_time_dict = param.Dynamic()
+    subject_time_dict = param.Dynamic()
     sampling_rate = param.Dynamic()
     session = param.Dynamic()
     recording = param.Dynamic()
@@ -44,25 +45,13 @@ class ProcessingPreStep(PhysiologicalBase):
         self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
         self.set_progress_value(self.step)
         pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(self.progress))
+        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
         pane.append(pn.pane.Markdown(text))
-        pane.append(pn.Column(self.text))
+        pane.append(pn.Column(text))
         pane.append(self.ready_btn)
         self._view = pane
 
-    def get_phases(self) -> list:
-        if self.subject is not None:
-            return self.ecg_processor[self.subject].phases
-        if type(self.ecg_processor) != dict:
-            return self.ecg_processor.phases
-        keys = list(self.ecg_processor.keys())
-        if len(keys) == 1:
-            return self.ecg_processor[keys[0]].phases
-        elif len(keys) > 1:
-            return keys
-        return ["data"]
-
-    def ready_btn_click(self, _):
+    def ready_btn_click(self, target, event):
         self.ready = True
 
     @param.output(
@@ -93,6 +82,13 @@ class ProcessingPreStep(PhysiologicalBase):
 
 class ProcessingAndPreview(PhysiologicalBase):
     ecg_processor = param.Dynamic()
+    cft_sheets = param.Dynamic()
+    subject_time_dict = param.Dynamic()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String()
+    freq_bands = param.Dynamic()
+    skip_outlier_detection = param.Boolean(default=True)
+    hr_data = param.Dynamic()
     data_processed = param.Boolean(default=False)
     eeg_processor = {}
     cft_processor = {}
@@ -112,6 +108,34 @@ class ProcessingAndPreview(PhysiologicalBase):
         height=20,
         sizing_mode="stretch_width",
     )
+    results = pn.Column()
+
+    def __init__(self):
+        super().__init__()
+        self.step = 9
+        text = (
+            "# Preview of the Results \n \n"
+            "Below you can find a short summary of the analyzed data "
+            "(Preview of the Dataframe, and several statistical values).p"
+        )
+        self.set_progress_value(self.step)
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(self.results)
+        self._view = pane
+
+    def get_phases(self) -> list:
+        if self.subject is not None:
+            return self.ecg_processor[self.subject].phases
+        if type(self.ecg_processor) != dict:
+            return self.ecg_processor.phases
+        keys = list(self.ecg_processor.keys())
+        if len(keys) == 1:
+            return self.ecg_processor[keys[0]].phases
+        elif len(keys) > 1:
+            return keys
+        return ["data"]
 
     def processing(self):
         col = pn.Column()
@@ -258,11 +282,11 @@ class ProcessingAndPreview(PhysiologicalBase):
         return col
 
     def get_timelog(self):
-        time_log = self.subj_time_dict
+        time_log = self.subject_time_dict
         if not bool(time_log):
             return None
-        if self.session.value == "Single Session":
-            time_log = self.subj_time_dict[self.subject]
+        if self.session == "Single Session":
+            time_log = self.subject_time_dict[self.subject]
             for key in time_log.keys():
                 time_log[key] = time_log[key].apply(lambda dt: dt.time())
             time_log = time_log[list(time_log.keys())[0]]
@@ -271,12 +295,12 @@ class ProcessingAndPreview(PhysiologicalBase):
     def process_eeg(self):
         col = pn.Column()
         if self.selected_signal == "EEG":
-            if self.subj_time_dict:
-                for subject in self.subj_time_dict.keys():
+            if self.subject_time_dict:
+                for subject in self.subject_time_dict.keys():
                     self.eeg_processor[subject] = EegProcessor(
                         data=self.data[subject],
                         sampling_rate=float(self.sampling_rate),
-                        time_intervals=self.subj_time_dict[subject],
+                        time_intervals=self.subject_time_dict[subject],
                     )
                     self.eeg_processor[subject].relative_band_energy(
                         freq_bands=self.freq_bands
@@ -308,7 +332,7 @@ class ProcessingAndPreview(PhysiologicalBase):
             pn.state.notifications.error("False Signal Selection")
             return col
         if type(self.data) != dict:
-            if self.subj_time_dict:
+            if self.subject_time_dict:
                 # One Subject mult. phases
                 self.ecg_processor = EcgProcessor(
                     data=self.data, sampling_rate=self.sampling_rate
@@ -424,7 +448,7 @@ class ProcessingAndPreview(PhysiologicalBase):
         if self.skip_hrv:
             return
         for key in self.ecg_processor.ecg_result.keys():
-            for vp in self.subj_time_dict.keys():
+            for vp in self.subject_time_dict.keys():
                 self.ecg_processor.hrv_process(
                     self.ecg_processor,
                     key,
@@ -435,27 +459,6 @@ class ProcessingAndPreview(PhysiologicalBase):
         # for vp in self.subj_time_dict.keys():
         #     self.dict_hr_subjects[vp] = self.ecg_processor.heart_rate
 
-    def set_progress_value(self):
-        self.progress.value = int((self.step / self.max_steps) * 100)
-
-    def get_step_static_text(self):
-        return pn.widgets.StaticText(
-            name="Progress",
-            value="Step " + str(self.step) + " of " + str(self.max_steps),
-        )
-
     def panel(self):
-        self.step = 9
-        self.set_progress_value()
-        if self.textHeader == "":
-            f = open("../assets/Markdown/ProcessingAndPreview.md", "r")
-            fileString = f.read()
-            self.textHeader = fileString
-        column = pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.textHeader),
-            self.processing(),
-            height=800,
-        )
-        return column
+        self.results = self.processing()
+        return self._view

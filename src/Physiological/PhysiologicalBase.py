@@ -5,19 +5,11 @@ import datetime as datetime
 
 
 class PhysiologicalBase(param.Parameterized):
-    selected_signal = param.String()
-    selected_session = param.String()
-    session = param.String()
-    subject_time_dict = param.Dynamic()
-    subject = param.Dynamic()
-
     step = param.Integer(default=1)
-    progress = pn.indicators.Progress(
-        name="Progress",
-        height=20,
-        sizing_mode="stretch_width",
-    )
     max_steps = param.Integer(default=12)
+    progress = pn.indicators.Progress(
+        name="Progress", height=20, sizing_mode="stretch_width"
+    )
     times = None
     select_vp = pn.widgets.Select(
         name="Select Subject",
@@ -28,6 +20,12 @@ class PhysiologicalBase(param.Parameterized):
         return pn.widgets.StaticText(
             name="Progress",
             value="Step " + str(step) + " of " + str(self.max_steps),
+        )
+
+    @staticmethod
+    def get_progress(step) -> pn.indicators.Progress:
+        return pn.indicators.Progress(
+            name="Progress", height=20, sizing_mode="stretch_width", max=12, value=step
         )
 
     def set_progress_value(self, step):

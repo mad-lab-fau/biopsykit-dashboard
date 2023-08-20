@@ -34,7 +34,7 @@ class Session(PhysiologicalBase):
         self.set_progress_value(self.progress_step)
         return pn.Column(
             pn.Row(self.get_step_static_text(self.progress_step)),
-            pn.Row(self.progress),
+            pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
             self._select,
         )

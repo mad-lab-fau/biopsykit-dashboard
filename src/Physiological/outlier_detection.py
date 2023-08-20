@@ -58,8 +58,8 @@ class AskToDetectOutliers(PhysiologicalBase):
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_detect_outlier})
         self._view = pn.Column(
             pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.text),
+            pn.Row(pn.Row(self.get_progress(self.step))),
+            pn.pane.Markdown(text),
             pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
         )
 

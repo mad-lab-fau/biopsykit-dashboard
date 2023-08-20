@@ -49,8 +49,8 @@ class FileUpload(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
+        self.ready = param.Boolean(default=False)
         self.step = 4
-        self.ready = self.data is not None
         self._select_timezone = pn.widgets.Select.from_param(self.param.timezone)
         pn.bind(self.timezone_changed, self._select_timezone.value, watch=True)
         self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)
@@ -61,11 +61,10 @@ class FileUpload(PhysiologicalBase):
             "After your upload your file will also be checked if it contains the necessary columns.\n"
         )
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
-        self.set_progress_value(self.step)
         self._view = pn.Column(
             pn.pane.Markdown(self.text),
             pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
+            pn.Row(self.get_progress(self.step)),
             self._select_hardware,
             self._select_timezone,
             self.file_input,
@@ -293,6 +292,7 @@ class FileUpload(PhysiologicalBase):
         )
 
     def panel(self):
+        self.ready = self.data is not None
         if self.recording == "Multiple Recording":
             self.file_input.accept = ".zip"
         else:
