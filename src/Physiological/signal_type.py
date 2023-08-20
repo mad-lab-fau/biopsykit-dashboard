@@ -8,10 +8,6 @@ class PhysSignalType(PhysiologicalBase):
     text = "# Selecting Physiological Signal Type"
     ready = param.Boolean(default=False)
     pane = pn.Column()
-    options = ["", "ECG", "CFT", "RSP", "EEG"]
-    selected_signal = param.Selector(
-        default="", objects=options, label="Select Signal Type"
-    )
 
     def __init__(self, **params):
         super().__init__(**params)
@@ -31,16 +27,6 @@ class PhysSignalType(PhysiologicalBase):
             self.ready = True
         else:
             self.ready = False
-
-    @param.output(
-        ("selected_signal", param.String),
-        ("progress_step", param.Integer),
-    )
-    def output(self):
-        return (
-            self.selected_signal,
-            (self.step + 1),
-        )
 
     def panel(self):
         self.ready = False

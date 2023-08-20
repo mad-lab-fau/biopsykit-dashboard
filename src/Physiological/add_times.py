@@ -11,18 +11,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class AskToAddTimes(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    selected_signal = param.String()
-
-    text = ""
     ready = param.Boolean(default=False)
     next = param.Selector(
         default="Add Times",
@@ -30,7 +18,6 @@ class AskToAddTimes(PhysiologicalBase):
     )
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
-    subject_time_dict = {}
 
     def __init__(self):
         super().__init__()
@@ -60,41 +47,11 @@ class AskToAddTimes(PhysiologicalBase):
         self.next = "Add Times"
         self.ready = True
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-        )
-
     def panel(self):
         return self._view
 
 
 class AddTimes(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    subject_time_dict = {}
-    selected_signal = param.String()
-
     time_upload = pn.widgets.FileInput(
         styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx"
     )
@@ -107,9 +64,7 @@ class AddTimes(PhysiologicalBase):
     add_button = pn.widgets.Button(name="Add timestamp", button_type="danger")
     remove_button = pn.widgets.Button(name="Remove last Phase", button_type="danger")
     pane = pn.Column()
-    time_log = None
     subject_log = None
-    times = None
     subject_timestamps = []
     df = None
     select_vp = pn.widgets.Select(
@@ -122,7 +77,6 @@ class AddTimes(PhysiologicalBase):
         default="Do you want to detect Outlier?",
         objects=["Do you want to detect Outlier?", "Frequency Bands"],
     )
-    freq_bands = {}
 
     def __init__(self):
         super().__init__()
@@ -357,23 +311,3 @@ class AddTimes(PhysiologicalBase):
                 self.subject_time_dict[subject][condition] = pd.Series(
                     dtype="datetime64[ns]"
                 )
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-        ("subject_time_dict", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-            self.subject_time_dict,
-        )

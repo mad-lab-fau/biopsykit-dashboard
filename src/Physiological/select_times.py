@@ -7,11 +7,7 @@ from src.Physiological.process_hrv import SetHRVParameters
 
 # TODO: hier sollte es unterscheidung zwischen
 class SelectTimes(SetHRVParameters):
-    sampling_rate = param.Dynamic()
     text = ""
-    session = param.String()
-    synced = param.Boolean()
-    timezone = param.String()
     datetime = [
         (
             pn.widgets.TextInput(placeholder="Name the timestamp"),
@@ -34,8 +30,8 @@ class SelectTimes(SetHRVParameters):
         for name_time in self.datetime:
             name_list.append(name_time[0].value)
             time_list.append(name_time[1].value.strftime("%H:%M"))
-        phase_series = pd.Series(time_list, index=name_list)
-        return self.session, self.synced, self.timezone, phase_series
+        self.phase_series = pd.Series(time_list, index=name_list)
+        super().output()
 
     def add_time(self, event):
         name_time = (

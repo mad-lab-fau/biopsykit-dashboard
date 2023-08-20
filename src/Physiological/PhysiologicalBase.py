@@ -15,6 +15,64 @@ class PhysiologicalBase(param.Parameterized):
         name="Select Subject",
         visible=False,
     )
+    options = ["", "ECG", "CFT", "RSP", "EEG"]
+    selected_signal = param.Selector(
+        default="", objects=options, label="Select Signal Type"
+    )
+    data = param.Dynamic()
+    sampling_rate = param.Number()
+    skip_hrv = param.Boolean(default=True)
+    session = param.String(default="Single Session")
+    sensors = param.Dynamic()
+    timezone = param.String(default="Europe/Berlin")
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
+    subject = param.Dynamic()
+    recordings = param.String()
+    synced = param.Boolean(default=False)
+    subject_selector = pn.widgets.Select()
+    dict_hr_subjects = {}
+    phase_series = param.Dynamic()
+    hardware = param.Selector(
+        label="Select the Hardware with which you recorded your data",
+        objects=["NilsPod", "BioPac"],
+        default="NilsPod",
+    )
+    recording = param.String(default="Single Recording")
+    hr_data = None
+    subject_time_dict = param.Dynamic(default={})
+    methods = [
+        "quality",
+        "artifact",
+        "physiological",
+        "statistical_rr",
+        "statistical_rr_diff",
+    ]
+    outlier_methods = pn.widgets.MultiChoice(
+        name="Methods", value=["quality", "artifact"], options=methods
+    )
+    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
+    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
+    quality = pn.widgets.FloatInput(name="quality", value=0.4)
+    artifact = pn.widgets.FloatInput(name="artifact", value=0)
+    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
+    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
+    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
+    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+    skip_outlier_detection = param.Boolean(default=True)
+    outlier_params = param.Dynamic()
+    ecg_processor = param.Dynamic()
+    cft_sheets = param.Dynamic()
+    freq_bands = param.Dynamic(default={})
+    data_processed = param.Boolean(default=False)
+    eeg_processor = {}
+    cft_processor = {}
+    textHeader = ""
+    original_data = param.Dynamic()
+    trimmed_data = param.Dynamic()
+
+    def __init__(self, **params):
+        super().__init__()
 
     def get_step_static_text(self, step):
         return pn.widgets.StaticText(
@@ -32,7 +90,7 @@ class PhysiologicalBase(param.Parameterized):
         self.progress.value = int((step / self.max_steps) * 100)
 
     def select_vp_changed(self, _, event):
-        self.subject = event.new
+        self.subject = str(event.new)
 
     def dict_to_column(self):
         if self.session == "Single Session" and len(self.subject_time_dict.keys()) > 1:
@@ -130,3 +188,63 @@ class PhysiologicalBase(param.Parameterized):
         active = self.times.objects[0].active
         self.dict_to_column()
         self.times.objects[0].active = active
+
+    def get_outlier_params(self):
+        self.outlier_params = {
+            "correlation": self.correlation.value,
+            "quality": self.quality.value,
+            "artifact": self.artifact.value,
+            "statistical_rr": self.statistical_rr.value,
+            "statistical_rr_diff": self.statistical_rr_diff,
+            "physiological": (
+                self.physiological_lower.value,
+                self.physiological_upper.value,
+            ),
+        }
+        return self.outlier_params
+
+    @param.output(
+        ("freq_bands", param.Dynamic),
+        ("synced", param.Boolean),
+        ("subject_time_dict", param.Dynamic),
+        ("timezone", param.String()),
+        ("trimmed_data", param.Dynamic),
+        ("session", param.String),
+        ("selected_signal", param.String),
+        ("recordings", param.String),
+        ("recording", param.String),
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Number),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Boolean),
+        ("time_log", param.Dynamic),
+        ("outlier_params", param.Dynamic),
+        ("outlier_methods", param.Dynamic),
+        ("skip_hrv", param.Boolean),
+        ("subject", param.Dynamic),
+        ("cft_sheets", param.Dynamic),
+        ("phase_series", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.freq_bands,
+            self.synced,
+            self.subject_time_dict,
+            self.timezone,
+            self.trimmed_data,
+            self.session,
+            self.selected_signal,
+            self.recordings,
+            self.recording,
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.get_outlier_params(),
+            self.outlier_methods,
+            self.skip_hrv,
+            self.subject,
+            self.cft_sheets,
+            self.phase_series,
+        )

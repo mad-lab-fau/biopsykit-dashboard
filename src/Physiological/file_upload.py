@@ -20,32 +20,21 @@ from src.utils import _handle_counter_inconsistencies_dataset
 
 
 class FileUpload(PhysiologicalBase):
-    selected_signal = param.String()
-    session = param.Dynamic()
-    recording = param.String()
     file_input = pn.widgets.FileInput(
         styles={"background": "whitesmoke"},
         multiple=False,
         accept=".csv,.bin,.xlsx",
     )
-    synced = param.Boolean()
     timezone = param.Selector(
         default="Europe/Berlin",
         objects=["None Selected"] + list(pytz.all_timezones),
         label="Timezone",
     )
-    data = pd.DataFrame()
-    hr_data = None
-    sampling_rate = param.Dynamic(default=-1)
     hardware = param.Selector(
         label="Select the Hardware with which you recorded your data",
         objects=["NilsPod", "BioPac"],
         default="NilsPod",
     )
-    phase_series = param.Dynamic()
-    sensors = []
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
 
     def __init__(self):
         super().__init__()
@@ -269,28 +258,6 @@ class FileUpload(PhysiologicalBase):
         for col in datetime_columns:
             self.data[col] = self.data[col].dt.tz_localize(self.timezone)
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("synced", param.Boolean),
-        ("session", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("timezone", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.time_log_present,
-            self.time_log,
-            self.synced,
-            self.session,
-            self.sensors,
-            self.timezone,
-        )
-
     def panel(self):
         self.ready = self.data is not None
         if self.recording == "Multiple Recording":
@@ -298,161 +265,3 @@ class FileUpload(PhysiologicalBase):
         else:
             self.file_input.accept = ".csv,.bin,.xlsx"
         return self._view
-
-    #
-    # def handle_single_session(self):
-    #     for val, fn in zip(self.file_input.value, self.file_input.filename):
-    #         self.handle_single_file(val, fn)
-    #         if fn.endswith(".bin"):
-    #             (
-    #                 self.data,
-    #                 self.sampling_rate,
-    #             ) = biopsykit.io.nilspod.load_dataset_nilspod(dataset=self.data[0])
-    #         self.ready = True
-
-    # def handle_multi_not_synced_sessions(self):
-    #     if self.data is dict:
-    #         return
-    #     session_names = [
-    #         name.split(".")[0].split("_")[-1]
-    #         for name in self.file_input.filename
-    #         if "xls" not in name
-    #     ]
-    #     for val, fn in zip(self.file_input.value, self.file_input.filename):
-    #         if "xls" in fn:
-    #             continue
-    #         self.handle_single_file(val, fn)
-    #     dataset_dict = {
-    #         vp: self.dataset_to_df(ds) for vp, ds in zip(session_names, self.data)
-    #     }
-    #     self.sampling_rate = [
-    #         ds.info.sampling_rate_hz for vp, ds in zip(session_names, self.data)
-    #     ]
-    #     if self.sampling_rate.count(self.sampling_rate[0]) != len(self.sampling_rate):
-    #         pn.state.notifications.error("One sampling rate is different!")
-    #         return
-    #     self.sampling_rate = self.sampling_rate[0]
-    #     self.data = dataset_dict
-    #     self.ready = True
-
-    # def dataset_to_df(self, ds):
-    #     df = ds.data_as_df()
-    #     start = ds.info.utc_datetime_start
-    #     sr = ds.info.sampling_rate_hz
-    #     step = datetime.timedelta(seconds=1 / sr)
-    #     my_ind = [start]
-    #     for i in range(len(df) - 1):
-    #         c = my_ind[i]
-    #         x = my_ind[i] + step
-    #         my_ind.append(x)
-    #     a = pd.Index(my_ind)
-    #     df.set_index(a, inplace=True)
-    #     df.index.name = "index"
-    #     return df
-
-    # def handle_synced_sessions(self):
-    #     for val, fn in zip(self.file_input.value, self.file_input.filename):
-    #         self.handle_single_file(val, fn)
-    #     session = SyncedSession(self.data)
-    #     session.align_to_syncregion(inplace=True)
-    #     _handle_counter_inconsistencies_dataset(session, "ignore")
-    #     df = session.data_as_df(None, index="local_datetime", concat_df=True)
-    #     df.index.name = "time"
-    #     if len(set(session.info.sampling_rate_hz)) > 1:
-    #         raise ValueError(
-    #             f"Datasets in the sessions have different sampling rates! Got: {session.info.sampling_rate_hz}."
-    #         )
-    #     fs = session.info.sampling_rate_hz[0]
-    #     self.data = df
-    #     self.sampling_rate = fs
-    #     self.ready = True
-
-    # def handle_single_file(self, value, filename):
-    #     if filename.endswith(".bin"):
-    #         self.handle_bin_file(bytefile=BytesIO(value))
-    #         pn.state.notifications.success(filename)
-    #     elif filename.endswith(".csv"):
-    #         self.handle_csv_file(bytefile=value)
-    #     else:
-    #         pn.state.notifications.error("Not a matching file format")
-
-    # def extract_zip(self, input_zip: bytes):
-    #     input_zip = ZipFile(BytesIO(input_zip))
-    #     datasets = []
-    #     path = zipfile.Path(input_zip)
-    #     subject_data_dict = {}
-    #     for file_path in path.iterdir():
-    #         if file_path.name.startswith("__"):
-    #             continue
-    #         if file_path.is_dir():
-    #             subject_id = file_path.name
-    #             ds = []
-    #             for file in file_path.iterdir():
-    #                 if ".bin" in file.name:
-    #                     dataset = NilsPodAdapted.from_bin_file(
-    #                         filepath_or_buffer=BytesIO(input_zip.read(file.at)),
-    #                         legacy_support="resolve",
-    #                         tz=self.timezone,
-    #                     )
-    #                     ds.append(dataset)
-    #             subject_data_dict[subject_id] = ds
-    #         elif ".bin" in file_path.name:
-    #             subject_id = file_path.name.split(".")[0].split("_")[-1]
-    #             dataset = NilsPodAdapted.from_bin_file(
-    #                 filepath_or_buffer=BytesIO(input_zip.read(file_path.name)),
-    #                 legacy_support="resolve",
-    #                 tz=self.timezone,
-    #             )
-    #             datasets.append(dataset)
-    #             if subject_id in subject_data_dict.keys():
-    #                 subject_data_dict[subject_id].append(dataset)
-    #             else:
-    #                 subject_data_dict[subject_id] = [dataset]
-    #             # subject_data_dict[subject_id] = {}
-    #     # for name in input_zip.namelist():
-    #     #     if name.startswith("__"):
-    #     #         continue
-    #     #     subject_id = name.split(".")[0].split("_")[-1]
-    #     #     if ".bin" in name:
-    #     #         dataset = NilsPodAdapted.from_bin_file(
-    #     #             filepath_or_buffer=BytesIO(input_zip.read(name)),
-    #     #             legacy_support="resolve",
-    #     #             tz=self.timezone,
-    #     #         )
-    #     #         datasets.append(dataset)
-    #     try:
-    #         subject_synced = {}
-    #         for subject in subject_data_dict.keys():
-    #             synced = SyncedSession(datasets)
-    #             synced.align_to_syncregion(inplace=True)
-    #             _handle_counter_inconsistencies_dataset(synced, "ignore")
-    #             df = synced.data_as_df(None, index="local_datetime", concat_df=True)
-    #             df.index.name = "time"
-    #             if len(set(synced.info.sampling_rate_hz)) > 1:
-    #                 raise ValueError(
-    #                     f"Datasets in the sessions have different sampling rates! Got: {synced.info.sampling_rate_hz}."
-    #                 )
-    #             fs = synced.info.sampling_rate_hz[0]
-    #             subject_synced[subject] = df
-    #         self.data = subject_synced
-    #         self.sampling_rate = fs
-    #         self.ready = True
-    #     except Exception:
-    #         # pn.state.notifications.warning("Could not sync data")
-    #         subject_phase_data_dict = {}
-    #         for subject in subject_data_dict.keys():
-    #             dataset_list = [
-    #                 biopsykit.io.nilspod.load_dataset_nilspod(dataset=dataset)
-    #                 for dataset in subject_data_dict[subject]
-    #             ]
-    #             fs_list = [fs for df, fs in dataset_list]
-    #             df_all = pd.concat([df for df, fs in dataset_list], axis=0)
-    #             self.sampling_rate = fs_list[0]
-    #             # phase_names = [f"Part{i}" for i in range(len(dataset_list))]
-    #             # dataset_dict = {
-    #             #     phase: df for phase, (df, fs) in zip(phase_names, dataset_list)
-    #             # }
-    #             # subject_phase_data_dict[subject] = dataset_dict
-    #             subject_phase_data_dict[subject] = df_all
-    #         self.data = subject_phase_data_dict
-    #         self.ready = True

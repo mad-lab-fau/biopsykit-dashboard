@@ -35,7 +35,7 @@ class PhysiologicalPipeline:
             ready_parameter="ready",
             auto_advance=True,
         )
-        self.pipeline.add_stage("Sessions", Session(), ready_parameter="ready")
+        self.pipeline.add_stage("Sessions", Session())
         self.pipeline.add_stage(
             "Recordings", Recordings(), ready_parameter="ready", next_parameter="next"
         )

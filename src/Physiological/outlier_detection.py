@@ -5,17 +5,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class AskToDetectOutliers(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    subject_time_dict = param.Dynamic()
-
     next = param.Selector(
         default="Do you want to process the HRV also?",
         objects=["Do you want to process the HRV also?", "Expert Outlier Detection"],
@@ -37,17 +26,6 @@ class AskToDetectOutliers(PhysiologicalBase):
     outlier_methods = pn.widgets.MultiChoice(
         name="Methods", value=["quality", "artifact"], options=methods
     )
-
-    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
-    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
-    quality = pn.widgets.FloatInput(name="quality", value=0.4)
-    artifact = pn.widgets.FloatInput(name="artifact", value=0)
-    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
-    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
-    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
-    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
-    skip_outlier_detection = param.Boolean(default=True)
-    outlier_params = param.Dynamic()
 
     def __init__(self):
         super().__init__()
@@ -78,84 +56,81 @@ class AskToDetectOutliers(PhysiologicalBase):
         self.skip_outlier_detection = False
         self.ready = True
 
-    def get_outlier_params(self):
-        self.outlier_params = {
-            "correlation": self.correlation.value,
-            "quality": self.quality.value,
-            "artifact": self.artifact.value,
-            "statistical_rr": self.statistical_rr.value,
-            "statistical_rr_diff": self.statistical_rr_diff,
-            "physiological": (
-                self.physiological_lower.value,
-                self.physiological_upper.value,
-            ),
-        }
-        return self.outlier_params
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-        ("subject_time_dict", param.Dynamic),
-        ("outlier_params", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-            self.subject_time_dict,
-            self.get_outlier_params(),
-        )
-
     def panel(self):
         return self._view
 
 
-class OutlierDetection(AskToDetectOutliers):
+class OutlierDetection(PhysiologicalBase):
     textHeader = ""
     textParams = ""
 
-    sensors = param.Dynamic()
+    methods = [
+        "quality",
+        "artifact",
+        "physiological",
+        "statistical_rr",
+        "statistical_rr_diff",
+    ]
+    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
+    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
+    quality = pn.widgets.FloatInput(name="quality", value=0.4)
+    artifact = pn.widgets.FloatInput(name="artifact", value=0)
+    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
+    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
+    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
+    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+    skip_outlier_detection = param.Boolean(default=True)
+    outlier_methods = pn.widgets.MultiChoice(
+        name="Methods", value=["quality", "artifact"], options=methods
+    )
 
-    ecg_processor = None
-
-    time_log = param.Dynamic()
-    time_log_present = param.Boolean()
-
-    outlier_params = param.Dynamic()
+    def __init__(self):
+        super().__init__()
+        self.step = 6
+        text = (
+            "# Outlier Detection \n\n"
+            "# # In this stage the ECG signal will be processed. This will be done in three steps: "
+            "Filtering, R-peak detection, Outlier correction. \n\n"
+            "Below you can select the outlier correction methods, which consist of: \n"
+            "- Correlation: Computes cross-correlation coefficient between every single beat and the average of all"
+            " detected beats. Marks beats as outlier if cross-correlation coefficient is below a certain threshold. \n"
+            "- Quality: Uses the ECG_Quality indicator is below a certain threshold. \n"
+            "- Artifact: Artifact detection based on Berntson et al. (1990)."
+            "- Physiological: Physiological outlier removal. "
+            "Marks beats if their heart rate is above or below a threshold that "
+            "is very unlikely to be achieved physiologically. \n"
+            "- Statistical rr: Marks beats as outlier if the RR interval is above or below a certain threshold. \n"
+            "Statistical outlier removal based on RR intervals. Marks beats as outlier if the "
+            "intervals are within the xx% highest or lowest values. Values are removed based on the z-score; "
+            "e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); "
+            "2.576 => 1% (0.5% highest, 0.5% lowest values). \n"
+            "- Statistical rr diff: Statistical outlier removal based on successive differences "
+            "of RR intervals. Marks beats as outlier if the difference of successive RR intervals "
+            "are within the xx% highest or lowest heart rates. Values are removed based on the z-score; "
+            "e.g. 1.96 => 5% (2.5% highest, 2.5% lowest values); 2.576 => 1% "
+            "(0.5% highest, 0.5% lowest values). \n"
+            "Furthermore, you can set the parameters for the outlier detection methods you chose down below. "
+            "If you don't change anything the default values for the corresponding method will be used. \n"
+        )
+        self.set_progress_value(self.step)
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(
+            pn.Column(
+                self.outlier_methods,
+                self.correlation,
+                self.quality,
+                self.artifact,
+                self.statistical_rr,
+                self.statistical_rr_diff,
+                pn.Row(self.physiological_lower, self.physiological_upper),
+            )
+        )
+        self._view = pane
 
     def panel(self):
-        self.step = 6
-        # self.max_steps = 22
-        self.set_progress_value(self.step)
-        if self.textHeader == "":
-            f = open("../assets/Markdown/OutlierDetection.html", "r")
-            fileString = f.read()
-            self.textHeader = fileString
-        if self.textParams == "":
-            f = open("../assets/Markdown/OutlierParams.md", "r")
-            fileString = f.read()
-            self.textParams = fileString
-        return pn.Column(
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.progress),
-            pn.pane.HTML(self.textHeader),
-            self.outlier_methods,
-            pn.pane.Markdown(self.textParams),
-            self.correlation,
-            self.quality,
-            self.artifact,
-            self.statistical_rr,
-            self.statistical_rr_diff,
-            pn.Row(self.physiological_lower, self.physiological_upper),
-        )
+        return self._view
 
     @pn.depends("physiological_upper.value", watch=True)
     def check_upper_bound(self):
@@ -170,29 +145,3 @@ class OutlierDetection(AskToDetectOutliers):
             self.physiological_upper.value = 0
         if self.physiological_lower.value > self.physiological_upper.value:
             self.physiological_upper.value = self.physiological_lower.value
-
-    @param.output(
-        ("outlier_params", param.Dynamic),
-    )
-    def output(self):
-        return self.get_outlier_params()
-
-    # @param.output(
-    #     ("data", param.Dynamic),
-    #     ("sampling_rate", param.Dynamic),
-    #     ("outlier_params", param.Dynamic),
-    #     ("outlier_methods", param.Dynamic),
-    #     ("sensors", param.Dynamic),
-    #     ("time_log_present", param.Dynamic),
-    #     ("time_log", param.Dynamic),
-    # )
-    # def output(self):
-    #     return (
-    #         self.data,
-    #         self.sampling_rate,
-    #         self.get_outlier_params(),
-    #         self.outlier_methods.value,
-    #         self.sensors,
-    #         self.time_log_present,
-    #         self.time_log,
-    #     )

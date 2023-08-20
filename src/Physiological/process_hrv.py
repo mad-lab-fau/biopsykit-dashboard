@@ -5,18 +5,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class AskToProcessHRV(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    subject_time_dict = param.Dynamic()
-    selected_signal = param.String()
-
     methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
     hrv_types = pn.widgets.MultiChoice(
         name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
@@ -34,13 +22,9 @@ class AskToProcessHRV(PhysiologicalBase):
         objects=["Set HRV Parameters", "Now the Files will be processed"],
     )
     ready = param.Boolean(default=False)
-    skip_hrv = False
-    textHeader = ""
-    outlier_params = param.Dynamic()
 
     def __init__(self):
         super().__init__()
-        self.recording = param.String()
         self.step = 7
         text = (
             "# Processing HRV \n \n"
@@ -64,65 +48,49 @@ class AskToProcessHRV(PhysiologicalBase):
         self.skip_hrv = True
         self.ready = True
 
-    def click_expert_hrv(self, event):
+    def click_expert_hrv(self, target, event):
         self.next_page = "Set HRV Parameters"
         self.skip_hrv = False
         self.ready = True
 
-    def click_default_hrv(self, event):
+    def click_default_hrv(self, target, event):
         self.next_page = "Now the Files will be processed"
         self.skip_hrv = False
         self.ready = True
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("subject_time_dict", param.Dynamic),
-        ("selected_signal", param.Dynamic),
-        ("skip_hrv", param.Dynamic),
-        ("session", param.Dynamic),
-        ("recording", param.Dynamic),
-        ("subject", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.subject_time_dict,
-            self.selected_signal,
-            self.skip_hrv,
-            self.session,
-            self.recording,
-            self.subject,
-        )
 
     def panel(self):
         return self._view
 
 
-class SetHRVParameters(AskToProcessHRV):
-
-    skip_hrv = param.Boolean()
-
-    @param.output(
-        ("skip_hrv", param.Dynamic),
+class SetHRVParameters(PhysiologicalBase):
+    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
+    hrv_types = pn.widgets.MultiChoice(
+        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
     )
-    def output(self):
-        return self.skip_hrv
+    correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
+    index = pn.widgets.TextInput(name="Index", value="")
+    index_name = pn.widgets.TextInput(name="Index Name", value="")
 
-    def panel(self):
+    def __init__(self):
+        super().__init__()
+        text = (
+            "# Processing HRV \n \n"
+            "If you want to additionally process the Heart Rate variability, "
+            "you can select the matching parameters and then hit the "
+            "process button, and then proceed. Otherwise, you can skip "
+            "this step and go to the next stage. "
+        )
         self.step = 7
-        self.set_progress_value()
-        if self.textHeader == "":
-            f = open("../assets/Markdown/ProcessHRV.md", "r")
-            fileString = f.read()
-            self.textHeader = fileString
-        return pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.textHeader),
+        pane = pn.Column(
+            pn.Row(self.get_step_static_text(self.step)),
+            pn.Row(self.get_progress(self.step)),
+            pn.pane.Markdown(text),
             self.hrv_types,
             self.correct_rpeaks,
             self.index,
             self.index_name,
         )
+        self._view = pane
+
+    def panel(self):
+        return self._view

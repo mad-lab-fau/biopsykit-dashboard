@@ -9,25 +9,27 @@ class SelectCFTSheet(DataArrived):
     cft_sheet = pn.widgets.CheckBoxGroup()
     ready = param.Boolean(default=False)
 
-    @pn.depends("cft_sheet.value", watch=True)
-    def sheet_checked(self):
+    def __init__(self):
+        super().__init__()
+        self.step = 6
+        text = (
+            "# Select CFT Sheet \n\n"
+            "This step allows you to select a CFT sheet from a list "
+            "of available sheets."
+        )
+        self.cft_sheet.link(self, callbacks={"value": self.sheet_checked})
+        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
+        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
+        pane.append(pn.pane.Markdown(text))
+        pane.append(self.cft_sheet)
+        self._view = pane
+
+    def sheet_checked(self, target, event):
         if len(self.cft_sheet.value) == 0:
             self.ready = False
         else:
             self.ready = True
 
-    @param.output(
-        ("cft_sheets", param.Dynamic),
-        ("data", param.Dynamic),
-        ("selected_signal", param.Dynamic),
-    )
-    def output(self):
-        return (self.cft_sheet.value, self.data, self.selected_signal)
-
     def panel(self):
-        if self.text == "":
-            f = open("../assets/Markdown/SelectCFTSheet.md", "r")
-            fileString = f.read()
-            self.text = fileString
         self.cft_sheet.options = list(self.data.keys())
-        return pn.Column(pn.pane.Markdown(self.text), self.cft_sheet)
+        return self._view

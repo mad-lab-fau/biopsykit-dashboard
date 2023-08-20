@@ -14,26 +14,7 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 class ProcessingPreStep(PhysiologicalBase):
     ready = param.Boolean(default=False)
-    hr_data = param.Dynamic()
-    ecg_processor = param.Dynamic()
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
-    freq_bands = param.Dynamic()
-    cft_sheets = param.Dynamic()
-    selected_signal = param.Dynamic()
-    data = param.Dynamic()
-    subject_time_dict = param.Dynamic()
-    sampling_rate = param.Dynamic()
-    session = param.Dynamic()
-    recording = param.Dynamic()
-    subject = param.Dynamic()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    synced = param.Boolean(default=False)
-    sensors = param.Dynamic()
-    timezone = param.String()
-    outlier_params = param.Dynamic()
-    skip_outlier_detection = param.Boolean(default=True)
-    skip_hrv = param.Boolean(default=True)
 
     def __init__(self):
         super().__init__()
@@ -47,67 +28,18 @@ class ProcessingPreStep(PhysiologicalBase):
         pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
         pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
         pane.append(pn.pane.Markdown(text))
-        pane.append(pn.Column(text))
         pane.append(self.ready_btn)
         self._view = pane
 
     def ready_btn_click(self, target, event):
         self.ready = True
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-        ("subject_time_dict", param.Dynamic),
-        ("outlier_params", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-            self.subject_time_dict,
-            self.outlier_params,
-        )
-
     def panel(self):
         return self._view
 
 
 class ProcessingAndPreview(PhysiologicalBase):
-    ecg_processor = param.Dynamic()
-    cft_sheets = param.Dynamic()
-    subject_time_dict = param.Dynamic()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    freq_bands = param.Dynamic()
-    skip_outlier_detection = param.Boolean(default=True)
-    hr_data = param.Dynamic()
-    data_processed = param.Boolean(default=False)
-    eeg_processor = {}
-    cft_processor = {}
-    selected_signal = param.Dynamic()
-    textHeader = ""
-    data = param.Dynamic()
-    sampling_rate = param.Dynamic()
-    outlier_params = param.Dynamic()
-    outlier_methods = param.Dynamic()
-    sensors = param.Dynamic()
-    time_log_present = param.Boolean()
-    time_log = param.Dynamic()
     phase_title = pn.widgets.StaticText(name="Phase", visible=False)
-    max_steps = 10
-    progress = pn.indicators.Progress(
-        name="Progress",
-        height=20,
-        sizing_mode="stretch_width",
-    )
     results = pn.Column()
 
     def __init__(self):
@@ -354,7 +286,7 @@ class ProcessingAndPreview(PhysiologicalBase):
                     outlier_correction=self.outlier_methods,
                     outlier_params=self.outlier_params,
                 )
-        elif self.session.value == "Single Session":
+        elif self.session == "Single Session":
             # Multiple Phases single. subject
             self.ecg_processor = {}
             ep = EcgProcessor(
@@ -364,7 +296,7 @@ class ProcessingAndPreview(PhysiologicalBase):
             )
             ep.ecg_process(title=self.subject)
             self.ecg_processor[self.subject] = ep
-        elif self.session.value == "Multiple Sessions":
+        elif self.session == "Multiple Sessions":
             # Multiple Subjects mult. phases
             self.ecg_processor = {}
             for subject in self.data.keys():

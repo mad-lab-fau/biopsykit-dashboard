@@ -4,10 +4,6 @@ from src.Physiological.recordings import Recordings
 
 
 class Compress(Recordings):
-    selected_session = param.String()
-    selected_signal = param.String()
-    recordings = param.String()
-
     def __init__(self):
         super().__init__()
         self.step = 4
@@ -22,18 +18,6 @@ class Compress(Recordings):
             pn.Row(self.get_step_static_text(self.step)),
             pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
-        )
-
-    @param.output(
-        ("selected_session", param.Dynamic),
-        ("selected_signal", param.String),
-        ("recordings", param.String),
-    )
-    def output(self):
-        return (
-            self.selected_session,
-            self.selected_signal,
-            self.recording,
         )
 
     def panel(self):

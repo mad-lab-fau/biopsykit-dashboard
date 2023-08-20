@@ -6,8 +6,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 class Recordings(PhysiologicalBase):
     next_step = param.Integer()
-    selected_signal = param.String()
-    session = param.Dynamic()
     text = (
         "# Number of Recordings \n"
         "After you defined the kind of Sessions, in this step you will set if your data"
@@ -28,34 +26,21 @@ class Recordings(PhysiologicalBase):
         super().__init__()
         self.ready = True
         self._select = pn.widgets.Select.from_param(self.param.recording)
-        pn.bind(self.chg, self._select.value)
-
-    @param.depends("recording", watch=True)
-    def chg(self):
-        if self.recording == "Single Recording":
-            self.next = "Upload Files"
-        else:
-            self.next = "Multiple Files"
-
-    @param.output(
-        ("session", param.Dynamic),
-        ("selected_signal", param.String),
-        ("progress_step", param.Integer),
-        ("recordings", param.String),
-    )
-    def output(self):
-        return (
-            self.session,
-            self.selected_signal,
-            self.next_step + 1,
-            self.recording,
-        )
-
-    def panel(self):
+        self._select.link(self, callbacks={"value": self.chg})
         self.set_progress_value(self.next_step)
-        return pn.Column(
+        self._view = pn.Column(
             pn.Row(self.get_step_static_text(self.next_step)),
             pn.Row(self.get_progress(self.step)),
             pn.pane.Markdown(self.text),
             self._select,
         )
+
+    def chg(self, target, event):
+        if self.recording == "Single Recording":
+            self.next = "Upload Files"
+        else:
+            self.next = "Multiple Files"
+
+    def panel(self):
+        self.set_progress_value(self.next_step)
+        return self._view

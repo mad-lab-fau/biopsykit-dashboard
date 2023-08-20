@@ -2,8 +2,10 @@ import param
 import panel as pn
 import pytz
 
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
-class SessionKind(param.Parameterized):
+
+class SessionKind(PhysiologicalBase):
     synced_radiobox = pn.widgets.RadioBoxGroup(
         name="Synced", options=["Synced", "Not Synced"]
     )
@@ -33,10 +35,8 @@ class SessionKind(param.Parameterized):
         ("timezone", param.String),
     )
     def output(self):
-        if self.synced_radiobox.value == "Synced":
-            return self.session, True, self.timezone_select.value
-        else:
-            return self.session, False, self.timezone_select.value
+        self.synced = self.synced_radiobox.value == "Synced"
+        return super().output()
 
     @param.depends("session", watch=True)
     def session_type_changed(self):

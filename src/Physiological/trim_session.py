@@ -2,6 +2,8 @@ import param
 import panel as pn
 import pandas as pd
 import pytz
+
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import (
     timezone_aware_to_naive,
     get_datetime_columns_of_data_frame,
@@ -9,20 +11,31 @@ from src.utils import (
 )
 
 
-class TrimSession(param.Parameterized):
-    original_data = param.Dynamic()
-    trimmed_data = param.Dynamic()
-    sampling_rate = param.Dynamic()
-    text = ""
+class TrimSession(PhysiologicalBase):
     start_time = pn.widgets.DatetimePicker(name="Start time")
     stop_time = pn.widgets.DatetimePicker(name="Stop time")
     trim_btn = pn.widgets.Button(name="Trim", button_type="primary")
     min_time = None
     max_time = None
-    sensors = param.Dynamic()
-    time_log = param.Dynamic()
-    time_log_present = param.Boolean()
-    timezone = param.String()
+
+    def __init__(self):
+        super().__init__()
+        self.step = 10
+        text = (
+            "# Edit start and stop \n \n"
+            "Here you can manually change the "
+            "start and the stop times for your session."
+        )
+        self.trim_btn.link(self, callbacks={"clicks": self.trim_data})
+        pane = pn.Column(
+            pn.Row(self.get_step_static_text(self.step)),
+            pn.Row(self.get_progress(self.step)),
+            pn.pane.Markdown(text),
+            self.start_time,
+            self.stop_time,
+            self.trim_btn,
+        )
+        self._view = pane
 
     def limit_times(self):
         min_time_all = None
@@ -73,7 +86,7 @@ class TrimSession(param.Parameterized):
                 "s time is lower than the selected start time!"
             )
 
-    def trim_data(self, event):
+    def trim_data(self, target, event):
         print(self.trim_btn.clicks)
         if type(self.original_data) is pd.DataFrame:
             dt_col = get_datetime_columns_of_data_frame(self.original_data)
@@ -110,32 +123,6 @@ class TrimSession(param.Parameterized):
             print("session")
 
     def panel(self):
-        self.trim_btn.on_click(self.trim_data)
         self.trimmed_data = self.original_data
         self.limit_times()
-        if self.text == "":
-            f = open("../assets/Markdown/EditStartAndStopTimes.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        return pn.Column(
-            pn.pane.Markdown(self.text),
-            self.start_time,
-            self.stop_time,
-            self.trim_btn,
-        )
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.trimmed_data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-        )
+        return self._view

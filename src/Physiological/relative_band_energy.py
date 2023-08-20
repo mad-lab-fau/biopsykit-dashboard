@@ -6,16 +6,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class FrequencyBands(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    skip_hrv = param.Boolean(default=True)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    subject_time_dict = param.Dynamic()
     text = ""
     band_panel = pn.Column()
 
@@ -105,53 +95,5 @@ class FrequencyBands(PhysiologicalBase):
         self.freq_bands[new_name] = [0, 0]
         self.show_freq_bands()
 
-    @param.output(
-        ("freq_bands", param.Dynamic),
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("subj_time_dict", param.Dynamic),
-        ("selected_signal", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.freq_bands,
-            self.data,
-            self.sampling_rate,
-            self.subject_time_dict,
-            self.selected_signal,
-        )
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-        )
-
     def panel(self):
         return self._view
-        # # self.step = 8
-        # # self.set_progress_value()
-        # if self.text == "":
-        #     f = open("../assets/Markdown/ChangeFreqBands.md", "r")
-        #     fileString = f.read()
-        #     self.text = fileString
-        # self.show_freq_bands()
-        # return pn.Column(
-        #     # pn.Row(self.get_step_static_text()),
-        #     # pn.Row(self.progress),
-        #     pn.pane.Markdown(self.text),
-        #     # pn.Row(self.yes_btn, self.no_btn),
-        #     self.band_panel,
-        # )

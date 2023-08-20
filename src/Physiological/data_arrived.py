@@ -8,15 +8,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class DataArrived(PhysiologicalBase):
-    data = param.Dynamic()
-    sampling_rate = param.Number()
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    synced = param.Boolean(default=False)
-    session = param.String()
-    sensors = param.Dynamic()
-    timezone = param.String()
-    selected_signal = param.String()
     ready = param.Boolean(default=True)
     subject_selector = pn.widgets.Select()
     sampling_rate_input = pn.widgets.TextInput(
@@ -49,6 +40,10 @@ class DataArrived(PhysiologicalBase):
             "Below is a short summary of the files which you uploaded."
             "These files can be further analysed in the following steps."
         )
+        self.sampling_rate_input.link(
+            self, callbacks={"value": self.set_sampling_rate_value}
+        )
+        self.info_selection.link(self, callbacks={"value": self.display_info_value})
         pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
         pane.append(pn.Row(self.get_progress(self.step)))
         pane.append(pn.pane.Markdown(text))
@@ -59,8 +54,7 @@ class DataArrived(PhysiologicalBase):
         pane.append(self.data_view)
         self._view = pane
 
-    @pn.depends("sampling_rate_input.value", watch=True)
-    def set_sampling_rate_value(self):
+    def set_sampling_rate_value(self, target, event):
         self.ready = False
         if not self.sampling_rate_input.value:
             return
@@ -72,8 +66,7 @@ class DataArrived(PhysiologicalBase):
                 "Sampling rate must be a number (seperated by a .)"
             )
 
-    @pn.depends("info_selection.value", watch=True)
-    def display_info_value(self):
+    def display_info_value(self, target, event):
         if (
             not self.info_selection.value
             or self.info_selection.value not in self.info_dict.keys()
@@ -115,24 +108,6 @@ class DataArrived(PhysiologicalBase):
             return pane
         else:
             return pane
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("sampling_rate", param.Dynamic),
-        ("sensors", param.Dynamic),
-        ("time_log_present", param.Dynamic),
-        ("time_log", param.Dynamic),
-        ("timezone", param.String()),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.sampling_rate,
-            self.sensors,
-            self.time_log_present,
-            self.time_log,
-            self.timezone,
-        )
 
     def panel(self):
         if self.selected_signal == "CFT":
