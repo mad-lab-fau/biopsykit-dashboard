@@ -3,6 +3,49 @@ from panel.viewable import Viewer
 import panel as pn
 
 
+class PipelineHeader(Viewer):
+
+    textField = param.String()
+    step = param.Integer(default=1)
+    max_step = param.Integer(default=100)
+
+    def __init__(
+        self,
+        step: int | param.Integer,
+        max_step: int | param.Integer,
+        text: str | param.String,
+        **params
+    ):
+        self._progress = pn.indicators.Progress(
+            name="Progress",
+            height=20,
+            sizing_mode="stretch_width",
+            max=step,
+            value=max_step,
+        )
+        self._step_text = pn.widgets.StaticText(
+            name="Progress", value="Step " + str(step) + " of " + str(max_step)
+        )
+        self._text = pn.pane.Markdown(text)
+        super().__init__(**params)
+        self._layout = pn.Column(
+            pn.Row(self._step_text),
+            pn.Row(self._progress),
+            pn.pane.Markdown(text),
+        )
+
+    def update_step(self, step: int):
+        self.step = step
+        self._step_text.value = "Step " + str(step) + " of " + str(self.max_step)
+        self._progress.value = step
+
+    def update_text(self, text: str):
+        self._text.object = text
+
+    def __panel__(self):
+        return self._layout
+
+
 class Timestamp(Viewer):
 
     value = param.Tuple(doc="First value is the name the second the timestamp")

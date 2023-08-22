@@ -1,11 +1,9 @@
 import io
 import zipfile
 import biopsykit as bp
-from io import StringIO
 
 import pandas as pd
 import panel as pn
-import param
 import seaborn as sns
 from biopsykit.protocols import CFT
 from fau_colors import cmaps
@@ -24,15 +22,25 @@ def delete_timezone_of_datetime_columns_(df):
 
 
 class DownloadResults(PhysiologicalBase):
-    textHeader = ""
-    dict_hr_subjects = {}
     load_plots_ecg = pn.widgets.Checkbox(name="Download ECG Plots")
     load_plots_eeg = pn.widgets.Checkbox(name="Download EEG Plots")
     load_plots_hrv = pn.widgets.Checkbox(name="HRV")
     load_plots_cft = pn.widgets.Checkbox(name="Download CFT Plots")
     load_plt_hr_ensemble = pn.widgets.Checkbox(name="HR Ensemble")
     zip_buffer = io.BytesIO()
-    skip_hrv = param.Boolean()
+
+    def __init__(self):
+        super().__init__()
+        text = "# Download Result \n"
+        self.update_text(text)
+        self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
+        self._view = pn.Column(self.header)
+        self.download_btn = pn.widgets.FileDownload(
+            callback=self.get_selected_files, filename="Results.zip"
+        )
+        self._view.append(self.download_btn)
+        self._view.append(self._load_results_checkbox)
+        self._view.append(self.load_plots_hrv)
 
     def get_selected_files(self):
         with zipfile.ZipFile(
@@ -117,11 +125,6 @@ class DownloadResults(PhysiologicalBase):
     def load_hrv_plots(self, zip_file):
         for key in self.ecg_processor.ecg_result.keys():
             buf = io.BytesIO()
-            # self.ecg_processor.hrv_process(
-            #     self.ecg_processor,
-            #     key,
-            #     index=self.subject,
-            # )
             fig, axs = bp.signals.ecg.plotting.hrv_plot(self.ecg_processor, key=key)
             fig.savefig(buf)
             zip_file.writestr(f"HRV_{key}.png", buf.getvalue())
@@ -172,26 +175,8 @@ class DownloadResults(PhysiologicalBase):
 
     def panel(self):
         self.step = 10
-        self.set_progress_value()
-        if self.textHeader == "":
-            f = open("../assets/Markdown/DownloadResults.md", "r")
-            fileString = f.read()
-            self.textHeader = fileString
-        column = pn.Column(
-            pn.Row(self.get_step_static_text()),
-            pn.Row(self.progress),
-            pn.pane.Markdown(self.textHeader),
-        )
-        download = pn.widgets.FileDownload(
-            callback=self.get_selected_files, filename="Results.zip"
-        )
-        if self.selected_signal == "ECG":
-            column.append(self.load_plots_ecg)
-        elif self.selected_signal == "EEG":
-            column.append(self.load_plots_eeg)
-        elif self.selected_signal == "CFT":
-            column.append(self.load_plots_cft)
-        if not self.skip_hrv:
-            column.append(self.load_plots_hrv)
-        column.append(download)
-        return column
+        self.update_step(self.step)
+        self._load_results_checkbox.name = f"Load {self.selected_signal} Results"
+        if self.skip_hrv:
+            self.load_plots_hrv.visible = False
+        return self._view

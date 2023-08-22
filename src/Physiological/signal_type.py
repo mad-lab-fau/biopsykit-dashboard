@@ -2,23 +2,23 @@ import panel as pn
 import param
 
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
+from src.Physiological.custom_components import PipelineHeader
 
 
 class PhysSignalType(PhysiologicalBase):
-    text = "# Selecting Physiological Signal Type"
     ready = param.Boolean(default=False)
     pane = pn.Column()
 
     def __init__(self, **params):
         super().__init__(**params)
         self.step = 1
+        text = "# Selecting Physiological Signal Type"
+        self.update_text(text)
         self.set_progress_value(self.step)
         select = pn.widgets.Select.from_param(self.param.selected_signal)
         select.link(self, callbacks={"value": self.signal_selected})
         self._view = pn.Column(
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.get_progress(self.step)),
-            pn.pane.Markdown(self.text),
+            self.header,
             select,
         )
 
@@ -30,4 +30,5 @@ class PhysSignalType(PhysiologicalBase):
 
     def panel(self):
         self.ready = False
+        self.update_step(self.step)
         return self._view

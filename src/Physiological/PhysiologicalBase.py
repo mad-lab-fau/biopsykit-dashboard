@@ -3,10 +3,13 @@ import param
 import panel as pn
 import datetime as datetime
 
+from src.Physiological.CONSTANTS import MAX_STEPS
+from src.Physiological.custom_components import PipelineHeader
 
+# TODO Use Header for all steps
 class PhysiologicalBase(param.Parameterized):
     step = param.Integer(default=1)
-    max_steps = param.Integer(default=12)
+    max_steps = 12
     progress = pn.indicators.Progress(
         name="Progress", height=20, sizing_mode="stretch_width"
     )
@@ -73,6 +76,14 @@ class PhysiologicalBase(param.Parameterized):
 
     def __init__(self, **params):
         super().__init__()
+        self.header = PipelineHeader(1, MAX_STEPS, "")
+
+    def update_step(self, step: int | param.Integer):
+        self.step = step
+        self.header.update_step(step)
+
+    def update_text(self, text: str | param.String):
+        self.header.update_text(text)
 
     def get_step_static_text(self, step):
         return pn.widgets.StaticText(
@@ -224,6 +235,7 @@ class PhysiologicalBase(param.Parameterized):
         ("subject", param.Dynamic),
         ("cft_sheets", param.Dynamic),
         ("phase_series", param.Dynamic),
+        ("step", param.Number),
     )
     def output(self):
         return (
@@ -247,4 +259,5 @@ class PhysiologicalBase(param.Parameterized):
             self.subject,
             self.cft_sheets,
             self.phase_series,
+            self.step + 1,
         )
