@@ -3,7 +3,7 @@ import param
 import panel as pn
 import datetime as datetime
 
-from src.Physiological.CONSTANTS import MAX_STEPS
+from src.Physiological.CONSTANTS import *
 from src.Physiological.custom_components import PipelineHeader
 
 # TODO Use Header for all steps
@@ -18,9 +18,8 @@ class PhysiologicalBase(param.Parameterized):
         name="Select Subject",
         visible=False,
     )
-    options = ["", "ECG", "CFT", "RSP", "EEG"]
     selected_signal = param.Selector(
-        default="", objects=options, label="Select Signal Type"
+        default="", objects=PHYSIOLOGICAL_SIGNAL_OPTIONS, label="Select Signal Type"
     )
     data = param.Dynamic()
     sampling_rate = param.Number()
@@ -38,21 +37,14 @@ class PhysiologicalBase(param.Parameterized):
     phase_series = param.Dynamic()
     hardware = param.Selector(
         label="Select the Hardware with which you recorded your data",
-        objects=["NilsPod", "BioPac"],
+        objects=PHYSIOLOGICAL_HW_OPTIONS,
         default="NilsPod",
     )
     recording = param.String(default="Single Recording")
     hr_data = None
     subject_time_dict = param.Dynamic(default={})
-    methods = [
-        "quality",
-        "artifact",
-        "physiological",
-        "statistical_rr",
-        "statistical_rr_diff",
-    ]
     outlier_methods = pn.widgets.MultiChoice(
-        name="Methods", value=["quality", "artifact"], options=methods
+        name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
     )
     statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
     correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
@@ -235,7 +227,6 @@ class PhysiologicalBase(param.Parameterized):
         ("subject", param.Dynamic),
         ("cft_sheets", param.Dynamic),
         ("phase_series", param.Dynamic),
-        ("step", param.Number),
     )
     def output(self):
         return (
@@ -259,5 +250,4 @@ class PhysiologicalBase(param.Parameterized):
             self.subject,
             self.cft_sheets,
             self.phase_series,
-            self.step + 1,
         )

@@ -4,6 +4,7 @@ import panel as pn
 import pandas as pd
 from nilspodlib import Session
 
+from src.Physiological.CONSTANTS import DATA_ARRIVED_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -34,19 +35,13 @@ class DataArrived(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        self.step = 5
-        text = (
-            "# Files uploaded successfully \n"
-            "Below is a short summary of the files which you uploaded."
-            "These files can be further analysed in the following steps."
-        )
+        self.update_step(5)
+        self.update_text(DATA_ARRIVED_TEXT)
         self.sampling_rate_input.link(
             self, callbacks={"value": self.set_sampling_rate_value}
         )
         self.info_selection.link(self, callbacks={"value": self.display_info_value})
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(self.get_progress(self.step)))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append(self.subject_selector)
         pane.append(self.sampling_rate_input)
         pane.append(self.session_start)

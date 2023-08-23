@@ -1,6 +1,7 @@
 import panel as pn
 import param
 
+from src.Physiological.CONSTANTS import RECORDINGS_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -17,18 +18,11 @@ class Recordings(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        text = (
-            "# Number of Recordings \n"
-            "After you defined the kind of Sessions, in this step you will set if your data"
-            "consists of a single Recording or multiple recordings.\n\n"
-            "A single Recording means, that you only have one file per subject and multiple Recording"
-            "is defined as two or more files per subject. \n"
-        )
-        self.update_text(text)
+        self.update_step(3)
+        self.update_text(RECORDINGS_TEXT)
         self.ready = True
         self._select = pn.widgets.Select.from_param(self.param.recording)
         self._select.link(self, callbacks={"value": self.chg})
-        self.set_progress_value(self.step)
         self._view = pn.Column(
             self.header,
             self._select,
@@ -41,5 +35,5 @@ class Recordings(PhysiologicalBase):
             self.next = "Multiple Files"
 
     def panel(self):
-
+        self.update_step(self.step)
         return self._view

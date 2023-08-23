@@ -2,6 +2,7 @@ import numpy as np
 import panel as pn
 import param
 
+from src.Physiological.CONSTANTS import SELECT_FREQUENCY_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -19,17 +20,10 @@ class FrequencyBands(PhysiologicalBase):
     def __init__(self):
         super().__init__()
         self.step = 9
-        text = (
-            "# Set Frequency Bands"
-            "In this step you can set the frequency bands for the analysis. "
-            "The default values are the standard frequency bands for EEG analysis. "
-            "You can change the values by clicking on the text field and entering the desired value. "
-            "The values are in Hz."
-        )
+        self.update_step(self.step)
+        self.update_text(SELECT_FREQUENCY_TEXT)
         pane = pn.Column(
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(pn.Row(self.get_progress(self.step))),
-            pn.pane.Markdown(self.text),
+            self.header,
             self.band_panel,
         )
         self._view = pane

@@ -7,6 +7,7 @@ from biopsykit.io.io import (
     _sanitize_index_cols,
 )
 
+from src.Physiological.CONSTANTS import ADD_TIMES_TEXT, ASK_ADD_TIMES_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -22,17 +23,13 @@ class AskToAddTimes(PhysiologicalBase):
     def __init__(self):
         super().__init__()
         self.step = 6
-        text = (
-            "# Do you want to add Phases for your Data?"
-            "If you want to upload an Excel oder CSV File, or if you want to manually add Phases "
-            "to your data then click on the Add Times Button otherwise skip"
-        )
-        pane = pn.Column(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
-        pane.append(pn.Row(self.add_times_btn, self.skip_btn))
+        self.update_step(6)
+        self.update_text(ASK_ADD_TIMES_TEXT)
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.add_times_btn.link(self, callbacks={"clicks": self.click_add_times})
         self.ready = False
+        pane = pn.Column(self.header)
+        pane.append(pn.Row(self.add_times_btn, self.skip_btn))
         self._view = pane
 
     def click_skip(self, target, event):
@@ -80,17 +77,15 @@ class AddTimes(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        self.step = 6
-        text = "# Select Times"
+        self.update_step(6)
+        self.update_text(ADD_TIMES_TEXT)
         self.time_upload.link(self, callbacks={"value": self.parse_time_file})
         self.add_button.link(self, callbacks={"clicks": self.add_timestamp})
         self.set_progress_value(self.step)
         self.times = pn.Column(
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append(
             pn.Row(
                 pn.widgets.StaticText(

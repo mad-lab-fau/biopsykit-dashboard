@@ -1,6 +1,7 @@
 import param
 from panel.viewable import Viewer
 import panel as pn
+from src.Physiological.CONSTANTS import MAX_STEPS
 
 
 class PipelineHeader(Viewer):
@@ -16,12 +17,13 @@ class PipelineHeader(Viewer):
         text: str | param.String,
         **params
     ):
+        self.max_step = max_step
         self._progress = pn.indicators.Progress(
             name="Progress",
             height=20,
             sizing_mode="stretch_width",
-            max=step,
-            value=max_step,
+            max=max_step,
+            value=step,
         )
         self._step_text = pn.widgets.StaticText(
             name="Progress", value="Step " + str(step) + " of " + str(max_step)

@@ -21,16 +21,16 @@ class TrimSession(PhysiologicalBase):
     def __init__(self):
         super().__init__()
         self.step = 10
+        self.update_step(self.step)
         text = (
             "# Edit start and stop \n \n"
             "Here you can manually change the "
             "start and the stop times for your session."
         )
+        self.update_text(text)
         self.trim_btn.link(self, callbacks={"clicks": self.trim_data})
         pane = pn.Column(
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.get_progress(self.step)),
-            pn.pane.Markdown(text),
+            self.header,
             self.start_time,
             self.stop_time,
             self.trim_btn,

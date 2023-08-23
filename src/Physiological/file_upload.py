@@ -11,6 +11,7 @@ import pytz
 from biopsykit.io.eeg import MuseDataset
 from biopsykit.utils.datatype_helper import HeartRatePhaseDict
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
+from src.Physiological.CONSTANTS import FILE_UPLOAD_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 from io import BytesIO
@@ -39,21 +40,15 @@ class FileUpload(PhysiologicalBase):
     def __init__(self):
         super().__init__()
         self.ready = param.Boolean(default=False)
-        self.step = 4
+        self.update_step(4)
+        self.update_text(FILE_UPLOAD_TEXT)
         self._select_timezone = pn.widgets.Select.from_param(self.param.timezone)
         pn.bind(self.timezone_changed, self._select_timezone.value, watch=True)
         self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)
         pn.bind(self.hardware_changed, self._select_hardware.value, watch=True)
-        self.text = (
-            "# Upload your session File \n"
-            "## The supported File formats are .bin, .csv, and you can also choose Folders.\n"
-            "After your upload your file will also be checked if it contains the necessary columns.\n"
-        )
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
         self._view = pn.Column(
-            pn.pane.Markdown(self.text),
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.get_progress(self.step)),
+            self.header,
             self._select_hardware,
             self._select_timezone,
             self.file_input,

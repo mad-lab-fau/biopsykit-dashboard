@@ -1,10 +1,12 @@
 import panel as pn
 import param
 
+from src.Physiological.CONSTANTS import SELECT_CFT_TEXT
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.data_arrived import DataArrived
 
 
-class SelectCFTSheet(DataArrived):
+class SelectCFTSheet(PhysiologicalBase):
     text = ""
     cft_sheet = pn.widgets.CheckBoxGroup()
     ready = param.Boolean(default=False)
@@ -12,15 +14,10 @@ class SelectCFTSheet(DataArrived):
     def __init__(self):
         super().__init__()
         self.step = 6
-        text = (
-            "# Select CFT Sheet \n\n"
-            "This step allows you to select a CFT sheet from a list "
-            "of available sheets."
-        )
+        self.update_step(self.step)
+        self.update_text(SELECT_CFT_TEXT)
         self.cft_sheet.link(self, callbacks={"value": self.sheet_checked})
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append(self.cft_sheet)
         self._view = pane
 

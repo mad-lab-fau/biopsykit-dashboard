@@ -9,6 +9,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 from fau_colors import cmaps
 
+from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -44,16 +45,10 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        self.step = 9
-        text = (
-            "# Preview of the Results \n \n"
-            "Below you can find a short summary of the analyzed data "
-            "(Preview of the Dataframe, and several statistical values).p"
-        )
+        self.update_step(9)
+        self.update_text(PROCESSING_PREVIEW_TEXT)
         self.set_progress_value(self.step)
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append(self.results)
         self._view = pane
 

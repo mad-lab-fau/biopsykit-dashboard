@@ -1,6 +1,7 @@
 import param
 import panel as pn
 
+from src.Physiological.CONSTANTS import PROCESS_HRV_TEXT, ASK_PROCESS_HRV_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -25,21 +26,13 @@ class AskToProcessHRV(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        self.step = 7
-        text = (
-            "# Processing HRV \n \n"
-            "If you want to additionally process the Heart Rate variability, "
-            "you can select the matching parameters and then "
-            "hit the process button, and then proceed. "
-            "Otherwise, you can skip this step and go to the next stage. \n \n"
-        )
+        self.update_text(ASK_PROCESS_HRV_TEXT)
+        self.update_step(7)
         self.set_progress_value(self.step)
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.default_btn.link(self, callbacks={"clicks": self.click_default_hrv})
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_expert_hrv})
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append((pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn)))
         self._view = pane
 
@@ -73,18 +66,10 @@ class SetHRVParameters(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        text = (
-            "# Processing HRV \n \n"
-            "If you want to additionally process the Heart Rate variability, "
-            "you can select the matching parameters and then hit the "
-            "process button, and then proceed. Otherwise, you can skip "
-            "this step and go to the next stage. "
-        )
-        self.step = 7
+        self.update_text(PROCESS_HRV_TEXT)
+        self.update_step(7)
         pane = pn.Column(
-            pn.Row(self.get_step_static_text(self.step)),
-            pn.Row(self.get_progress(self.step)),
-            pn.pane.Markdown(text),
+            self.header,
             self.hrv_types,
             self.correct_rpeaks,
             self.index,

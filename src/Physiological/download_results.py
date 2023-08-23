@@ -9,6 +9,7 @@ from biopsykit.protocols import CFT
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
 
+from src.Physiological.CONSTANTS import DOWNLOAD_RESULT_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 
@@ -31,8 +32,7 @@ class DownloadResults(PhysiologicalBase):
 
     def __init__(self):
         super().__init__()
-        text = "# Download Result \n"
-        self.update_text(text)
+        self.update_text(DOWNLOAD_RESULT_TEXT)
         self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
         self._view = pn.Column(self.header)
         self.download_btn = pn.widgets.FileDownload(
