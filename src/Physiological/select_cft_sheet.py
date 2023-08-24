@@ -11,8 +11,9 @@ class SelectCFTSheet(PhysiologicalBase):
     cft_sheet = pn.widgets.CheckBoxGroup()
     ready = param.Boolean(default=False)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SELECT_CFT_TEXT
+        super().__init__(**params)
         self.step = 6
         self.update_step(self.step)
         self.update_text(SELECT_CFT_TEXT)

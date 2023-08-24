@@ -20,10 +20,10 @@ class Session(PhysiologicalBase):
     )
     selected_signal = param.String()
 
-    def __init__(self):
-        super().__init__()
-        self.step = 2
-        self.update_step(self.step)
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SESSION_TEXT
+        super().__init__(**params)
+        self.update_step(2)
         self._select = pn.widgets.Select.from_param(self.param.session)
         self.update_text(SESSION_TEXT)
         pane = pn.Column(

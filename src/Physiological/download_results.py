@@ -30,9 +30,10 @@ class DownloadResults(PhysiologicalBase):
     load_plt_hr_ensemble = pn.widgets.Checkbox(name="HR Ensemble")
     zip_buffer = io.BytesIO()
 
-    def __init__(self):
-        super().__init__()
-        self.update_text(DOWNLOAD_RESULT_TEXT)
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = DOWNLOAD_RESULT_TEXT
+        super().__init__(**params)
+        self.update_step(12)
         self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
         self._view = pn.Column(self.header)
         self.download_btn = pn.widgets.FileDownload(

@@ -33,10 +33,10 @@ class DataArrived(PhysiologicalBase):
     session_start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
     session_end = pn.widgets.DatetimePicker(name="Session end:", disabled=True)
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = DATA_ARRIVED_TEXT
+        super().__init__(**params)
         self.update_step(5)
-        self.update_text(DATA_ARRIVED_TEXT)
         self.sampling_rate_input.link(
             self, callbacks={"value": self.set_sampling_rate_value}
         )

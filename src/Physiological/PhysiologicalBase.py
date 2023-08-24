@@ -67,8 +67,9 @@ class PhysiologicalBase(param.Parameterized):
     trimmed_data = param.Dynamic()
 
     def __init__(self, **params):
-        super().__init__()
-        self.header = PipelineHeader(1, MAX_STEPS, "")
+        header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
+        self.header = PipelineHeader(1, MAX_STEPS, header_text)
+        super().__init__(**params)
 
     def update_step(self, step: int | param.Integer):
         self.step = step

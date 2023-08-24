@@ -11,10 +11,10 @@ class PhysSignalType(PhysiologicalBase):
     pane = pn.Column()
 
     def __init__(self, **params):
+        params["HEADER_TEXT"] = SIGNAL_TYPE_TEXT
         super().__init__(**params)
-        self.step = 1
+        self.update_step(1)
         self.update_text(SIGNAL_TYPE_TEXT)
-        self.set_progress_value(self.step)
         select = pn.widgets.Select.from_param(self.param.selected_signal)
         select.link(self, callbacks={"value": self.signal_selected})
         self._view = pn.Column(
@@ -30,5 +30,4 @@ class PhysSignalType(PhysiologicalBase):
 
     def panel(self):
         self.ready = False
-        self.update_step(self.step)
         return self._view

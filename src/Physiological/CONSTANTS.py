@@ -113,3 +113,7 @@ ASK_ADD_TIMES_TEXT = (
     "to your data then click on the Add Times Button otherwise skip"
 )
 ADD_TIMES_TEXT = "# Select Times"
+PRESTEP_PROCESSING_TEXT = (
+    "# Processing \n"
+    "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
+)

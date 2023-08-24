@@ -31,17 +31,12 @@ class FileUpload(PhysiologicalBase):
         objects=["None Selected"] + list(pytz.all_timezones),
         label="Timezone",
     )
-    hardware = param.Selector(
-        label="Select the Hardware with which you recorded your data",
-        objects=["NilsPod", "BioPac"],
-        default="NilsPod",
-    )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = FILE_UPLOAD_TEXT
+        super().__init__(**params)
         self.ready = param.Boolean(default=False)
         self.update_step(4)
-        self.update_text(FILE_UPLOAD_TEXT)
         self._select_timezone = pn.widgets.Select.from_param(self.param.timezone)
         pn.bind(self.timezone_changed, self._select_timezone.value, watch=True)
         self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)

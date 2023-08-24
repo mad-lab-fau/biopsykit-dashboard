@@ -17,11 +17,10 @@ class FrequencyBands(PhysiologicalBase):
         "gamma": [30, 44],
     }
 
-    def __init__(self):
-        super().__init__()
-        self.step = 9
-        self.update_step(self.step)
-        self.update_text(SELECT_FREQUENCY_TEXT)
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SELECT_FREQUENCY_TEXT
+        super().__init__(**params)
+        self.update_step(9)
         pane = pn.Column(
             self.header,
             self.band_panel,

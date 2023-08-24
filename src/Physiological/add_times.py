@@ -20,11 +20,10 @@ class AskToAddTimes(PhysiologicalBase):
     skip_btn = pn.widgets.Button(name="Skip", button_type="success")
     add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
 
-    def __init__(self):
-        super().__init__()
-        self.step = 6
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_ADD_TIMES_TEXT
+        super().__init__(**params)
         self.update_step(6)
-        self.update_text(ASK_ADD_TIMES_TEXT)
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.add_times_btn.link(self, callbacks={"clicks": self.click_add_times})
         self.ready = False
@@ -75,13 +74,12 @@ class AddTimes(PhysiologicalBase):
         objects=["Do you want to detect Outlier?", "Frequency Bands"],
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ADD_TIMES_TEXT
+        super().__init__(**params)
         self.update_step(6)
-        self.update_text(ADD_TIMES_TEXT)
         self.time_upload.link(self, callbacks={"value": self.parse_time_file})
         self.add_button.link(self, callbacks={"clicks": self.add_timestamp})
-        self.set_progress_value(self.step)
         self.times = pn.Column(
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
@@ -112,7 +110,7 @@ class AddTimes(PhysiologicalBase):
         self.dict_to_column()
         return self._view
 
-    def parse_time_file(self, event):
+    def parse_time_file(self, target, event):
         df = None
         self.ecg_processed = False
         self.select_condition.visible = False

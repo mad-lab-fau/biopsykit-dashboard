@@ -9,7 +9,7 @@ import plotly.express as px
 import matplotlib.pyplot as plt
 from fau_colors import cmaps
 
-from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT
+from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT, PRESTEP_PROCESSING_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -17,18 +17,12 @@ class ProcessingPreStep(PhysiologicalBase):
     ready = param.Boolean(default=False)
     ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
 
-    def __init__(self):
-        super().__init__()
-        self.step = 8
-        text = (
-            "# Processing \n"
-            "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
-        )
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = PRESTEP_PROCESSING_TEXT
+        super().__init__(**params)
+        self.update_step(8)
         self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
-        self.set_progress_value(self.step)
-        pane = pn.Column(pn.Row(self.get_step_static_text(self.step)))
-        pane.append(pn.Row(pn.Row(self.get_progress(self.step))))
-        pane.append(pn.pane.Markdown(text))
+        pane = pn.Column(self.header)
         pane.append(self.ready_btn)
         self._view = pane
 
@@ -43,11 +37,10 @@ class ProcessingAndPreview(PhysiologicalBase):
     phase_title = pn.widgets.StaticText(name="Phase", visible=False)
     results = pn.Column()
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = PROCESSING_PREVIEW_TEXT
+        super().__init__(**params)
         self.update_step(9)
-        self.update_text(PROCESSING_PREVIEW_TEXT)
-        self.set_progress_value(self.step)
         pane = pn.Column(self.header)
         pane.append(self.results)
         self._view = pane
@@ -208,12 +201,12 @@ class ProcessingAndPreview(PhysiologicalBase):
             col.append(cft_plot)
         return col
 
-    def get_timelog(self):
+    def get_timelog(self, subject: str):
         time_log = self.subject_time_dict
         if not bool(time_log):
             return None
         if self.session == "Single Session":
-            time_log = self.subject_time_dict[self.subject]
+            time_log = self.subject_time_dict[subject]
             for key in time_log.keys():
                 time_log[key] = time_log[key].apply(lambda dt: dt.time())
             time_log = time_log[list(time_log.keys())[0]]
@@ -284,13 +277,20 @@ class ProcessingAndPreview(PhysiologicalBase):
         elif self.session == "Single Session":
             # Multiple Phases single. subject
             self.ecg_processor = {}
-            ep = EcgProcessor(
-                data=self.data,
-                sampling_rate=self.sampling_rate,
-                time_intervals=self.get_timelog(),
-            )
-            ep.ecg_process(title=self.subject)
-            self.ecg_processor[self.subject] = ep
+            for subject in self.data.keys():
+                try:
+                    ep = EcgProcessor(
+                        data=self.data[subject],
+                        sampling_rate=self.sampling_rate,
+                        time_intervals=self.get_timelog(subject),
+                    )
+                    ep.ecg_process(
+                        outlier_correction=self.outlier_methods,
+                        outlier_params=self.outlier_params,
+                    )
+                    self.ecg_processor[subject] = ep
+                except Exception as e:
+                    pn.state.notifications.error("Error in ECG Processing: " + str(e))
         elif self.session == "Multiple Sessions":
             # Multiple Subjects mult. phases
             self.ecg_processor = {}

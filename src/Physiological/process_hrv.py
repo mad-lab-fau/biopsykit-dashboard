@@ -14,9 +14,7 @@ class AskToProcessHRV(PhysiologicalBase):
     index = pn.widgets.TextInput(name="Index", value="")
     index_name = pn.widgets.TextInput(name="Index Name", value="")
     skip_btn = pn.widgets.Button(name="Skip")
-    expert_mode_btn = pn.widgets.Button(
-        styles={"background": "#d5433e"}, name="Expert Mode", button_type="success"
-    )
+    expert_mode_btn = pn.widgets.Button(name="Expert Mode", button_type="warning")
     default_btn = pn.widgets.Button(name="Default", button_type="primary")
     next_page = param.Selector(
         default="Set HRV Parameters",
@@ -24,11 +22,10 @@ class AskToProcessHRV(PhysiologicalBase):
     )
     ready = param.Boolean(default=False)
 
-    def __init__(self):
-        super().__init__()
-        self.update_text(ASK_PROCESS_HRV_TEXT)
-        self.update_step(7)
-        self.set_progress_value(self.step)
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_PROCESS_HRV_TEXT
+        super().__init__(**params)
+        self.update_step(8)
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.default_btn.link(self, callbacks={"clicks": self.click_default_hrv})
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_expert_hrv})

@@ -16,10 +16,10 @@ class Recordings(PhysiologicalBase):
         default="Upload Files", objects=["Upload Files", "Multiple Files"]
     )
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = RECORDINGS_TEXT
+        super().__init__(**params)
         self.update_step(3)
-        self.update_text(RECORDINGS_TEXT)
         self.ready = True
         self._select = pn.widgets.Select.from_param(self.param.recording)
         self._select.link(self, callbacks={"value": self.chg})
@@ -35,5 +35,4 @@ class Recordings(PhysiologicalBase):
             self.next = "Multiple Files"
 
     def panel(self):
-        self.update_step(self.step)
         return self._view

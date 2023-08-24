@@ -5,6 +5,7 @@ from src.Physiological.CONSTANTS import (
     OUTLIER_METHODS,
     ASK_PROCESS_HRV_TEXT,
     OUTLIER_DETECTION_TEXT,
+    ASK_DETECT_OUTLIER_TEXT,
 )
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
@@ -25,11 +26,10 @@ class AskToDetectOutliers(PhysiologicalBase):
         name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
     )
 
-    def __init__(self):
-        super().__init__()
-        self.step = 7
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_DETECT_OUTLIER_TEXT
+        super().__init__(**params)
         self.update_step(7)
-        self.update_text(ASK_PROCESS_HRV_TEXT)
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_detect_outlier})
         self.default_btn.link(self, callbacks={"clicks": self.click_default})
@@ -60,8 +60,9 @@ class AskToDetectOutliers(PhysiologicalBase):
 class OutlierDetection(PhysiologicalBase):
     textHeader = ""
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = OUTLIER_DETECTION_TEXT
+        super().__init__(**params)
         self.step = 6
         self.update_step(6)
         self.update_text(OUTLIER_DETECTION_TEXT)
