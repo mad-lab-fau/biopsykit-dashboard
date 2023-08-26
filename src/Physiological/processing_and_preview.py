@@ -278,19 +278,15 @@ class ProcessingAndPreview(PhysiologicalBase):
             # Multiple Phases single. subject
             self.ecg_processor = {}
             for subject in self.data.keys():
-                try:
-                    ep = EcgProcessor(
-                        data=self.data[subject],
-                        sampling_rate=self.sampling_rate,
-                        time_intervals=self.get_timelog(subject),
-                    )
-                    ep.ecg_process(
-                        outlier_correction=self.outlier_methods,
-                        outlier_params=self.outlier_params,
-                    )
-                    self.ecg_processor[subject] = ep
-                except Exception as e:
-                    pn.state.notifications.error("Error in ECG Processing: " + str(e))
+                ep = EcgProcessor(
+                    data=self.data[subject], sampling_rate=self.sampling_rate
+                )
+                ep.ecg_process(
+                    outlier_correction=self.selected_outlier_methods,
+                    outlier_params=self.outlier_params,
+                )
+                self.ecg_processor[subject] = ep
+                # pn.state.notifications.error("Error in ECG Processing: " + str(e))
         elif self.session == "Multiple Sessions":
             # Multiple Subjects mult. phases
             self.ecg_processor = {}

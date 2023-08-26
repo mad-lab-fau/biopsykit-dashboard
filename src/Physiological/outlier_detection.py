@@ -59,6 +59,9 @@ class AskToDetectOutliers(PhysiologicalBase):
 
 class OutlierDetection(PhysiologicalBase):
     textHeader = ""
+    outlier_methods = pn.widgets.MultiChoice(
+        name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = OUTLIER_DETECTION_TEXT
@@ -69,6 +72,9 @@ class OutlierDetection(PhysiologicalBase):
         self.set_progress_value(self.step)
         self.physiological_upper.link(self, callbacks={"value": self.check_upper_bound})
         self.physiological_lower.link(self, callbacks={"value": self.check_lower_bound})
+        self.outlier_methods.link(
+            self, callbacks={"value": self.outlier_methods_changed}
+        )
         pane = pn.Column(self.header)
         pane.append(
             pn.Column(
@@ -82,6 +88,11 @@ class OutlierDetection(PhysiologicalBase):
             )
         )
         self._view = pane
+
+    def outlier_methods_changed(self, _, event):
+        if len(event.new) == 0:
+            self.selected_outlier_methods = None
+        self.selected_outlier_methods = event.new
 
     def check_upper_bound(self):
         if self.physiological_upper.value < 0:

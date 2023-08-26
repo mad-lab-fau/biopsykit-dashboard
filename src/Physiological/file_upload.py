@@ -221,7 +221,7 @@ class FileUpload(PhysiologicalBase):
     def handle_bin_file(self, file_name: string, file_content: bytes):
         dataset = NilsPodAdapted.from_bin_file(
             filepath_or_buffer=BytesIO(file_content),
-            legacy_support="resolve",
+            # legacy_support="resolve",
             tz=self.timezone,
         )
         self.sensors = set(dataset.info.enabled_sensors)

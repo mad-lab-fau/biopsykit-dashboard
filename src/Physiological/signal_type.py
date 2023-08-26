@@ -1,6 +1,6 @@
 import panel as pn
 import param
-
+import biopsykit as bp
 from src.Physiological.CONSTANTS import SIGNAL_TYPE_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.custom_components import PipelineHeader

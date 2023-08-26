@@ -43,9 +43,6 @@ class PhysiologicalBase(param.Parameterized):
     recording = param.String(default="Single Recording")
     hr_data = None
     subject_time_dict = param.Dynamic(default={})
-    outlier_methods = pn.widgets.MultiChoice(
-        name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
-    )
     statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
     correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
     quality = pn.widgets.FloatInput(name="quality", value=0.4)
@@ -55,7 +52,8 @@ class PhysiologicalBase(param.Parameterized):
     physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
     physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
     skip_outlier_detection = param.Boolean(default=True)
-    outlier_params = param.Dynamic()
+    selected_outlier_methods = param.Dynamic(default=None)
+    outlier_params = param.Dynamic(default=None)
     ecg_processor = param.Dynamic()
     cft_sheets = param.Dynamic()
     freq_bands = param.Dynamic(default={})
@@ -194,6 +192,10 @@ class PhysiologicalBase(param.Parameterized):
         self.times.objects[0].active = active
 
     def get_outlier_params(self):
+        if self.skip_outlier_detection:
+            self.outlier_params = None
+            self.selected_outlier_methods = None
+            return None
         self.outlier_params = {
             "correlation": self.correlation.value,
             "quality": self.quality.value,
@@ -223,7 +225,7 @@ class PhysiologicalBase(param.Parameterized):
         ("time_log_present", param.Boolean),
         ("time_log", param.Dynamic),
         ("outlier_params", param.Dynamic),
-        ("outlier_methods", param.Dynamic),
+        ("selected_outlier_methods", param.Dynamic),
         ("skip_hrv", param.Boolean),
         ("subject", param.Dynamic),
         ("cft_sheets", param.Dynamic),
@@ -246,7 +248,7 @@ class PhysiologicalBase(param.Parameterized):
             self.time_log_present,
             self.time_log,
             self.get_outlier_params(),
-            self.outlier_methods,
+            self.selected_outlier_methods,
             self.skip_hrv,
             self.subject,
             self.cft_sheets,
