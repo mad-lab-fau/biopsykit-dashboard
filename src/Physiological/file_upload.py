@@ -31,11 +31,11 @@ class FileUpload(PhysiologicalBase):
         objects=["None Selected"] + list(pytz.all_timezones),
         label="Timezone",
     )
+    ready = param.Boolean(default=False)
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = FILE_UPLOAD_TEXT
         super().__init__(**params)
-        self.ready = param.Boolean(default=False)
         self.update_step(4)
         self._select_timezone = pn.widgets.Select.from_param(self.param.timezone)
         pn.bind(self.timezone_changed, self._select_timezone.value, watch=True)

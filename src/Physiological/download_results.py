@@ -31,19 +31,19 @@ class DownloadResults(PhysiologicalBase):
     zip_buffer = io.BytesIO()
 
     def __init__(self, **params):
+        self.download_btn = None
         params["HEADER_TEXT"] = DOWNLOAD_RESULT_TEXT
         super().__init__(**params)
         self.update_step(12)
         self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
         self._view = pn.Column(self.header)
-        self.download_btn = pn.widgets.FileDownload(
-            callback=self.get_selected_files, filename="Results.zip"
-        )
-        self._view.append(self.download_btn)
+
         self._view.append(self._load_results_checkbox)
         self._view.append(self.load_plots_hrv)
 
     def get_selected_files(self):
+        print("get selected files")
+        pn.state.notifications.info("Loading Results")
         with zipfile.ZipFile(
             self.zip_buffer, "a", zipfile.ZIP_DEFLATED, False
         ) as zip_file:
@@ -54,6 +54,7 @@ class DownloadResults(PhysiologicalBase):
             elif self.selected_signal == "CFT":
                 self.load_cft_files(zip_file)
         self.zip_buffer.seek(0)
+        pn.state.notifications.info("Results loaded")
         return self.zip_buffer
 
     def load_eeg_files(self, zip_file):
@@ -175,9 +176,12 @@ class DownloadResults(PhysiologicalBase):
             zip_file.writestr(f"CFT_{key}.png", buf.getvalue())
 
     def panel(self):
-        self.step = 10
-        self.update_step(self.step)
         self._load_results_checkbox.name = f"Load {self.selected_signal} Results"
         if self.skip_hrv:
             self.load_plots_hrv.visible = False
+        if self.download_btn is None:
+            self.download_btn = pn.widgets.FileDownload(
+                callback=self.get_selected_files, filename="Results.zip"
+            )
+            self._view.append(self.download_btn)
         return self._view
