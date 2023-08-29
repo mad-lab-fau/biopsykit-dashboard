@@ -3,7 +3,6 @@ import panel as pn
 
 from src.Physiological.CONSTANTS import (
     OUTLIER_METHODS,
-    ASK_PROCESS_HRV_TEXT,
     OUTLIER_DETECTION_TEXT,
     ASK_DETECT_OUTLIER_TEXT,
 )

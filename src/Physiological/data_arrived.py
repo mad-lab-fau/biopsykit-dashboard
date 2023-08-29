@@ -2,7 +2,6 @@ import nilspodlib
 import param
 import panel as pn
 import pandas as pd
-from nilspodlib import Session
 
 from src.Physiological.CONSTANTS import DATA_ARRIVED_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase

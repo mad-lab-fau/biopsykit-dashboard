@@ -3,7 +3,6 @@ import param
 
 from src.Physiological.CONSTANTS import SELECT_CFT_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
-from src.Physiological.data_arrived import DataArrived
 
 
 class SelectCFTSheet(PhysiologicalBase):

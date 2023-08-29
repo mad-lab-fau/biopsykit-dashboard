@@ -1,6 +1,5 @@
 import numpy as np
 import panel as pn
-import param
 
 from src.Physiological.CONSTANTS import SELECT_FREQUENCY_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase

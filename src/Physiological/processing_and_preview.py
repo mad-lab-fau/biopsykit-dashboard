@@ -279,7 +279,9 @@ class ProcessingAndPreview(PhysiologicalBase):
             self.ecg_processor = {}
             for subject in self.data.keys():
                 ep = EcgProcessor(
-                    data=self.data[subject], sampling_rate=self.sampling_rate
+                    data=self.data[subject],
+                    sampling_rate=self.sampling_rate,
+                    time_intervals=self.get_timelog(subject),
                 )
                 ep.ecg_process(
                     outlier_correction=self.selected_outlier_methods,

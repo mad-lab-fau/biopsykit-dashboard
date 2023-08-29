@@ -6,7 +6,7 @@ import datetime as datetime
 from src.Physiological.CONSTANTS import *
 from src.Physiological.custom_components import PipelineHeader
 
-# TODO Use Header for all steps
+
 class PhysiologicalBase(param.Parameterized):
     step = param.Integer(default=1)
     max_steps = 12

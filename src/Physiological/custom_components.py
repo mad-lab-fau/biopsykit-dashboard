@@ -1,11 +1,8 @@
-import panel.pane
 import param
-from panel.viewable import Viewer
 import panel as pn
-from src.Physiological.CONSTANTS import MAX_STEPS
 
 
-class PipelineHeader(Viewer):
+class PipelineHeader(pn.viewable.Viewer):
     max_step = param.Integer(default=100)
 
     def __init__(
@@ -45,7 +42,7 @@ class PipelineHeader(Viewer):
         return self._layout
 
 
-class Timestamp(Viewer):
+class Timestamp(pn.viewable.Viewer):
 
     value = param.Tuple(doc="First value is the name the second the timestamp")
     remove = False
@@ -79,7 +76,7 @@ class Timestamp(Viewer):
         self.value = (self._timestamp_name.value, self._timestamp_datetime.value)
 
 
-class TimestampList(Viewer):
+class TimestampList(pn.viewable.Viewer):
 
     value = param.List(doc="List of Tuples (str, DateTime)")
     col = pn.Column()

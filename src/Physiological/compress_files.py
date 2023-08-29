@@ -2,10 +2,10 @@ import panel as pn
 import param
 
 from src.Physiological.CONSTANTS import COMPRESS_FILES_TEXT
-from src.Physiological.recordings import Recordings
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
-class Compress(Recordings):
+class Compress(PhysiologicalBase):
     def __init__(self, **params):
         params["HEADER_TEXT"] = COMPRESS_FILES_TEXT
         super().__init__(**params)

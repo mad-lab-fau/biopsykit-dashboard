@@ -1,6 +1,6 @@
 import panel as pn
 import param
-from Physiological.physiological_pipeline import *
+from src.Physiological.physiological_pipeline import *
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)

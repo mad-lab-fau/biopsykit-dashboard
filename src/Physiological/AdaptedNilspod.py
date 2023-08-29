@@ -13,7 +13,6 @@ from typing import Dict, Optional, Tuple, Iterable
 from nilspodlib.legacy import find_conversion_function, legacy_support_check
 from nilspodlib.utils import read_binary_uint8, get_strict_version_from_header_bytes
 from packaging.version import Version
-from pandas._typing import FilePath, ReadCsvBuffer
 from typing_extensions import Self
 import warnings
 
