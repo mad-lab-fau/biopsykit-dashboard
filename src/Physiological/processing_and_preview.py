@@ -11,6 +11,7 @@ from fau_colors import cmaps
 
 from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT, PRESTEP_PROCESSING_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
+from src.Physiological.custom_components import SubjectDataFrameView
 
 
 class ProcessingPreStep(PhysiologicalBase):
@@ -41,9 +42,11 @@ class ProcessingAndPreview(PhysiologicalBase):
         params["HEADER_TEXT"] = PROCESSING_PREVIEW_TEXT
         super().__init__(**params)
         self.update_step(9)
-        pane = pn.Column(self.header)
-        pane.append(self.results)
-        self._view = pane
+        # pane = pn.Column(self.header)
+        # pane.append(self.results)
+        self.result_view = SubjectDataFrameView({})
+        # pane.append(self.result_view)
+        self._view = pn.Column(self.header, self.results, self.result_view)
 
     def get_phases(self) -> list:
         if self.subject is not None:
@@ -82,96 +85,6 @@ class ProcessingAndPreview(PhysiologicalBase):
                 df[key] = self.data[key]
         if self.data_processed:
             return accordion
-        # self.process_ecg()
-        # if "ecg" in self.sensors:
-        #     if self.subj_time_dict:
-        #         time_log = self.subj_time_dict
-        #         if self.session.value == "Single Session":
-        #             time_log = self.subj_time_dict[self.subject]
-        #             for key in time_log.keys():
-        #                 time_log[key] = time_log[key].apply(
-        #                     lambda dt: dt.time() if isinstance(dt, datetime) else dt
-        #                 )
-        #             time_log = time_log[list(time_log.keys())[0]]
-        #         self.ecg_processor = EcgProcessor(
-        #             data=df,
-        #             sampling_rate=self.sampling_rate,
-        #             time_intervals=time_log,
-        #         )
-        #     else:
-        #         self.ecg_processor = EcgProcessor(
-        #             data=df, sampling_rate=self.sampling_rate
-        #         )
-        #     if self.skip_outlier_detection:
-        #         self.ecg_processor.ecg_process(
-        #             outlier_correction=None,
-        #             outlier_params=None,
-        #         )
-        #     else:
-        #         self.ecg_processor.ecg_process(
-        #             outlier_correction=self.outlier_methods,
-        #             outlier_params=self.outlier_params,
-        #         )
-        #     self.data_processed = True
-        # if type(self.data) == dict:
-        #     for key in self.data.keys():
-        #         ecg_results = pn.widgets.DataFrame(
-        #             name=key + " ECG Results",
-        #             value=self.ecg_processor.ecg_result[key],
-        #         )
-        #         hr_results = pn.widgets.DataFrame(
-        #             name=key + " HR Results",
-        #             value=self.ecg_processor.hr_result[key],
-        #         )
-        #         rsp_signal = self.ecg_processor.ecg_estimate_rsp(
-        #             self.ecg_processor, key=key, edr_type="peak_trough_diff"
-        #         )
-        #         rsa = self.ecg_processor.rsa_process(
-        #             ecg_signal=self.ecg_processor.ecg_result[key],
-        #             rsp_signal=rsp_signal,
-        #             sampling_rate=self.sampling_rate,
-        #         )
-        #         accordion.append(ecg_results)
-        #         accordion.append(hr_results)
-        # else:
-        #     ecg_results = pn.widgets.DataFrame(
-        #         name="ECG Results",
-        #         value=self.ecg_processor.ecg_result[self.get_phases()[0]],
-        #     )
-        #     hr_results = pn.widgets.DataFrame(
-        #         name="HR Results",
-        #         value=self.ecg_processor.hr_result[self.get_phases()[0]],
-        #     )
-        # rsp_signal = self.ecg_processor.ecg_estimate_rsp(
-        #     self.ecg_processor, key="Data", edr_type="peak_trough_diff"
-        # )
-        # rsa = self.ecg_processor.rsa_process(
-        #     ecg_signal=self.ecg_processor.ecg_result[
-        #         self.ecg_processor.ecg_result.keys()[0]
-        #     ],
-        #     rsp_signal=rsp_signal,
-        #     sampling_rate=self.sampling_rate,
-        # )
-        #         accordion.append(ecg_results)
-        #         accordion.append(hr_results)
-        # if "eeg" in self.sensors:
-        #     self.eeg_processor = EegProcessor(df, self.sampling_rate)
-        #     self.eeg_processor.relative_band_energy()
-        #     if type(self.data) == dict:
-        #         for key in self.data.keys():
-        #             df_bands = pn.widgets.DataFrame(
-        #                 name=key + " Frequency Bands",
-        #                 value=self.eeg_processor.eeg_result[key],
-        #             )
-        #             accordion.append(df_bands)
-        #     else:
-        #         df_bands = pn.widgets.DataFrame(
-        #             name="Frequency Bands",
-        #             value=self.eeg_processor.eeg_result[
-        #                 self.eeg_processor.eeg_result.keys()[0]
-        #             ],
-        #         )
-        #         accordion.append(df_bands)
         return accordion
 
     def process_rsp(self):
@@ -300,6 +213,15 @@ class ProcessingAndPreview(PhysiologicalBase):
                 )
                 ep.ecg_process(title=subject)
                 self.ecg_processor[subject] = ep
+        subject_result_dict = {}
+        for subject in self.ecg_processor.keys():
+            result_dict = {}
+            # result_dict["Data"] = self.ecg_processor[subject].data
+            result_dict["ECG Result"] = self.ecg_processor[subject].ecg_result
+            result_dict["Heart Rate Result"] = self.ecg_processor[subject].heart_rate
+            result_dict["HRV Result"] = self.ecg_processor[subject].hr_result
+            subject_result_dict[subject] = result_dict
+        self.result_view.set_subject_results(subject_result_dict)
         accordion = self.get_dataframes_as_accordions()
         stat_values = self.get_statistical_values()
         for stat_value in stat_values:
@@ -321,7 +243,6 @@ class ProcessingAndPreview(PhysiologicalBase):
         self.data_processed = True
         return col
 
-    # TODO: noch den Baseline abfragen, und abfragen welche Phasen gewählt werden sollen
     def process_hr(self):
         if self.hr_data is None:
             return

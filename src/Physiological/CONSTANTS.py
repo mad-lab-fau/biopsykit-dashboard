@@ -44,7 +44,7 @@ RECORDINGS_TEXT = (
 PROCESSING_PREVIEW_TEXT = (
     "# Preview of the Results \n \n"
     "Below you can find a short summary of the analyzed data "
-    "(Preview of the Dataframe, and several statistical values).p"
+    "(Preview of the Dataframe, and several statistical values)."
 )
 PROCESS_HRV_TEXT = (
     "# Processing HRV \n \n"
@@ -108,7 +108,7 @@ COMPRESS_FILES_TEXT = (
     "Please do that before proceeding to the next step.\n"
 )
 ASK_ADD_TIMES_TEXT = (
-    "# Do you want to add Phases for your Data?"
+    "# Do you want to add Phases for your Data?\n"
     "If you want to upload an Excel oder CSV File, or if you want to manually add Phases "
     "to your data then click on the Add Times Button otherwise skip"
 )
