@@ -1,3 +1,5 @@
+import os
+
 import panel as pn
 
 from src.Physiological.physiological_pipeline import PhysiologicalPipeline
@@ -5,11 +7,13 @@ from src.Psychological.psychological_pipeline import PsychologicalPipeline
 from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
 from src.Saliva.saliva_pipeline import SalivaPipeline
 from src.Sleep.sleep_pipeline import SleepPipeline
+import warnings
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 from src.MainPage.main_page import MainPage
+
 
 app = pn.template.BootstrapTemplate(
     title="BioPysKit Dashboard",
@@ -18,7 +22,7 @@ app = pn.template.BootstrapTemplate(
 )
 
 app.config.console_output = "disable"
-app.config.log_level = "NOTSET"
+app.config.log_level = "CRITICAL"
 app.sidebar.constant = False
 app.main.constant = False
 app.theme_toggle = False
@@ -30,7 +34,6 @@ def startPhysPipeline(event):
     ecg = PhysiologicalPipeline()
     pane = pn.Column(
         pn.Row(
-            # ecg.pipeline.title,
             pn.layout.HSpacer(),
             ecg.pipeline.prev_button,
             ecg.pipeline.next_button,
@@ -111,8 +114,6 @@ def get_sidebar():
 
 
 def get_mainMenu(event):
-    # f = open("../assets/Markdown/WelcomeText.md", "r")
-    # fileString = f.read()
     fileString = """
         # Welcome to the BioPsyKit Dashboard
         
@@ -256,6 +257,8 @@ def get_mainMenu(event):
 
 
 if __name__ == "__main__":
+    os.environ["OUTDATED_IGNORE"] = "1"
+    pn.config.console_output = "disable"
     app.sidebar.append(get_sidebar())
     get_mainMenu(None)
     app.servable().show(

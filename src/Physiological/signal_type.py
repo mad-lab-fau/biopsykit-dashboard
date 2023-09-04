@@ -1,6 +1,6 @@
 import panel as pn
 import param
-from src.Physiological.CONSTANTS import SIGNAL_TYPE_TEXT
+from src.Physiological.CONSTANTS import SIGNAL_TYPE_TEXT, PHYSIOLOGICAL_SIGNAL_OPTIONS
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -13,7 +13,11 @@ class PhysSignalType(PhysiologicalBase):
         super().__init__(**params)
         self.update_step(1)
         self.update_text(SIGNAL_TYPE_TEXT)
-        select = pn.widgets.Select.from_param(self.param.selected_signal)
+        select = pn.widgets.Select(
+            name="Select Signal Type",
+            options=PHYSIOLOGICAL_SIGNAL_OPTIONS,
+            default="",
+        )
         select.link(self, callbacks={"value": self.signal_selected})
         self._view = pn.Column(
             self.header,

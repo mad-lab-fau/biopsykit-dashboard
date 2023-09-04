@@ -3,6 +3,8 @@ from typing import Dict
 import pandas as pd
 import param
 import panel as pn
+import biopsykit as bp
+from biopsykit.signals._base import _BaseProcessor
 
 
 class PipelineHeader(pn.viewable.Viewer):
@@ -125,7 +127,7 @@ class SubjectDataFrameView(pn.viewable.Viewer):
             name="Results",
             pagination="local",
             layout="fit_data_stretch",
-            page_size=30,
+            page_size=15,
             visible=False,
         )
         self._layout = pn.Column(
@@ -173,6 +175,76 @@ class SubjectDataFrameView(pn.viewable.Viewer):
         df = self._subject_results_dict[subject][result][phase]
         self.tab.value = df
         self.tab.visible = True
+
+    def __panel__(self):
+        return self._layout
+
+
+class PlotViewer(pn.viewable.Viewer):
+    def __init__(
+        self,
+        signal_type: str | None,
+        signal: Dict[str, _BaseProcessor] | None,
+        sampling_rate: float | None,
+        **params
+    ):
+        self._signal_type = signal_type
+        self._signal = signal
+        self._sampling_rate = sampling_rate
+        self.select_result = pn.widgets.Select(name="Result")
+        self.select_phase = pn.widgets.Select(name="Phase")
+        if signal is not None:
+            self.select_result.options = list(signal.keys())
+        self.graph = pn.pane.Matplotlib()
+        self.select_result.link(self.graph, callbacks={"value": self.change_result})
+        self.select_phase.link(self.graph, callbacks={"value": self.change_phase})
+        self._layout = pn.Column(
+            pn.Row(self.select_result, self.select_phase), self.graph
+        )
+        super().__init__(**params)
+
+    def set_signal_type(self, signal_type: str):
+        self._signal_type = signal_type
+
+    def set_sampling_rate(self, sampling_rate: float):
+        self._sampling_rate = sampling_rate
+
+    def set_values(
+        self, signal_type: str, signal: Dict[str, _BaseProcessor], sampling_rate: float
+    ):
+        self._signal_type = signal_type
+        self._signal = signal
+        self._sampling_rate = sampling_rate
+        self.select_result.options = list(signal.keys())
+
+    def set_signal(self, signal: Dict[str, pd.DataFrame]):
+        self._signal = signal
+        self.select_result.options = list(signal.keys())
+
+    def change_phase(self, target, event):
+        phase = event.new
+        subject = self.select_result.value
+        if subject is None or phase is None:
+            return
+        if self._signal_type == "ECG" and self._signal is not None:
+            self.select_phase.options = list()
+            fig, _ = bp.signals.ecg.plotting.ecg_plot(
+                ecg_processor=self._signal[subject],
+                sampling_rate=self._sampling_rate,
+                key=phase,
+            )
+            target.object = fig
+
+    def change_result(self, target, event):
+        if self._signal_type == "ECG" and self._signal is not None:
+            self.select_phase.options = list()
+            fig, _ = bp.signals.ecg.plotting.ecg_plot(
+                ecg_processor=self._signal[event.new],
+                sampling_rate=self._sampling_rate,
+                key=self._signal[event.new].phases[0],
+            )
+            self.select_phase.options = self._signal[event.new].phases
+            target.object = fig
 
     def __panel__(self):
         return self._layout

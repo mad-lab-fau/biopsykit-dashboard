@@ -11,7 +11,7 @@ from fau_colors import cmaps
 
 from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT, PRESTEP_PROCESSING_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
-from src.Physiological.custom_components import SubjectDataFrameView
+from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
 
 
 class ProcessingPreStep(PhysiologicalBase):
@@ -42,11 +42,11 @@ class ProcessingAndPreview(PhysiologicalBase):
         params["HEADER_TEXT"] = PROCESSING_PREVIEW_TEXT
         super().__init__(**params)
         self.update_step(9)
-        # pane = pn.Column(self.header)
-        # pane.append(self.results)
         self.result_view = SubjectDataFrameView({})
-        # pane.append(self.result_view)
-        self._view = pn.Column(self.header, self.results, self.result_view)
+        self.result_graph = PlotViewer(None, None, None)
+        self._view = pn.Column(
+            self.header, self.results, self.result_view, self.result_graph
+        )
 
     def get_phases(self) -> list:
         if self.subject is not None:
@@ -188,7 +188,6 @@ class ProcessingAndPreview(PhysiologicalBase):
                     outlier_params=self.outlier_params,
                 )
         elif self.session == "Single Session":
-            # Multiple Phases single. subject
             self.ecg_processor = {}
             for subject in self.data.keys():
                 ep = EcgProcessor(
@@ -209,38 +208,21 @@ class ProcessingAndPreview(PhysiologicalBase):
                 ep = EcgProcessor(
                     data=self.data[subject],
                     sampling_rate=self.sampling_rate,
-                    time_intervals=self.get_timelog()[subject],
+                    time_intervals=self.get_timelog(subject),
                 )
                 ep.ecg_process(title=subject)
                 self.ecg_processor[subject] = ep
         subject_result_dict = {}
+        graph_dict = {}
         for subject in self.ecg_processor.keys():
             result_dict = {}
-            # result_dict["Data"] = self.ecg_processor[subject].data
             result_dict["ECG Result"] = self.ecg_processor[subject].ecg_result
             result_dict["Heart Rate Result"] = self.ecg_processor[subject].heart_rate
             result_dict["HRV Result"] = self.ecg_processor[subject].hr_result
             subject_result_dict[subject] = result_dict
+            graph_dict[subject] = self.ecg_processor[subject]
         self.result_view.set_subject_results(subject_result_dict)
-        accordion = self.get_dataframes_as_accordions()
-        stat_values = self.get_statistical_values()
-        for stat_value in stat_values:
-            accordion.append(stat_value)
-        col.append(accordion)
-        select_phase = pn.widgets.Select(name="Select Phase", options=self.get_phases())
-        ecg_plot = pn.pane.Matplotlib(plt.Figure(figsize=(15, 10)), tight=True)
-        if self.subject is not None:
-            fig, _ = bp.signals.ecg.plotting.ecg_plot(
-                self.ecg_processor[self.subject], key=self.get_phases()[0]
-            )
-            ecg_plot.object = fig
-            select_phase.link(ecg_plot, callbacks={"value": self.phase_changed})
-            col.append(select_phase)
-            self.phase_title.visible = True
-            self.phase_title.value = self.get_phases()[0]
-            col.append(self.phase_title)
-            col.append(ecg_plot)
-        self.data_processed = True
+        self.result_graph.set_signal(graph_dict)
         return col
 
     def process_hr(self):
@@ -307,4 +289,6 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def panel(self):
         self.results = self.processing()
+        self.result_graph.set_signal_type(self.selected_signal)
+        self.result_graph.set_sampling_rate(self.sampling_rate)
         return self._view
