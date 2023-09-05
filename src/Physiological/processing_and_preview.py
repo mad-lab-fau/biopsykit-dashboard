@@ -127,35 +127,22 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def process_eeg(self):
         col = pn.Column()
+        if self.sampling_rate == -1:
+            pn.state.notifications.error("Bitte eine sampling Rate eingeben")
+            return
         if self.selected_signal == "EEG":
-            if self.subject_time_dict:
-                for subject in self.subject_time_dict.keys():
-                    self.eeg_processor[subject] = EegProcessor(
-                        data=self.data[subject],
-                        sampling_rate=float(self.sampling_rate),
-                        time_intervals=self.subject_time_dict[subject],
-                    )
-                    self.eeg_processor[subject].relative_band_energy(
-                        freq_bands=self.freq_bands
-                    )
-            else:
-                if self.sampling_rate != -1:
-                    self.eeg_processor["Data"] = EegProcessor(
-                        data=self.data, sampling_rate=float(self.sampling_rate)
-                    )
-                else:
-                    self.eeg_processor["Data"] = EegProcessor(
-                        data=self.data.data_as_df(index="local_datetime"),
-                        sampling_rate=float(256),
-                    )
-                self.eeg_processor["Data"].relative_band_energy()
-                fig = px.line(
-                    self.eeg_processor["Data"].eeg_result["Data"],
-                    color_discrete_sequence=cmaps.faculties,
+            for subject in list(self.data.keys()):
+                time_intervals = (
+                    self.get_timelog(subject) if self.subject_time_dict else None
                 )
-                fig.layout.autosize = True
-                responsive = pn.pane.Plotly(fig, config={"responsive": True})
-                col.append(responsive)
+                self.eeg_processor[subject] = EegProcessor(
+                    data=self.data[subject],
+                    sampling_rate=float(self.sampling_rate),
+                    time_intervals=time_intervals,
+                )
+                self.eeg_processor[subject].relative_band_energy(
+                    freq_bands=self.freq_bands, title=subject
+                )
             self.data_processed = True
         return col
 
@@ -164,30 +151,7 @@ class ProcessingAndPreview(PhysiologicalBase):
         if not self.selected_signal == "ECG":
             pn.state.notifications.error("False Signal Selection")
             return col
-        if type(self.data) != dict:
-            if self.subject_time_dict:
-                # One Subject mult. phases
-                self.ecg_processor = EcgProcessor(
-                    data=self.data, sampling_rate=self.sampling_rate
-                )
-            else:
-                # One Subject one phase
-                self.ecg_processor = EcgProcessor(
-                    data=self.data,
-                    sampling_rate=self.sampling_rate,
-                    time_intervals=self.get_timelog(),
-                )
-            if self.skip_outlier_detection:
-                self.ecg_processor.ecg_process(
-                    outlier_correction=None,
-                    outlier_params=None,
-                )
-            else:
-                self.ecg_processor.ecg_process(
-                    outlier_correction=self.outlier_methods,
-                    outlier_params=self.outlier_params,
-                )
-        elif self.session == "Single Session":
+        if self.session == "Single Session":
             self.ecg_processor = {}
             for subject in self.data.keys():
                 ep = EcgProcessor(
@@ -200,9 +164,7 @@ class ProcessingAndPreview(PhysiologicalBase):
                     outlier_params=self.outlier_params,
                 )
                 self.ecg_processor[subject] = ep
-                # pn.state.notifications.error("Error in ECG Processing: " + str(e))
         elif self.session == "Multiple Sessions":
-            # Multiple Subjects mult. phases
             self.ecg_processor = {}
             for subject in self.data.keys():
                 ep = EcgProcessor(
@@ -215,11 +177,11 @@ class ProcessingAndPreview(PhysiologicalBase):
         subject_result_dict = {}
         graph_dict = {}
         for subject in self.ecg_processor.keys():
-            result_dict = {}
-            result_dict["ECG Result"] = self.ecg_processor[subject].ecg_result
-            result_dict["Heart Rate Result"] = self.ecg_processor[subject].heart_rate
-            result_dict["HRV Result"] = self.ecg_processor[subject].hr_result
-            subject_result_dict[subject] = result_dict
+            subject_result_dict[subject] = {
+                "ECG Result": self.ecg_processor[subject].ecg_result,
+                "Heart Rate Result": self.ecg_processor[subject].heart_rate,
+                "HRV Result": self.ecg_processor[subject].hr_result,
+            }
             graph_dict[subject] = self.ecg_processor[subject]
         self.result_view.set_subject_results(subject_result_dict)
         self.result_graph.set_signal(graph_dict)

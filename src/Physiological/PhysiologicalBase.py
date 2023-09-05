@@ -56,7 +56,7 @@ class PhysiologicalBase(param.Parameterized):
     outlier_params = param.Dynamic(default=None)
     ecg_processor = param.Dynamic()
     cft_sheets = param.Dynamic()
-    freq_bands = param.Dynamic(default={})
+    freq_bands = param.Dynamic(default=None)
     data_processed = param.Boolean(default=False)
     eeg_processor = {}
     cft_processor = {}
