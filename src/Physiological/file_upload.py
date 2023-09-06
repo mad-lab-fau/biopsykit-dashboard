@@ -9,7 +9,6 @@ import panel as pn
 import pandas as pd
 import pytz
 from biopsykit.io.eeg import MuseDataset
-from biopsykit.utils.datatype_helper import HeartRatePhaseDict
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
 from src.Physiological.CONSTANTS import FILE_UPLOAD_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
@@ -194,7 +193,10 @@ class FileUpload(PhysiologicalBase):
         string_io = StringIO(file_content.decode("utf8"))
         df = pd.read_csv(string_io)
         if self.selected_signal == "EEG":
-            self.data = {file_name: MuseDataset(data=df, tz=self.timezone)}
+            muse = MuseDataset(data=df, tz=self.timezone)
+            df = muse.data_as_df("local_datetime")
+            self.sampling_rate = muse.sampling_rate_hz
+            self.data = {file_name: df}
         else:
             self.data = {file_name: self.convert_columns(df)}
         if self.data is None or len(self.data) == 0:
@@ -232,11 +234,11 @@ class FileUpload(PhysiologicalBase):
 
     def handle_xlsx_file(self, file_content: bytes, filename: string):
         if self.selected_signal == "CFT":
-            dict_hr: HeartRatePhaseDict = pd.read_excel(
+            dict_hr = pd.read_excel(
                 BytesIO(file_content), index_col="time", sheet_name=None
             )
             dict_hr = {k: v.tz_localize(self.timezone) for k, v in dict_hr.items()}
-            self.data = dict_hr
+            self.data[filename] = dict_hr
         if "hr_result" in filename:
             subject_id = re.findall("hr_result_(Vp\w+).xlsx", filename)[0]
             hr = pd.read_excel(BytesIO(file_content), sheet_name=None, index_col="time")

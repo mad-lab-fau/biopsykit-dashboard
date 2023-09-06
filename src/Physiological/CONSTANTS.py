@@ -1,7 +1,7 @@
 import pytz
 
 MAX_STEPS = 12
-PHYSIOLOGICAL_SIGNAL_OPTIONS = ["", "ECG", "CFT", "RSP", "EEG"]
+PHYSIOLOGICAL_SIGNAL_OPTIONS = ["", "ECG", "RSP", "EEG"]
 TIMEZONES = ["None Selected"] + list(pytz.all_timezones)
 PHYSIOLOGICAL_HW_OPTIONS = ["NilsPod", "BioPac"]
 OUTLIER_METHODS = [
@@ -11,6 +11,7 @@ OUTLIER_METHODS = [
     "statistical_rr",
     "statistical_rr_diff",
 ]
+EDR_TYPES = ["peak_trough_mean", "peak_trough_diff", "peak_peak_interval"]
 
 SESSION_TEXT = (
     "# Number of Sessions \n"
@@ -116,4 +117,11 @@ ADD_TIMES_TEXT = "# Select Times"
 PRESTEP_PROCESSING_TEXT = (
     "# Processing \n"
     "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
+)
+
+SET_RSP_PARAMETERS_TEXT = PRESTEP_PROCESSING_TEXT = (
+    "# RSP Parameters\n"
+    "Here you can set the different parameters for the RSP analysis. You may select if the data is "
+    "a Raw respiration signal or if it has to be estimated by the ECG. \n"
+    "You ma also choose the method used to estimate the respiration signal from the ECG. \n"
 )

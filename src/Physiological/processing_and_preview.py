@@ -4,6 +4,7 @@ import biopsykit as bp
 from biopsykit.protocols import CFT
 from biopsykit.signals.ecg import EcgProcessor
 from biopsykit.signals.eeg import EegProcessor
+from biopsykit.signals.rsp import RspProcessor
 from nilspodlib import Dataset
 import plotly.express as px
 import matplotlib.pyplot as plt
@@ -66,8 +67,6 @@ class ProcessingAndPreview(PhysiologicalBase):
             col = self.process_ecg()
         elif self.selected_signal == "EEG":
             col = self.process_eeg()
-        elif self.selected_signal == "CFT":
-            col = self.process_cft()
         elif self.selected_signal == "RSP":
             self.process_rsp()
         if not self.skip_hrv:
@@ -88,7 +87,40 @@ class ProcessingAndPreview(PhysiologicalBase):
         return accordion
 
     def process_rsp(self):
-        return
+        if self.sampling_rate == -1:
+            pn.state.notifications.error("Bitte eine sampling Rate eingeben")
+            return
+        if self.estimate_rsp:
+            self.rsp_processor = {}
+            for subject in self.data.keys():
+                time_intervals = self.get_timelog(subject)
+                ep = EcgProcessor(
+                    data=self.data[subject],
+                    sampling_rate=self.sampling_rate,
+                    time_intervals=time_intervals,
+                )
+                for phase in list(time_intervals.keys()):
+                    rsp_signal = ep.ecg_estimate_rsp(
+                        ep, key=phase, edr_type=self.estimate_rsp_method
+                    )
+                    rsp_rate = RspProcessor.rsp_compute_rate(
+                        rsp_signal, sampling_rate=self.sampling_rate
+                    )
+                    self.rsp_processor[subject] = {phase: (rsp_signal, rsp_rate)}
+        else:
+            self.rsp_processor = {}
+            for subject in self.data.keys():
+                time_intervals = self.get_timelog(subject)
+                rp = RspProcessor(
+                    data=self.data[subject],
+                    sampling_rate=self.sampling_rate,
+                    time_intervals=time_intervals,
+                )
+                rsp_rate = rp.rsp_compute_rate(
+                    self.data[subject], sampling_rate=self.sampling_rate
+                )
+                self.rsp_processor[subject] = {"Data": (self.data[subject], rsp_rate)}
+        self.data_processed = True
 
     def process_cft(self):
         cft = CFT()

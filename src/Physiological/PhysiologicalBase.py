@@ -40,6 +40,8 @@ class PhysiologicalBase(param.Parameterized):
         objects=PHYSIOLOGICAL_HW_OPTIONS,
         default="NilsPod",
     )
+    estimate_rsp = param.Boolean(default=False)
+    estimate_rsp_method = param.String(default="peak_trough_mean")
     recording = param.String(default="Single Recording")
     hr_data = None
     subject_time_dict = param.Dynamic(default={})
@@ -55,10 +57,11 @@ class PhysiologicalBase(param.Parameterized):
     selected_outlier_methods = param.Dynamic(default=None)
     outlier_params = param.Dynamic(default=None)
     ecg_processor = param.Dynamic()
+    eeg_processor = {}
+    rsp_processor = {}
     cft_sheets = param.Dynamic()
     freq_bands = param.Dynamic(default=None)
     data_processed = param.Boolean(default=False)
-    eeg_processor = {}
     cft_processor = {}
     textHeader = ""
     original_data = param.Dynamic()

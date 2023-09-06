@@ -69,6 +69,12 @@ def test_eeg_processing():
         assert False, e
     assert process.eeg_processor["Vp01"] is not None
     assert process.eeg_processor["Vp01"].eeg_result is not None
+    assert process.eeg_processor["Vp01"].eeg_result["Data"].shape[0] == 925
+    assert process.eeg_processor["Vp01"].eeg_result["Data"].shape[1] == 4
+
+
+def test_cft_processing():
+    assert True
 
 
 def get_sample_eeg_data() -> Tuple[Dict[str, pd.DataFrame], float]:
