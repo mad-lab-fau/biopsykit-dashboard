@@ -99,7 +99,16 @@ class ProcessingAndPreview(PhysiologicalBase):
                     sampling_rate=self.sampling_rate,
                     time_intervals=time_intervals,
                 )
-                for phase in list(time_intervals.keys()):
+                ep.ecg_process(
+                    outlier_correction=self.selected_outlier_methods,
+                    outlier_params=self.outlier_params,
+                )
+                phases = (
+                    list(time_intervals.keys())
+                    if time_intervals is not None
+                    else ["Data"]
+                )
+                for phase in phases:
                     rsp_signal = ep.ecg_estimate_rsp(
                         ep, key=phase, edr_type=self.estimate_rsp_method
                     )

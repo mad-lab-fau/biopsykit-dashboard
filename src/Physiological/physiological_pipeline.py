@@ -2,6 +2,7 @@ import panel as pn
 
 from src.Physiological.download_results import DownloadResults
 from src.Physiological.relative_band_energy import FrequencyBands
+from src.Physiological.rsp_settings import SetRspParameters
 from src.Physiological.select_cft_sheet import SelectCFTSheet
 from src.Physiological.sessions import Session
 from src.Physiological.recordings import Recordings
@@ -47,6 +48,7 @@ class PhysiologicalPipeline:
             next_parameter="next_page",
             ready_parameter="proceed",
         )
+        self.pipeline.add_stage("Set RSP Parameters", SetRspParameters())
         self.pipeline.add_stage(
             "Select CFT Sheet", SelectCFTSheet(), ready_parameter="ready"
         )
@@ -93,7 +95,12 @@ class PhysiologicalPipeline:
                 "Recordings": ("Multiple Files", "Upload Files"),
                 "Multiple Files": "Upload Files",
                 "Upload Files": "Data arrived",
-                "Data arrived": ("Do you want to add time logs?", "Select CFT Sheet"),
+                "Data arrived": (
+                    "Do you want to add time logs?",
+                    "Select CFT Sheet",
+                    "Set RSP Parameters",
+                ),
+                "Set RSP Parameters": "Now the Files will be processed",
                 "Select CFT Sheet": "Now the Files will be processed",
                 "Do you want to add time logs?": (
                     "Add Times",

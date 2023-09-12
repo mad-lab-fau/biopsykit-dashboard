@@ -73,8 +73,17 @@ def test_eeg_processing():
     assert process.eeg_processor["Vp01"].eeg_result["Data"].shape[1] == 4
 
 
-def test_cft_processing():
-    assert True
+def test_rsp_processing():
+    df, fs = get_sample_ecg_data("Vp01")
+    process = ProcessingAndPreview()
+    process.selected_signal = "RSP"
+    process.estimate_rsp = True
+    process.sampling_rate = fs
+    process.data = {"Vp01": df}
+    try:
+        process.processing()
+    except Exception as e:
+        assert False, e
 
 
 def get_sample_eeg_data() -> Tuple[Dict[str, pd.DataFrame], float]:

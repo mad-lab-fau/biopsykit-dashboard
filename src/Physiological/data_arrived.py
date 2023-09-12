@@ -19,7 +19,7 @@ class DataArrived(PhysiologicalBase):
     )
     info_selected_value = pn.pane.Str("")
     next = param.Selector(
-        objects=["Do you want to add time logs?", "Select CFT Sheet"],
+        objects=["Do you want to add time logs?", "Select CFT Sheet", "Data arrived"],
         default="Do you want to add time logs?",
     )
     data_view = pn.widgets.Tabulator(
@@ -106,6 +106,8 @@ class DataArrived(PhysiologicalBase):
     def panel(self):
         if self.selected_signal == "CFT":
             self.next = "Select CFT Sheet"
+        elif self.selected_signal == "RSP":
+            self.next = "Set RSP Parameters"
         if self.sampling_rate == -1 and self.selected_signal != "CFT":
             if self.sampling_rate != -1:
                 self.sampling_rate_input.value = str(self.sampling_rate)
