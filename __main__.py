@@ -10,6 +10,10 @@ from src.Sleep.sleep_pipeline import SleepPipeline
 import warnings
 
 pn.extension(sizing_mode="stretch_width")
+pn.extension(
+    "plotly",
+    sizing_mode="stretch_width",
+)
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 from src.MainPage.main_page import MainPage
@@ -18,7 +22,7 @@ from src.MainPage.main_page import MainPage
 app = pn.template.BootstrapTemplate(
     title="BioPysKit Dashboard",
     header_background="#186FEF",
-    logo="../assets/Icons/biopsykit_Icon.png",
+    logo="./assets/Icons/biopsykit_Icon.png",
 )
 
 app.config.console_output = "disable"
@@ -154,7 +158,7 @@ def get_mainMenu(event):
         button_type="primary",
     )
     salBtn.on_click(startSalivaPipeline)
-    pathToIcons = "../assets/Icons/"
+    pathToIcons = "./assets/Icons/"
     iconNames = [
         "Physiological.svg",
         "Psychological.svg",

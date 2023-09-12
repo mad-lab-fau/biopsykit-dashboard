@@ -28,15 +28,16 @@ class PhysiologicalPipeline:
     pipeline = None
 
     def __init__(self):
-        self.pipeline = pn.pipeline.Pipeline(debug=True)
+        self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)
 
         self.pipeline.add_stage(
             "Select Physiological Session Type",
             PhysSignalType(),
             ready_parameter="ready",
             auto_advance=True,
+            inherit_params=True,
         )
-        self.pipeline.add_stage("Sessions", Session())
+        self.pipeline.add_stage("Sessions", Session(), inherit_params=True)
         self.pipeline.add_stage(
             "Recordings", Recordings(), ready_parameter="ready", next_parameter="next"
         )

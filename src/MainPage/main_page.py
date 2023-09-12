@@ -1,5 +1,7 @@
 import panel as pn
 import param
+
+from src.MainPage.MAIN_CONSTANTS import WELCOME_TEXT
 from src.Physiological.physiological_pipeline import *
 
 pn.extension(sizing_mode="stretch_width")
@@ -22,10 +24,8 @@ class MainPage(param.Parameterized):
         return self.mainPage.append(pn.Column(ecg.pipeline))
 
     def __init__(self, main_page, **params):
-        f = open("../assets/Markdown/WelcomeText.md", "r")
-        fileString = f.read()
         self.mainPage = main_page
-        self.welcomeText = fileString
+        self.welcomeText = WELCOME_TEXT
         self.physBtn.on_click(self.start_physiological_pipeline)
         self.signalSelection.append(self.physBtn)
         super().__init__(**params)

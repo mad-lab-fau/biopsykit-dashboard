@@ -3,7 +3,7 @@ import param
 import panel as pn
 import datetime as datetime
 
-from src.Physiological.CONSTANTS import *
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import *
 from src.Physiological.custom_components import PipelineHeader
 
 
@@ -66,6 +66,8 @@ class PhysiologicalBase(param.Parameterized):
     textHeader = ""
     original_data = param.Dynamic()
     trimmed_data = param.Dynamic()
+    correct_rpeaks = param.Boolean(default=False)
+    hrv_types = param.List(default=None)
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""

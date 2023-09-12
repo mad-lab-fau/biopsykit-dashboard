@@ -7,7 +7,7 @@ from biopsykit.io.io import (
     _sanitize_index_cols,
 )
 
-from src.Physiological.CONSTANTS import ADD_TIMES_TEXT, ASK_ADD_TIMES_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import ADD_TIMES_TEXT, ASK_ADD_TIMES_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -17,8 +17,12 @@ class AskToAddTimes(PhysiologicalBase):
         default="Add Times",
         objects=["Do you want to detect Outlier?", "Add Times", "Frequency Bands"],
     )
-    skip_btn = pn.widgets.Button(name="Skip", button_type="success")
-    add_times_btn = pn.widgets.Button(name="Add Phases", button_type="primary")
+    skip_btn = pn.widgets.Button(
+        name="Skip", button_type="default", sizing_mode="stretch_width"
+    )
+    add_times_btn = pn.widgets.Button(
+        name="Add Phases", button_type="primary", sizing_mode="stretch_width"
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = ASK_ADD_TIMES_TEXT

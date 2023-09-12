@@ -1,7 +1,10 @@
 import param
 import panel as pn
 
-from src.Physiological.CONSTANTS import PROCESS_HRV_TEXT, ASK_PROCESS_HRV_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
+    PROCESS_HRV_TEXT,
+    ASK_PROCESS_HRV_TEXT,
+)
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -13,9 +16,13 @@ class AskToProcessHRV(PhysiologicalBase):
     correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
     index = pn.widgets.TextInput(name="Index", value="")
     index_name = pn.widgets.TextInput(name="Index Name", value="")
-    skip_btn = pn.widgets.Button(name="Skip")
-    expert_mode_btn = pn.widgets.Button(name="Expert Mode", button_type="warning")
-    default_btn = pn.widgets.Button(name="Default", button_type="primary")
+    skip_btn = pn.widgets.Button(name="Skip", sizing_mode="stretch_width")
+    expert_mode_btn = pn.widgets.Button(
+        name="Expert Mode", button_type="warning", sizing_mode="stretch_width"
+    )
+    default_btn = pn.widgets.Button(
+        name="Default", button_type="primary", sizing_mode="stretch_width"
+    )
     next_page = param.Selector(
         default="Set HRV Parameters",
         objects=["Set HRV Parameters", "Now the Files will be processed"],
@@ -29,9 +36,9 @@ class AskToProcessHRV(PhysiologicalBase):
         self.skip_btn.link(self, callbacks={"clicks": self.click_skip})
         self.default_btn.link(self, callbacks={"clicks": self.click_default_hrv})
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_expert_hrv})
-        pane = pn.Column(self.header)
-        pane.append((pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn)))
-        self._view = pane
+        self._view = pn.Column(
+            self.header, pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn)
+        )
 
     def click_skip(self, target, event):
         self.next_page = "Now the Files will be processed"
@@ -65,14 +72,13 @@ class SetHRVParameters(PhysiologicalBase):
         super().__init__()
         self.update_text(PROCESS_HRV_TEXT)
         self.update_step(7)
-        pane = pn.Column(
+        self._view = pn.Column(
             self.header,
             self.hrv_types,
             self.correct_rpeaks,
             self.index,
             self.index_name,
         )
-        self._view = pane
 
     def panel(self):
         return self._view

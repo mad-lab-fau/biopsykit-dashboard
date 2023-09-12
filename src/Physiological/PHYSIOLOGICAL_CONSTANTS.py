@@ -4,6 +4,9 @@ MAX_STEPS = 12
 PHYSIOLOGICAL_SIGNAL_OPTIONS = ["", "ECG", "RSP", "EEG"]
 TIMEZONES = ["None Selected"] + list(pytz.all_timezones)
 PHYSIOLOGICAL_HW_OPTIONS = ["NilsPod", "BioPac"]
+
+HRV_METHODS = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
+
 OUTLIER_METHODS = [
     "quality",
     "artifact",

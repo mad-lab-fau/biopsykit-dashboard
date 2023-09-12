@@ -1,6 +1,9 @@
 import panel as pn
 import param
-from src.Physiological.CONSTANTS import SIGNAL_TYPE_TEXT, PHYSIOLOGICAL_SIGNAL_OPTIONS
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
+    SIGNAL_TYPE_TEXT,
+    PHYSIOLOGICAL_SIGNAL_OPTIONS,
+)
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
@@ -16,15 +19,12 @@ class PhysSignalType(PhysiologicalBase):
         select = pn.widgets.Select(
             name="Select Signal Type",
             options=PHYSIOLOGICAL_SIGNAL_OPTIONS,
-            default="",
         )
         select.link(self, callbacks={"value": self.signal_selected})
-        self._view = pn.Column(
-            self.header,
-            select,
-        )
+        self._view = pn.Column(self.header, select)
 
     def signal_selected(self, target, event):
+        self.selected_signal = event.new
         if self.selected_signal != "":
             self.ready = True
         else:

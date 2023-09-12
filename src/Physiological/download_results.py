@@ -9,7 +9,7 @@ from biopsykit.protocols import CFT
 from fau_colors import cmaps
 from matplotlib import pyplot as plt
 
-from src.Physiological.CONSTANTS import DOWNLOAD_RESULT_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import DOWNLOAD_RESULT_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 

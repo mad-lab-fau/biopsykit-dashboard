@@ -73,6 +73,20 @@ def test_extract_mixed_structure(file_upload, script_dir):
     assert_extracted_files(file_upload)
 
 
+def test_multiple_subjects_multiple_sessions(file_upload, script_dir):
+    file_name = "Archiv_OrdnerStrukturMultipleSessions.zip"
+    abs_file_path = os.path.join(script_dir, file_name)
+    with open(abs_file_path, "rb") as f:
+        file_upload.file_input.filename = file_name
+        file_upload.handle_zip_file(f.read())
+    assert file_upload.file_input.filename == file_name
+    assert file_upload.ready == True
+    assert file_upload.sampling_rate == 256.0
+    assert isinstance(file_upload.data, dict)
+    assert len(file_upload.data) == 2
+    assert file_upload.data.keys() == {"Vp01", "Vp02"}
+
+
 def assert_extracted_files(file_upload):
     assert file_upload.ready == True
     assert file_upload.sampling_rate == 256.0

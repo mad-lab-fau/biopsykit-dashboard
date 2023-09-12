@@ -8,9 +8,12 @@ from biopsykit.signals.rsp import RspProcessor
 from nilspodlib import Dataset
 import plotly.express as px
 import matplotlib.pyplot as plt
-from fau_colors import cmaps
 
-from src.Physiological.CONSTANTS import PROCESSING_PREVIEW_TEXT, PRESTEP_PROCESSING_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
+    PROCESSING_PREVIEW_TEXT,
+    PRESTEP_PROCESSING_TEXT,
+    HRV_METHODS,
+)
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
 
@@ -24,9 +27,7 @@ class ProcessingPreStep(PhysiologicalBase):
         super().__init__(**params)
         self.update_step(8)
         self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
-        pane = pn.Column(self.header)
-        pane.append(self.ready_btn)
-        self._view = pane
+        self._view = pn.Column(self.header, self.ready_btn)
 
     def ready_btn_click(self, target, event):
         self.ready = True
@@ -171,50 +172,50 @@ class ProcessingAndPreview(PhysiologicalBase):
         if self.sampling_rate == -1:
             pn.state.notifications.error("Bitte eine sampling Rate eingeben")
             return
-        if self.selected_signal == "EEG":
-            for subject in list(self.data.keys()):
-                time_intervals = (
-                    self.get_timelog(subject) if self.subject_time_dict else None
-                )
-                self.eeg_processor[subject] = EegProcessor(
-                    data=self.data[subject],
-                    sampling_rate=float(self.sampling_rate),
-                    time_intervals=time_intervals,
-                )
-                self.eeg_processor[subject].relative_band_energy(
-                    freq_bands=self.freq_bands, title=subject
-                )
-            self.data_processed = True
+        for subject in list(self.data.keys()):
+            time_intervals = (
+                self.get_timelog(subject) if self.subject_time_dict else None
+            )
+            self.eeg_processor[subject] = EegProcessor(
+                data=self.data[subject],
+                sampling_rate=float(self.sampling_rate),
+                time_intervals=time_intervals,
+            )
+            self.eeg_processor[subject].relative_band_energy(
+                freq_bands=self.freq_bands, title=subject
+            )
+        self.data_processed = True
         return col
 
     def process_ecg(self):
         col = pn.Column()
-        if not self.selected_signal == "ECG":
-            pn.state.notifications.error("False Signal Selection")
-            return col
-        if self.session == "Single Session":
-            self.ecg_processor = {}
-            for subject in self.data.keys():
-                ep = EcgProcessor(
-                    data=self.data[subject],
-                    sampling_rate=self.sampling_rate,
-                    time_intervals=self.get_timelog(subject),
-                )
-                ep.ecg_process(
-                    outlier_correction=self.selected_outlier_methods,
-                    outlier_params=self.outlier_params,
-                )
-                self.ecg_processor[subject] = ep
-        elif self.session == "Multiple Sessions":
-            self.ecg_processor = {}
-            for subject in self.data.keys():
-                ep = EcgProcessor(
-                    data=self.data[subject],
-                    sampling_rate=self.sampling_rate,
-                    time_intervals=self.get_timelog(subject),
-                )
-                ep.ecg_process(title=subject)
-                self.ecg_processor[subject] = ep
+        # if self.session == "Single Session":
+        self.ecg_processor = {}
+        for subject in self.data.keys():
+            ep = EcgProcessor(
+                data=self.data[subject],
+                sampling_rate=self.sampling_rate,
+                time_intervals=self.get_timelog(subject),
+            )
+            ep.ecg_process(
+                outlier_correction=self.selected_outlier_methods,
+                outlier_params=self.outlier_params,
+            )
+            self.ecg_processor[subject] = ep
+        # elif self.session == "Multiple Sessions":
+        #     self.ecg_processor = {}
+        #     for subject in self.data.keys():
+        #         ep = EcgProcessor(
+        #             data=self.data[subject],
+        #             sampling_rate=self.sampling_rate,
+        #             time_intervals=self.get_timelog(subject),
+        #         )
+        #         ep.ecg_process(
+        #             outlier_correction=self.selected_outlier_methods,
+        #             outlier_params=self.outlier_params,
+        #             title=subject,
+        #         )
+        #         self.ecg_processor[subject] = ep
         subject_result_dict = {}
         graph_dict = {}
         for subject in self.ecg_processor.keys():
@@ -278,17 +279,18 @@ class ProcessingAndPreview(PhysiologicalBase):
     def process_hrv(self):
         if self.skip_hrv:
             return
-        for key in self.ecg_processor.ecg_result.keys():
-            for vp in self.subject_time_dict.keys():
-                self.ecg_processor.hrv_process(
-                    self.ecg_processor,
+        for subject in list(self.ecg_processor.keys()):
+            self.dict_hr_subjects[subject] = {}
+            for key in self.ecg_processor[subject].ecg_result.keys():
+                self.dict_hr_subjects[subject][key] = self.ecg_processor[
+                    subject
+                ].hrv_process(
+                    self.ecg_processor[subject],
                     key,
-                    index=vp,
+                    index=subject,
                     hrv_types=self.hrv_types.value,
                     correct_rpeaks=self.correct_rpeaks.value,
                 )
-        # for vp in self.subj_time_dict.keys():
-        #     self.dict_hr_subjects[vp] = self.ecg_processor.heart_rate
 
     def panel(self):
         self.results = self.processing()

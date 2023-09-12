@@ -1,7 +1,7 @@
 import param
 import panel as pn
 
-from src.Physiological.CONSTANTS import (
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
     OUTLIER_METHODS,
     OUTLIER_DETECTION_TEXT,
     ASK_DETECT_OUTLIER_TEXT,
@@ -15,12 +15,15 @@ class AskToDetectOutliers(PhysiologicalBase):
         objects=["Do you want to process the HRV also?", "Expert Outlier Detection"],
     )
     ready = param.Boolean(default=False)
-    skip_btn = pn.widgets.Button(name="Skip")
-    expert_mode_btn = pn.widgets.Button(
-        name="Expert Mode",
-        button_type="warning",
+    skip_btn = pn.widgets.Button(
+        name="Skip", sizing_mode="stretch_width", button_type="default"
     )
-    default_btn = pn.widgets.Button(name="Default", button_type="primary")
+    expert_mode_btn = pn.widgets.Button(
+        name="Expert Mode", button_type="danger", sizing_mode="stretch_width"
+    )
+    default_btn = pn.widgets.Button(
+        name="Default", button_type="primary", sizing_mode="stretch_width"
+    )
     outlier_methods = pn.widgets.MultiChoice(
         name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
     )
@@ -34,7 +37,7 @@ class AskToDetectOutliers(PhysiologicalBase):
         self.default_btn.link(self, callbacks={"clicks": self.click_default})
         self._view = pn.Column(
             self.header,
-            pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn),
+            pn.Row(self.default_btn, self.expert_mode_btn, self.skip_btn),
         )
 
     def click_skip(self, target, event):

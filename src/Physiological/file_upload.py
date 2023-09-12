@@ -10,7 +10,7 @@ import pandas as pd
 import pytz
 from biopsykit.io.eeg import MuseDataset
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
-from src.Physiological.CONSTANTS import FILE_UPLOAD_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import FILE_UPLOAD_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 from io import BytesIO
@@ -223,7 +223,6 @@ class FileUpload(PhysiologicalBase):
     def handle_bin_file(self, file_name: string, file_content: bytes):
         dataset = NilsPodAdapted.from_bin_file(
             filepath_or_buffer=BytesIO(file_content),
-            # legacy_support="resolve",
             tz=self.timezone,
         )
         self.sensors = set(dataset.info.enabled_sensors)

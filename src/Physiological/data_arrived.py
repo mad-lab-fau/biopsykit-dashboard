@@ -3,19 +3,25 @@ import param
 import panel as pn
 import pandas as pd
 
-from src.Physiological.CONSTANTS import DATA_ARRIVED_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import DATA_ARRIVED_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class DataArrived(PhysiologicalBase):
     ready = param.Boolean(default=True)
-    subject_selector = pn.widgets.Select()
+    subject_selector = pn.widgets.Select(sizing_mode="stretch_width")
     sampling_rate_input = pn.widgets.TextInput(
-        name="Sampling rate Input", placeholder="Enter your sampling rate here..."
+        name="Sampling rate Input",
+        placeholder="Enter your sampling rate here...",
+        sizing_mode="stretch_width",
     )
     info_dict = None
     info_selection = pn.widgets.Select(
-        name="Info header", options=[], visible=False, value=""
+        name="Info header",
+        options=[],
+        visible=False,
+        value="",
+        sizing_mode="stretch_width",
     )
     info_selected_value = pn.pane.Str("")
     next = param.Selector(
@@ -29,8 +35,12 @@ class DataArrived(PhysiologicalBase):
         header_align="right",
         visible=False,
     )
-    session_start = pn.widgets.DatetimePicker(name="Session start:", disabled=True)
-    session_end = pn.widgets.DatetimePicker(name="Session end:", disabled=True)
+    session_start = pn.widgets.DatetimePicker(
+        name="Session start:", disabled=True, sizing_mode="stretch_width"
+    )
+    session_end = pn.widgets.DatetimePicker(
+        name="Session end:", disabled=True, sizing_mode="stretch_width"
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = DATA_ARRIVED_TEXT
@@ -40,13 +50,14 @@ class DataArrived(PhysiologicalBase):
             self, callbacks={"value": self.set_sampling_rate_value}
         )
         self.info_selection.link(self, callbacks={"value": self.display_info_value})
-        pane = pn.Column(self.header)
-        pane.append(self.subject_selector)
-        pane.append(self.sampling_rate_input)
-        pane.append(self.session_start)
-        pane.append(self.session_end)
-        pane.append(self.data_view)
-        self._view = pane
+        self._view = pn.Column(
+            self.header,
+            self.subject_selector,
+            self.sampling_rate_input,
+            self.session_start,
+            self.session_end,
+            self.data_view,
+        )
 
     def set_sampling_rate_value(self, target, event):
         self.ready = False

@@ -1,7 +1,7 @@
 import panel as pn
 import param
 
-from src.Physiological.CONSTANTS import RECORDINGS_TEXT
+from src.Physiological.PHYSIOLOGICAL_CONSTANTS import RECORDINGS_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
