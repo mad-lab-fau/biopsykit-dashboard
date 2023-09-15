@@ -9,6 +9,7 @@ from biopsykit.io.io import (
 
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import ADD_TIMES_TEXT, ASK_ADD_TIMES_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
+from src.Physiological.custom_components import TimesToSubject
 
 
 class AskToAddTimes(PhysiologicalBase):
@@ -35,7 +36,7 @@ class AskToAddTimes(PhysiologicalBase):
         pane.append(pn.Row(self.add_times_btn, self.skip_btn))
         self._view = pane
 
-    def click_skip(self, target, event):
+    def click_skip(self, _, event):
         if self.selected_signal == "EEG":
             self.next = "Frequency Bands"
             self.ready = True
@@ -43,7 +44,7 @@ class AskToAddTimes(PhysiologicalBase):
             self.next = "Do you want to detect Outlier?"
             self.ready = True
 
-    def click_add_times(self, target, event):
+    def click_add_times(self, _, event):
         self.next = "Add Times"
         self.ready = True
 
@@ -80,13 +81,14 @@ class AddTimes(PhysiologicalBase):
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = ADD_TIMES_TEXT
+        self.ready = False
         super().__init__(**params)
         self.update_step(6)
         self.time_upload.link(self, callbacks={"value": self.parse_time_file})
-        self.add_button.link(self, callbacks={"clicks": self.add_timestamp})
         self.times = pn.Column(
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
+        self.times_to_subject = TimesToSubject([])
         pane = pn.Column(self.header)
         pane.append(
             pn.Row(
@@ -99,23 +101,22 @@ class AddTimes(PhysiologicalBase):
         pane.append(
             pn.Row(
                 self.time_upload,
-                self.times,
+                self.times_to_subject,
             )
         )
         pane.append(pn.Row(self.select_vp))
         pane.append(pn.Row(self.select_subject, self.select_condition))
+        self.ready = self.times_to_subject.is_ready()
         self._view = pane
 
     def panel(self):
-        self.ready = False
+        # self.ready = False
         if self.selected_signal == "EEG":
             self.next = "Frequency Bands"
-        self.init_subject_time_dict()
-        self.dict_to_column()
+        self.times_to_subject.initialize_filenames(list(self.data.keys()))
         return self._view
 
     def parse_time_file(self, target, event):
-        df = None
         self.ecg_processed = False
         self.select_condition.visible = False
         self.select_subject.visible = False
@@ -155,7 +156,6 @@ class AddTimes(PhysiologicalBase):
             return
         self.df = df
         self.set_subject_time_dict()
-        self.dict_to_column()
 
     def select_vp_changed(self, _, event):
         self.subject = event.new
@@ -175,6 +175,7 @@ class AddTimes(PhysiologicalBase):
             )
             self.subject_time_dict[subject_name] = {}
             self.subject_time_dict[subject_name][cond_name] = t_condition
+        self.times_to_subject.add_new_subject_time_dict(self.subject_time_dict)
 
     def timestamp_changed(self, target, event):
         changed_timestamp = event.new
@@ -193,7 +194,7 @@ class AddTimes(PhysiologicalBase):
         )
         self.dict_to_column()
 
-    def remove_btn_click(self, target, event):
+    def remove_btn_click(self, target, _):
         if len(target) == 3:
             self.subject_time_dict[target[0]][target[1]].drop(
                 labels=target[2], inplace=True
@@ -203,10 +204,6 @@ class AddTimes(PhysiologicalBase):
         active = self.times.objects[0].active
         self.dict_to_column()
         self.times.objects[0].active = active
-
-    def add_timestamp(self, target, event):
-        print(event)
-        return
 
     def check_subject_condition_columns(self, df):
         if "subject" not in df.columns:
@@ -229,9 +226,8 @@ class AddTimes(PhysiologicalBase):
         self.df = self.handle_time_file(self.df)
         self.set_subject_time_dict()
         self.select_subject.visible = False
-        self.dict_to_column()
 
-    def condition_column_changed(self, target, event):
+    def condition_column_changed(self, _, event):
         col = event.new
         if col == " ":
             return
@@ -243,7 +239,6 @@ class AddTimes(PhysiologicalBase):
         self.df = self.handle_time_file(self.df)
         self.set_subject_time_dict()
         self.select_condition.visible = False
-        self.dict_to_column()
 
     def add_phase_btn_click(self, target, _):
         new_phase_name = "New Phase"

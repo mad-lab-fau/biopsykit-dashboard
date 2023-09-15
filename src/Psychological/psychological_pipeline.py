@@ -1,5 +1,6 @@
 import panel as pn
 
+from src.Psychological.TestPage import TestPage
 from src.Psychological.setup_study import SetUpStudyDesign
 
 pn.extension(sizing_mode="stretch_width")
@@ -16,6 +17,7 @@ class PsychologicalPipeline:
             debug=True,
         )
 
+        self.pipeline.add_stage("Test", TestPage(), ready_parameter="ready")
         self.pipeline.add_stage("Set upt Study Design", SetUpStudyDesign())
 
         # self.pipeline.add_stage(

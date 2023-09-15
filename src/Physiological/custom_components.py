@@ -1,4 +1,5 @@
-from typing import Dict
+import datetime
+from typing import Dict, List
 
 import pandas as pd
 import param
@@ -15,7 +16,7 @@ class PipelineHeader(pn.viewable.Viewer):
         step: int | param.Integer,
         max_step: int | param.Integer,
         text: str | param.String,
-        **params
+        **params,
     ):
         self.max_step = max_step
         self._progress = pn.indicators.Progress(
@@ -186,7 +187,7 @@ class PlotViewer(pn.viewable.Viewer):
         signal_type: str | None,
         signal: Dict[str, _BaseProcessor] | None,
         sampling_rate: float | None,
-        **params
+        **params,
     ):
         self._signal_type = signal_type
         self._signal = signal
@@ -245,6 +246,305 @@ class PlotViewer(pn.viewable.Viewer):
             )
             self.select_phase.options = self._signal[event.new].phases
             target.object = fig
+
+    def __panel__(self):
+        return self._layout
+
+
+class TimesToSubject(pn.viewable.Viewer):
+
+    accordion = pn.Accordion()
+    subject_time_dict = param.Dict(default={})
+    add_new_subject_selector = pn.widgets.Select(
+        name="Add New Subject", align=("start", "end")
+    )
+    add_new_subject_btn = pn.widgets.Button(
+        name="Add New Subject", button_type="primary", align=("start", "end")
+    )
+    files_to_subjects = {}
+    ready = not any(files_to_subjects.values()) is None
+
+    def __init__(self, subject_names: List[str], **params):
+        super().__init__(**params)
+        self.add_new_subject_selector.options = subject_names
+        for subject in subject_names:
+            self.files_to_subjects[subject] = None
+        self.add_new_subject_btn.link(
+            self.add_new_subject_selector, callbacks={"clicks": self.add_new_subject}
+        )
+        self._layout = pn.Column(
+            self.accordion,
+            pn.Row(self.add_new_subject_selector, self.add_new_subject_btn),
+        )
+
+    def initialize_filenames(self, filenames: List[str]):
+        self.add_new_subject_selector.options = filenames
+        for subject in filenames:
+            self.files_to_subjects[subject] = None
+        self.add_new_subject_btn.link(
+            self.add_new_subject_selector, callbacks={"clicks": self.add_new_subject}
+        )
+
+    def assign_file_to_subject(self, target, _):
+        new_subject = target[0]
+        file_name = target[1].value
+        self.files_to_subjects[file_name] = new_subject
+
+    def add_new_subject_time_dict(
+        self, new_subject_time_dict: Dict[str, Dict[str, pd.DataFrame]]
+    ):
+        for subject in new_subject_time_dict.keys():
+            self.append_subject_to_accordion(subject, new_subject_time_dict[subject])
+
+    def add_new_subject(self, target, _):
+        if (
+            target.value is None
+            or target.value == ""
+            or target.value in self.subject_time_dict.keys()
+        ):
+            pn.state.notifications.error("Subject already added")
+            return
+        self.files_to_subjects[target.value] = target.value
+        self.append_subject_to_accordion(target.value)
+
+    def append_subject_to_accordion(
+        self, subject_name: str, time_dict: None | Dict[str, pd.DataFrame] = None
+    ):
+        if subject_name in self.subject_time_dict.keys():
+            return
+        self.subject_time_dict[subject_name] = time_dict
+        self.accordion.append(self.get_subject_column(subject_name))
+
+    def get_subject_column(self, subject_name: str) -> pn.Column:
+        col = pn.Column(name=subject_name)
+        rename_input = pn.widgets.TextInput(
+            name=f"Rename Subject {subject_name}:", align=("start", "end")
+        )
+        new_phase_input = pn.widgets.TextInput(
+            name="New Phase Name:", align=("start", "end")
+        )
+        add_phase_btn = pn.widgets.Button(
+            name="Add Phase", button_type="primary", align=("start", "end")
+        )
+        add_phase_btn.link(
+            (
+                subject_name,
+                new_phase_input,
+                col,
+            ),
+            callbacks={"clicks": self.add_phase_to_subject},
+        )
+        remove_btn = pn.widgets.Button(
+            name=f"Remove {subject_name}", button_type="danger", align=("start", "end")
+        )
+        if self.subject_time_dict[subject_name] is not None:
+            associate_file_to_subject_selector = pn.widgets.Select(
+                name="Subject",
+                options=list(self.files_to_subjects.keys()),
+                align=("start", "end"),
+            )
+            associate_file_to_subject_btn = pn.widgets.Button(
+                name="Associate", button_type="primary", align=("start", "end")
+            )
+            associate_file_to_subject_btn.link(
+                (
+                    subject_name,
+                    associate_file_to_subject_selector,
+                ),
+                callbacks={"clicks": self.assign_file_to_subject},
+            )
+            col.append(
+                pn.Row(
+                    associate_file_to_subject_selector,
+                    associate_file_to_subject_btn,
+                )
+            )
+            col.append(pn.layout.Divider())
+            for phase in self.subject_time_dict[subject_name]:
+                phase_name_input = pn.widgets.TextInput(
+                    placeholder=phase, value=phase, align=("start", "end")
+                )
+                phase_name_input.link(
+                    (
+                        subject_name,
+                        col,
+                    ),
+                    callbacks={"value": self.rename_phase},
+                )
+                remove_phase_btn = pn.widgets.Button(
+                    name=f"Remove {phase}", button_type="danger", align=("start", "end")
+                )
+                remove_phase_btn.link(
+                    (
+                        subject_name,
+                        phase,
+                        col,
+                    ),
+                    callbacks={"clicks": self.remove_phase},
+                )
+                col.append(pn.Row(phase_name_input, remove_phase_btn))
+                for subphase, time in (
+                    self.subject_time_dict[subject_name][phase].items()
+                    if self.subject_time_dict[subject_name][phase] is not None
+                    else []
+                ):
+                    subphase_name_input = pn.widgets.TextInput(
+                        value=subphase, align=("start", "end")
+                    )
+                    subphase_dt_picker = pn.widgets.DatetimePicker(
+                        value=time, align=("start", "end")
+                    )
+                    subphase_remove_btn = pn.widgets.Button(
+                        name="Remove", button_type="danger", align=("start", "end")
+                    )
+                    subphase_remove_btn.link(
+                        (
+                            subject_name,
+                            phase,
+                            subphase,
+                            col,
+                        ),
+                        callbacks={"clicks": self.remove_subphase},
+                    )
+                    col.append(
+                        pn.Row(
+                            subphase_name_input,
+                            subphase_dt_picker,
+                            subphase_remove_btn,
+                        )
+                    )
+                add_subphase_btn = pn.widgets.Button(
+                    name="Add Subphase", button_type="primary"
+                )
+                add_subphase_btn.link(
+                    (subject_name, phase, col),
+                    callbacks={"clicks": self.add_subphase_btn_click},
+                )
+                col.append(pn.Row(pn.layout.HSpacer(), add_subphase_btn))
+        col.append(pn.Row(new_phase_input, add_phase_btn))
+        col.append(pn.layout.Divider())
+        col.append(rename_input)
+        col.append(remove_btn)
+        rename_input.link(col, callbacks={"value": self.rename_subject})
+        remove_btn.link(col, callbacks={"clicks": self.remove_subject})
+        return col
+
+    def add_subphase_btn_click(self, target, _):
+        subject_name = target[0]
+        phase = target[1]
+        subject_col = target[2]
+        new_phase_name = "New Subphase"
+        if (
+            self.subject_time_dict[subject_name][phase] is None
+            or len(self.subject_time_dict[subject_name][phase]) == 0
+        ):
+            self.subject_time_dict[subject_name][phase] = pd.Series(
+                {new_phase_name: datetime.datetime.now()}
+            )
+        elif new_phase_name not in list(
+            self.subject_time_dict[subject_name][phase].index.values
+        ):
+            self.subject_time_dict[subject_name][phase] = pd.concat(
+                [
+                    self.subject_time_dict[subject_name][phase],
+                    pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
+                ]
+            )
+        elif new_phase_name in list(
+            self.subject_time_dict[subject_name][phase].index.values
+        ):
+            i = 1
+            new_phase_name = new_phase_name + " " + str(i)
+            while new_phase_name in list(
+                self.subject_time_dict[subject_name][phase].index.values
+            ):
+                i += 1
+                new_phase_name = new_phase_name + " " + str(i)
+            self.subject_time_dict[subject_name][phase] = pd.concat(
+                [
+                    self.subject_time_dict[subject_name][phase],
+                    pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
+                ]
+            )
+        index = self.accordion.objects.index(subject_col)
+        col = self.get_subject_column(subject_name)
+        self.accordion.__setitem__(index, col)
+
+    def add_phase_to_subject(self, target, _):
+        subject_name = target[0]
+        new_phase_name = target[1].value
+        if new_phase_name is None or new_phase_name == "":
+            pn.state.notifications.error("Phase name must be filled out")
+            return
+        if (
+            self.subject_time_dict[subject_name] is not None
+            and new_phase_name in self.subject_time_dict[subject_name].keys()
+        ):
+            pn.state.notifications.error("Phase already added")
+            return
+        if self.subject_time_dict[subject_name] is None:
+            self.subject_time_dict[subject_name] = {new_phase_name: None}
+        else:
+            self.subject_time_dict[subject_name][new_phase_name] = None
+        index = self.accordion.objects.index(target[2])
+        col = self.get_subject_column(subject_name)
+        self.accordion.__setitem__(index, col)
+
+    def rename_phase(self, target, event):
+        subject_name = target[0]
+        new_phase_name = event.new
+        old_phase_name = event.old
+        self.subject_time_dict[subject_name][new_phase_name] = self.subject_time_dict[
+            subject_name
+        ].pop(old_phase_name)
+        index = self.accordion.objects.index(target[1])
+        col = self.get_subject_column(subject_name)
+        self.accordion.__setitem__(index, col)
+
+    def rename_subject(self, target, event):
+        file_name = self.get_filename_of_subject(target.name)
+        self.files_to_subjects[file_name] = event.new
+        index = self.accordion.objects.index(target)
+        self.subject_time_dict[event.new] = self.subject_time_dict.pop(target.name)
+        col = self.get_subject_column(event.new)
+        self.accordion.__setitem__(index, col)
+
+    def get_filename_of_subject(self, subject_name: str) -> str:
+        for file_name, subject in self.files_to_subjects.items():
+            if subject == subject_name:
+                return file_name
+        return ""
+
+    def remove_subphase(self, target, _):
+        subject_name = target[0]
+        phase = target[1]
+        subphase = target[2]
+        old_col = target[3]
+        self.subject_time_dict[subject_name][phase].pop(subphase)
+        index = self.accordion.objects.index(old_col)
+        col = self.get_subject_column(subject_name)
+        self.accordion.__setitem__(index, col)
+
+    def remove_phase(self, target, _):
+        subject_name = target[0]
+        phase = target[1]
+        self.subject_time_dict[subject_name].pop(phase)
+        index = self.accordion.objects.index(target[2])
+        col = self.get_subject_column(subject_name)
+        self.accordion.__setitem__(index, col)
+
+    def remove_subject(self, target, _):
+        self.subject_time_dict.pop(target.name)
+        self.accordion.remove(target)
+
+    def get_subject_time_dict(self) -> Dict[str, Dict[str, pd.DataFrame]]:
+        return self.subject_time_dict
+
+    def get_files_to_subjects(self) -> Dict[str, str]:
+        return self.files_to_subjects
+
+    def is_ready(self) -> bool:
+        return not any(self.files_to_subjects.values()) is None
 
     def __panel__(self):
         return self._layout

@@ -77,7 +77,10 @@ class FileUpload(PhysiologicalBase):
                 case "zip":
                     self.handle_zip_file(self.file_input.value)
                 case "csv":
-                    self.handle_csv_file(file_content=self.file_input.value)
+                    self.handle_csv_file(
+                        file_name=self.file_input.name,
+                        file_content=self.file_input.value,
+                    )
                 case "bin":
                     self.handle_bin_file(
                         file_name=self.file_input.filename,
