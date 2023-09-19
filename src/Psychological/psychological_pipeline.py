@@ -17,7 +17,7 @@ class PsychologicalPipeline:
             debug=True,
         )
 
-        self.pipeline.add_stage("Test", TestPage(), ready_parameter="ready")
+        # self.pipeline.add_stage("Test", TestPage(), ready_parameter="ready")
         self.pipeline.add_stage("Set upt Study Design", SetUpStudyDesign())
 
         # self.pipeline.add_stage(
