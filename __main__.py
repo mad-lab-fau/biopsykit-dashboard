@@ -1,5 +1,6 @@
 import os
 
+os.environ["OUTDATED_IGNORE"] = "1"
 import panel as pn
 
 from src.Physiological.physiological_pipeline import PhysiologicalPipeline
@@ -8,6 +9,7 @@ from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
 from src.Saliva.saliva_pipeline import SalivaPipeline
 from src.Sleep.sleep_pipeline import SleepPipeline
 import warnings
+
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(
