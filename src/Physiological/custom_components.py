@@ -289,6 +289,14 @@ class TimesToSubject(pn.viewable.Viewer):
         new_subject = target[0]
         file_name = target[1].value
         self.files_to_subjects[file_name] = new_subject
+        if file_name == "":
+            pn.state.notifications.warning(
+                f"Please assign a file to the subject {new_subject}"
+            )
+        else:
+            pn.state.notifications.success(
+                f"Successfully assigned file {file_name} to subject {new_subject}"
+            )
 
     def add_new_subject_time_dict(
         self, new_subject_time_dict: Dict[str, Dict[str, pd.DataFrame]]
@@ -340,7 +348,7 @@ class TimesToSubject(pn.viewable.Viewer):
         if self.subject_time_dict[subject_name] is not None:
             associate_file_to_subject_selector = pn.widgets.Select(
                 name="Subject",
-                options=list(self.files_to_subjects.keys()),
+                options=[""] + list(self.files_to_subjects.keys()),
                 align=("start", "end"),
             )
             associate_file_to_subject_btn = pn.widgets.Button(

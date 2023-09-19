@@ -36,6 +36,7 @@ class SetUpStudyDesign(param.Parameterized):
     add_phase_btn = pn.widgets.Button(name="Add Phase", button_type="primary")
     add_subphase_btn = pn.widgets.Button(name="Add Subphase", button_type="primary")
     structure_accordion = pn.layout.Accordion(name="Study Structure")
+    subject_time_dict = param.Dynamic()
     structure = {}
 
     def add_study_part(self, _):

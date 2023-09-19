@@ -130,7 +130,6 @@ class AddTimes(PhysiologicalBase):
             df = self.handle_time_file(df)
             self.df = df
         if not self.ready:
-            # Subject oder condition column nicht angegeben
             row = pn.Row()
             cols = list(self.df.columns)
             cols.insert(0, " ")
@@ -177,34 +176,6 @@ class AddTimes(PhysiologicalBase):
             self.subject_time_dict[subject_name][cond_name] = t_condition
         self.times_to_subject.add_new_subject_time_dict(self.subject_time_dict)
 
-    def timestamp_changed(self, target, event):
-        changed_timestamp = event.new
-        self.subject_time_dict[target[0]][target[1]].loc[target[2]] = changed_timestamp
-        self.dict_to_column()
-
-    def change_condition_name(self, target, event):
-        self.subject_time_dict[target[0]][event.new] = self.subject_time_dict[
-            target[0]
-        ].pop(target[1])
-        self.dict_to_column()
-
-    def change_phase_name(self, target, event):
-        self.subject_time_dict[target[0]][target[1]].rename(
-            {target[2]: event.new}, inplace=True
-        )
-        self.dict_to_column()
-
-    def remove_btn_click(self, target, _):
-        if len(target) == 3:
-            self.subject_time_dict[target[0]][target[1]].drop(
-                labels=target[2], inplace=True
-            )
-        elif len(target) == 2:
-            self.subject_time_dict[target[0]].pop(target[1])
-        active = self.times.objects[0].active
-        self.dict_to_column()
-        self.times.objects[0].active = active
-
     def check_subject_condition_columns(self, df):
         if "subject" not in df.columns:
             pn.state.notifications.error("Subject column must be specified")
@@ -240,37 +211,6 @@ class AddTimes(PhysiologicalBase):
         self.set_subject_time_dict()
         self.select_condition.visible = False
 
-    def add_phase_btn_click(self, target, _):
-        new_phase_name = "New Phase"
-        self.subject_time_dict[target[0]][new_phase_name] = pd.Series(
-            {"New Subphase": datetime.datetime.now()}
-        )
-        active = self.times.objects[0].active
-        self.dict_to_column()
-        self.times.objects[0].active = active
-
-    def add_subphase_btn_click(self, target, event):
-        new_phase_name = "New Subphase"
-        if new_phase_name in list(
-            self.subject_time_dict[target[0]][target[1]].index.values
-        ):
-            i = 1
-            new_phase_name = new_phase_name + " " + str(i)
-            while new_phase_name in list(
-                self.subject_time_dict[target[0]][target[1]].index.values
-            ):
-                i += 1
-                new_phase_name = new_phase_name + " " + str(i)
-        self.subject_time_dict[target[0]][target[1]] = pd.concat(
-            [
-                self.subject_time_dict[target[0]][target[1]],
-                pd.Series(data=[datetime.datetime.now()], index=[new_phase_name]),
-            ]
-        )
-        active = self.times.objects[0].active
-        self.dict_to_column()
-        self.times.objects[0].active = active
-
     def handle_time_file(self, df):
         if not self.check_subject_condition_columns(df):
             self.ready = False
@@ -303,3 +243,54 @@ class AddTimes(PhysiologicalBase):
                 self.subject_time_dict[subject][condition] = pd.Series(
                     dtype="datetime64[ns]"
                 )
+
+    @param.output(
+        ("freq_bands", param.Dynamic),
+        ("synced", param.Boolean),
+        ("subject_time_dict", param.Dynamic),
+        ("timezone", param.String()),
+        ("trimmed_data", param.Dynamic),
+        ("session", param.String),
+        ("selected_signal", param.String),
+        ("recordings", param.String),
+        ("recording", param.String),
+        ("data", param.Dynamic),
+        ("sampling_rate", param.Number),
+        ("sensors", param.Dynamic),
+        ("time_log_present", param.Boolean),
+        ("time_log", param.Dynamic),
+        ("outlier_params", param.Dynamic),
+        ("selected_outlier_methods", param.Dynamic),
+        ("skip_hrv", param.Boolean),
+        ("subject", param.Dynamic),
+        ("cft_sheets", param.Dynamic),
+        ("phase_series", param.Dynamic),
+    )
+    def output(self):
+        file_dict = self.times_to_subject.get_files_to_subjects()
+        subject_time_dict = self.times_to_subject.get_subject_time_dict()
+        for file_name in file_dict.keys():
+            self.data[file_dict[file_name]] = self.data.pop(file_name)
+        self.subject_time_dict = subject_time_dict
+        return (
+            self.freq_bands,
+            self.synced,
+            self.subject_time_dict,
+            self.timezone,
+            self.trimmed_data,
+            self.session,
+            self.selected_signal,
+            self.recordings,
+            self.recording,
+            self.data,
+            self.sampling_rate,
+            self.sensors,
+            self.time_log_present,
+            self.time_log,
+            self.get_outlier_params(),
+            self.selected_outlier_methods,
+            self.skip_hrv,
+            self.subject,
+            self.cft_sheets,
+            self.phase_series,
+        )
