@@ -19,7 +19,9 @@ class PhysiologicalBase(param.Parameterized):
         visible=False,
     )
     selected_signal = param.Selector(
-        default="", objects=PHYSIOLOGICAL_SIGNAL_OPTIONS, label="Select Signal Type"
+        default="",
+        objects=PHYSIOLOGICAL_SIGNAL_OPTIONS,
+        label="Select Signal Type",
     )
     data = param.Dynamic()
     sampling_rate = param.Number()

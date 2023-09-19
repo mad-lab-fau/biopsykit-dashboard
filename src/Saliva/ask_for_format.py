@@ -6,7 +6,6 @@ class AskForFormat(param.Parameterized):
     condition_list = param.Dynamic(default=None)
     format_selector = pn.widgets.Select(
         options=["", "Wide Format", "Plate Format"],
-        default="",
         name="Format",
     )
     ready = param.Boolean(default=False)
