@@ -268,7 +268,7 @@ if __name__ == "__main__":
     app.sidebar.append(get_sidebar())
     get_mainMenu(None)
     app.servable().show(
-        port=5023,
+        port=5022,
         verbose=True,
         autoreload=True,
     )

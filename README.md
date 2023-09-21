@@ -43,7 +43,7 @@ poetry install
 To then run the Dashboard locally in your Browser:
 
 ```bash
-poetry run main.py
+poetry run python __main__.py
 ```
 
 after that the Dashboard should start in your default Browser.
@@ -52,15 +52,15 @@ after that the Dashboard should start in your default Browser.
 
 - [X] Click on previous, the sampling rate Box has to be updated in order to proceed again
 - [X] In the Processing Step: Check Lower and upper Bound dynamically
-- [ ] Stages: 
-  - [ ] Select Subtypes
-  - [ ] Results
-- [~] Adapted Nilspodlib: Change such that the processing is similar to read_csv in pandas and make a pull request
+- [X] Stages: 
+  - [X] Select Subtypes
+  - [X] Results
+- [X] Adapted Nilspodlib: Change such that the processing is similar to read_csv in pandas and make a pull request
 - [ ] Refactoring: 
   - [ ] Tests
   - [ ] Catch Exceptions
   - [X] For each Stage a single Python File
-  - [ ] Progress Bar
+  - [X] Progress Bar
 - [X] Test ob App in WebAssembly konvertiert werden kann
   - [ ] Automatisieren, dass alle .py und .md Datei in eine Datei geladen wird
 - 
