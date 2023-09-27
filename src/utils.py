@@ -41,11 +41,9 @@ from biopsykit.utils.datatype_helper import (
 )
 from biopsykit.utils.time import tz
 
-import panel as pn
-import biopsykit
 import numpy as np
 import pandas as pd
-from nilspodlib import Dataset, SyncedSession
+from nilspodlib import Dataset
 from nilspodlib.utils import path_t
 from typing_extensions import Literal
 

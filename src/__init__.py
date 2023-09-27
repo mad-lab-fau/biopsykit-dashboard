@@ -51,7 +51,7 @@ def version() -> None:
     import pytz
     import plotly.express as px
     import matplotlib.pyplot as plt
-
+    #
     # print(
     #     f"Operating System: {platform.system()} ({platform.architecture()[1]} {platform.architecture()[0]})\n",
     #     f"- Python: {platform.python_version()}\n",
