@@ -15,27 +15,32 @@ class_file_dict = {}
 function_file_dict = {}
 files_added = []
 functions_dict = {}
-files_dict = {}
 
 
-def fill_files_dict():
+def is_ignored(filename) -> bool:
+    return (
+        filename == OWN_NAME
+        or filename == MAIN_FILE
+        or "__init__" in filename
+        or any(ignore in filename for ignore in IGNORE_FOLDERS)
+    )
+
+
+def read_python_files() -> dict:
+    files_dict = {}
     for filename in glob.iglob("src/**/*.py", recursive=True):
-        if (
-            filename == OWN_NAME
-            or filename == MAIN_FILE
-            or "__init__" in filename
-            or any(ignore in filename for ignore in IGNORE_FOLDERS)
-        ):
+        if is_ignored(filename):
             continue
         package_name = filename.replace("/", ".")
         package_name = package_name.replace(".py", "")
         with open(filename) as file:
             files_dict[package_name] = file.read()
+    return files_dict
 
 
-def get_combined_files_string() -> str:
+def get_combined_files_string(python_file_dict: dict) -> str:
     out_file_text = ""
-    for key, value in files_dict.items():
+    for key, value in python_file_dict.items():
         if key in files_added:
             continue
         if len(out_file_text) == 0:
@@ -56,7 +61,7 @@ def get_combined_files_string() -> str:
             out_file_text_array = out_file_text.splitlines(keepends=True)
             out_file_text_array = (
                 out_file_text_array[: imports[0].lineno - 1]
-                + files_dict[imports[0].module].splitlines(keepends=True)
+                + python_file_dict[imports[0].module].splitlines(keepends=True)
                 + out_file_text_array[imports[0].end_lineno :]
             )
             out_file_text = "".join(out_file_text_array)
@@ -73,8 +78,8 @@ def get_combined_files_string() -> str:
 
 
 def combine_all_files():
-    fill_files_dict()
-    out_file_text = get_combined_files_string()
+    files_dict = read_python_files()
+    out_file_text = get_combined_files_string(files_dict)
     out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
     with open(MAIN_FILE, "r") as file:
         main_file_text = file.read()
@@ -82,6 +87,7 @@ def combine_all_files():
         out_file_text += main_file_text
     with open(RESULTING_FILENAME, "w") as outfile:
         outfile.write(out_file_text)
+
 
 if __name__ == "__main__":
     combine_all_files()
