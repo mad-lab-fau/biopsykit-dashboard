@@ -1,4 +1,5 @@
 import ast
+from _ast import ImportFrom
 
 from setuptools import glob
 
@@ -49,32 +50,49 @@ def get_combined_files_string(python_file_dict: dict) -> str:
         else:
             out_file_text += "\n\n"
             out_file_text += value
+        out_file_text = replace_all_imports(out_file_text, python_file_dict)
+    return out_file_text
+
+
+def replace_all_imports(out_file_text: str, python_file_dict: dict) -> str:
+    node = ast.parse(out_file_text)
+    imports = [
+        n
+        for n in node.body
+        if isinstance(n, ast.ImportFrom) and n.module.startswith("src")
+    ]
+    while len(imports) > 0:
+        out_file_text = add_subpart(imports[0], out_file_text, python_file_dict)
         node = ast.parse(out_file_text)
         imports = [
             n
             for n in node.body
-            if isinstance(n, ast.ImportFrom)
-            and n.module.startswith("src")
-            and n.module not in files_added
+            if isinstance(n, ast.ImportFrom) and n.module.startswith("src")
         ]
-        while len(imports) > 0:
-            out_file_text_array = out_file_text.splitlines(keepends=True)
-            out_file_text_array = (
-                out_file_text_array[: imports[0].lineno - 1]
-                + python_file_dict[imports[0].module].splitlines(keepends=True)
-                + out_file_text_array[imports[0].end_lineno :]
-            )
-            out_file_text = "".join(out_file_text_array)
-            files_added.append(imports[0].module)
-            node = ast.parse(out_file_text)
-            imports = [
-                n
-                for n in node.body
-                if isinstance(n, ast.ImportFrom)
-                and n.module.startswith("src")
-                and n.module not in files_added
-            ]
     return out_file_text
+
+
+def add_subpart(
+    import_from: ImportFrom, out_file_text: str, python_file_dict: dict
+) -> str:
+    if import_from.module in files_added:
+        out_file_text_array = out_file_text.splitlines(keepends=True)
+        out_file_text_array = (
+            out_file_text_array[: import_from.lineno - 1]
+            + out_file_text_array[import_from.end_lineno :]
+        )
+        out_file_text = "".join(out_file_text_array)
+        return out_file_text
+    else:
+        out_file_text_array = out_file_text.splitlines(keepends=True)
+        out_file_text_array = (
+            out_file_text_array[: import_from.lineno - 1]
+            + python_file_dict[import_from.module].splitlines(keepends=True)
+            + out_file_text_array[import_from.end_lineno :]
+        )
+        out_file_text = "".join(out_file_text_array)
+        files_added.append(import_from.module)
+        return out_file_text
 
 
 def combine_all_files():
@@ -85,6 +103,7 @@ def combine_all_files():
         main_file_text = file.read()
         out_file_text += "\n\n"
         out_file_text += main_file_text
+    out_file_text = replace_all_imports(out_file_text, files_dict)
     with open(RESULTING_FILENAME, "w") as outfile:
         outfile.write(out_file_text)
 
