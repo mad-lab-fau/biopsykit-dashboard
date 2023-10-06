@@ -64,11 +64,11 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def processing(self):
         col = pn.Column()
-        if self.selected_signal == "ECG":
+        if self.signal == "ECG":
             col = self.process_ecg()
-        elif self.selected_signal == "EEG":
+        elif self.signal == "EEG":
             col = self.process_eeg()
-        elif self.selected_signal == "RSP":
+        elif self.signal == "RSP":
             self.process_rsp()
         if not self.skip_hrv:
             col.append(self.process_hrv())
@@ -294,6 +294,6 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def panel(self):
         self.results = self.processing()
-        self.result_graph.set_signal_type(self.selected_signal)
+        self.result_graph.set_signal_type(self.signal)
         self.result_graph.set_sampling_rate(self.sampling_rate)
         return self._view

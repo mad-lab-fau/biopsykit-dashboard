@@ -25,10 +25,15 @@ class FileUpload(PhysiologicalBase):
         multiple=False,
         accept=".csv,.bin,.xlsx",
     )
-    timezone = param.Selector(
-        default="Europe/Berlin",
-        objects=["None Selected"] + list(pytz.all_timezones),
-        label="Timezone",
+    select_timezone = pn.widgets.Select(
+        options=["None Selected"] + list(pytz.all_timezones),
+        value="Europe/Berlin",
+        name="Timezone",
+    )
+    select_hardware = pn.widgets.Select(
+        options=["NilsPod", "BioPac"],
+        value="NilsPod",
+        name="Hardware",
     )
     ready = param.Boolean(default=False)
 
@@ -36,27 +41,27 @@ class FileUpload(PhysiologicalBase):
         params["HEADER_TEXT"] = FILE_UPLOAD_TEXT
         super().__init__(**params)
         self.update_step(4)
-        self._select_timezone = pn.widgets.Select.from_param(self.param.timezone)
-        pn.bind(self.timezone_changed, self._select_timezone.value, watch=True)
+        self.select_timezone.link(self, callbacks={"value": self.timezone_changed})
+        self.select_hardware.link(self, callbacks={"value": self.hardware_changed})
         self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)
         pn.bind(self.hardware_changed, self._select_hardware.value, watch=True)
         pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
         self._view = pn.Column(
             self.header,
-            self._select_hardware,
-            self._select_timezone,
+            self.select_hardware,
+            self.select_timezone,
             self.file_input,
         )
 
-    @param.depends("timezone", watch=True)
-    def timezone_changed(self):
+    def timezone_changed(self, _, event):
+        self.timezone = event.new
         if self.timezone == "None Selected":
             self.ready = False
         else:
             self.ready = True
 
-    @param.depends("hardware", watch=True)
-    def hardware_changed(self):
+    def hardware_changed(self, _, event):
+        self.hardware = event.new
         if self.hardware == "NilsPod":
             self.file_input.accept = ".csv,.bin, .zip"
         if self.hardware == "BioPac":
@@ -195,7 +200,7 @@ class FileUpload(PhysiologicalBase):
     def handle_csv_file(self, file_name: string, file_content: bytes):
         string_io = StringIO(file_content.decode("utf8"))
         df = pd.read_csv(string_io)
-        if self.selected_signal == "EEG":
+        if self.signal == "EEG":
             muse = MuseDataset(data=df, tz=self.timezone)
             df = muse.data_as_df("local_datetime")
             self.sampling_rate = muse.sampling_rate_hz
@@ -235,7 +240,7 @@ class FileUpload(PhysiologicalBase):
         self.ready = True
 
     def handle_xlsx_file(self, file_content: bytes, filename: string):
-        if self.selected_signal == "CFT":
+        if self.signal == "CFT":
             dict_hr = pd.read_excel(
                 BytesIO(file_content), index_col="time", sheet_name=None
             )

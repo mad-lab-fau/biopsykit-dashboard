@@ -10,18 +10,18 @@ def signal_type():
 def test_constructor(signal_type):
     """Tests default values of PhysSignalType"""
     assert signal_type.ready == False
-    assert signal_type.selected_signal == ""
-    assert signal_type.options == ["", "ECG", "CFT", "RSP", "EEG"]
+    assert signal_type.signal == ""
+    assert signal_type.select_signal.options == ["", "ECG", "RSP", "EEG"]
 
 
 def test_signal_selected(signal_type):
     """Tests if the function signal_selected works correctly"""
-    signal_type.selected_signal = "ECG"
-    assert signal_type.selected_signal == "ECG"
+    signal_type.select_signal.value = "ECG"
+    assert signal_type.signal == "ECG"
     assert signal_type.ready == True
-    signal_type.selected_signal = ""
-    assert signal_type.selected_signal == ""
+    signal_type.select_signal.value = ""
+    assert signal_type.signal == ""
     assert signal_type.ready == False
-    with pytest.raises(Exception):
-        signal_type.selected_signal = "FalseSignal"
-    assert signal_type.selected_signal != "FalseSignal"
+    signal_type.select_signal.value = "FalseSignal"
+    assert signal_type.signal != "FalseSignal"
+    assert signal_type.ready == False

@@ -47,11 +47,11 @@ class DownloadResults(PhysiologicalBase):
         with zipfile.ZipFile(
             self.zip_buffer, "a", zipfile.ZIP_DEFLATED, False
         ) as zip_file:
-            if self.selected_signal == "ECG":
+            if self.signal == "ECG":
                 self.load_ecg_files(zip_file)
-            elif self.selected_signal == "EEG":
+            elif self.signal == "EEG":
                 self.load_eeg_files(zip_file)
-            elif self.selected_signal == "CFT":
+            elif self.signal == "CFT":
                 self.load_cft_files(zip_file)
         self.zip_buffer.seek(0)
         pn.state.notifications.info("Results loaded")
@@ -176,7 +176,7 @@ class DownloadResults(PhysiologicalBase):
             zip_file.writestr(f"CFT_{key}.png", buf.getvalue())
 
     def panel(self):
-        self._load_results_checkbox.name = f"Load {self.selected_signal} Results"
+        self._load_results_checkbox.name = f"Load {self.signal} Results"
         if self.skip_hrv:
             self.load_plots_hrv.visible = False
         if self.download_btn is None:

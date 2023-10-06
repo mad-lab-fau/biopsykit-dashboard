@@ -37,7 +37,7 @@ class AskToAddTimes(PhysiologicalBase):
         self._view = pane
 
     def click_skip(self, _, event):
-        if self.selected_signal == "EEG":
+        if self.signal == "EEG":
             self.next = "Frequency Bands"
             self.ready = True
         else:
@@ -111,7 +111,7 @@ class AddTimes(PhysiologicalBase):
 
     def panel(self):
         # self.ready = False
-        if self.selected_signal == "EEG":
+        if self.signal == "EEG":
             self.next = "Frequency Bands"
         self.times_to_subject.initialize_filenames(list(self.data.keys()))
         return self._view
@@ -279,7 +279,7 @@ class AddTimes(PhysiologicalBase):
             self.timezone,
             self.trimmed_data,
             self.session,
-            self.selected_signal,
+            self.signal,
             self.recordings,
             self.recording,
             self.data,

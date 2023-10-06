@@ -9,17 +9,17 @@ def recordings():
 
 def test_constructor(recordings):
     """Tests default values of Recordings"""
-    assert recordings.ready == True
+    assert recordings.select_recording.options == [
+        "Multiple Recording",
+        "Single Recording",
+    ]
+    assert recordings.select_recording.value == "Single Recording"
     assert recordings.recording == "Single Recording"
-    assert recordings.selected_signal == ""
 
 
 def test_change_recordings(recordings):
     """Tests change of recordings"""
-    recordings.recording = "Multiple Recording"
+    recordings.select_recording.value = "Multiple Recording"
     assert recordings.next == "Multiple Files"
-    recordings.recording = "Single Recording"
-    assert recordings.next == "Upload Files"
-    with pytest.raises(Exception):
-        recordings.recording = "False Recording"
+    recordings.select_recording.value = "Single Recording"
     assert recordings.next == "Upload Files"

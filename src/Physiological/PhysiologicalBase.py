@@ -18,11 +18,7 @@ class PhysiologicalBase(param.Parameterized):
         name="Select Subject",
         visible=False,
     )
-    selected_signal = param.Selector(
-        default="",
-        objects=PHYSIOLOGICAL_SIGNAL_OPTIONS,
-        label="Select Signal Type",
-    )
+    signal = param.String(default="")
     data = param.Dynamic()
     sampling_rate = param.Number()
     skip_hrv = param.Boolean(default=True)
@@ -246,7 +242,7 @@ class PhysiologicalBase(param.Parameterized):
             self.timezone,
             self.trimmed_data,
             self.session,
-            self.selected_signal,
+            self.signal,
             self.recordings,
             self.recording,
             self.data,

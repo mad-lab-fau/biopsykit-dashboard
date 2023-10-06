@@ -115,11 +115,11 @@ class DataArrived(PhysiologicalBase):
             return pane
 
     def panel(self):
-        if self.selected_signal == "CFT":
+        if self.signal == "CFT":
             self.next = "Select CFT Sheet"
-        elif self.selected_signal == "RSP":
+        elif self.signal == "RSP":
             self.next = "Set RSP Parameters"
-        if self.sampling_rate == -1 and self.selected_signal != "CFT":
+        if self.sampling_rate == -1 and self.signal != "CFT":
             if self.sampling_rate != -1:
                 self.sampling_rate_input.value = str(self.sampling_rate)
             if self.sampling_rate_input.value == "":

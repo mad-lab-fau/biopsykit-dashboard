@@ -12,8 +12,8 @@ from src.Physiological.processing_and_preview import ProcessingAndPreview
 
 def test_ecg_processing():
     process = ProcessingAndPreview()
-    process.selected_signal = "ECG"
-    process.selected_signal = "ECG"
+    process.signal = "ECG"
+    process.signal = "ECG"
     df, fs = get_sample_ecg_data("Vp01")
     process.data = {"ecg_sample_Vp01.bin": df}
     process.selected_outlier_methods = None
@@ -43,7 +43,7 @@ def test_ecg_processing_with_timelog():
     add_times.df = add_times.handle_time_file(add_times.df)
     add_times.set_subject_time_dict()
     process.subject_time_dict = add_times.subject_time_dict
-    process.selected_signal = "ECG"
+    process.signal = "ECG"
     df, fs = get_sample_ecg_data("Vp01")
     process.data = {"Vp01": df}
     process.selected_outlier_methods = None
@@ -61,7 +61,7 @@ def test_ecg_processing_with_timelog():
 
 def test_eeg_processing():
     process = ProcessingAndPreview()
-    process.selected_signal = "EEG"
+    process.signal = "EEG"
     process.data, process.sampling_rate = get_sample_eeg_data()
     try:
         process.processing()
@@ -76,7 +76,7 @@ def test_eeg_processing():
 def test_rsp_processing():
     df, fs = get_sample_ecg_data("Vp01")
     process = ProcessingAndPreview()
-    process.selected_signal = "RSP"
+    process.signal = "RSP"
     process.estimate_rsp = True
     process.sampling_rate = fs
     process.data = {"Vp01": df}

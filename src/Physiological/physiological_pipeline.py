@@ -38,9 +38,7 @@ class PhysiologicalPipeline:
             inherit_params=True,
         )
         self.pipeline.add_stage("Sessions", Session(), inherit_params=True)
-        self.pipeline.add_stage(
-            "Recordings", Recordings(), ready_parameter="ready", next_parameter="next"
-        )
+        self.pipeline.add_stage("Recordings", Recordings(), next_parameter="next")
         self.pipeline.add_stage("Multiple Files", Compress())
         self.pipeline.add_stage("Upload Files", FileUpload(), ready_parameter="ready")
         self.pipeline.add_stage(

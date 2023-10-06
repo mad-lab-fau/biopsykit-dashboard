@@ -10,20 +10,21 @@ def session():
 
 def test_constructor(session):
     """Tests default values of Session"""
-    assert session.ready == True
-    assert session.step == 1
-    assert session.max_steps == 10
-    assert session.session.value == "Single Session"
-    assert session.selected_signal == ""
+    assert session.ready == False
+    assert session.session == "Single Session"
+    assert session.signal == ""
+    assert session.select_session.value == "Single Session"
+    assert session.select_session.options == ["Multiple Sessions", "Single Session"]
 
 
 def test_output(session):
     """Tests output of Session"""
-    session.selected_signal = "ECG"
-    session.session = "Single Session"
-    assert session.output() == ("Single Session", "ECG")
-    with pytest.raises(Exception):
-        session.session = "False Sessions"
-    assert session.output() == ("Single Session", "ECG")
-    session.session = "Multiple Sessions"
-    assert session.output() == ("Multiple Sessions", "ECG")
+    session.signal = "ECG"
+    assert session.session == "Single Session"
+    session.select_session.value = ""
+    assert session.ready == False
+    session.select_session.value = "Single Session"
+    assert session.ready == True
+    session.select_session.value = "Multiple Sessions"
+    assert session.ready == True
+    assert session.session == "Multiple Sessions"

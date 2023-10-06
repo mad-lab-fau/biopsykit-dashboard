@@ -19,28 +19,29 @@ def script_dir():
 
 def test_constructor(file_upload):
     """Tests default values of FileUpload"""
-    assert file_upload.ready == True
-    assert file_upload.selected_signal == ""
-    assert file_upload.next == "Data arrived"
+    assert file_upload.ready == False
+    assert file_upload.timezone == "Europe/Berlin"
+    assert file_upload.file_input.accept == ".csv,.bin,.xlsx"
+    assert file_upload.file_input.multiple == False
 
 
 def test_changing_timezone(file_upload):
-    file_upload.timezone = "Europe/Berlin"
-    assert file_upload.timezone == "Europe/Berlin"
-    assert file_upload.ready == True
-    file_upload.timezone = "None Selected"
+    file_upload.select_timezone.value = "None Selected"
     assert file_upload.timezone == "None Selected"
     assert file_upload.ready == False
+    file_upload.select_timezone.value = "Europe/Berlin"
+    assert file_upload.timezone == "Europe/Berlin"
+    assert file_upload.ready == True
 
 
 def test_change_selected_hardware(file_upload):
-    file_upload.hardware = "BioPac"
+    file_upload.select_hardware.value = "BioPac"
     assert file_upload.hardware == "BioPac"
     assert file_upload.file_input.accept == ".acq"
-    file_upload.hardware = "NilsPod"
+    file_upload.select_hardware.value = "NilsPod"
     assert file_upload.file_input.accept == ".csv,.bin, .zip"
     with pytest.raises(Exception):
-        file_upload.hardware = "False Hardware"
+        file_upload.select_hardware.value = "False Hardware"
 
 
 def test_extract_simple_zip(file_upload, script_dir):
@@ -100,24 +101,24 @@ def assert_extracted_files(file_upload):
 def test_handle_csv_file(file_upload, script_dir):
     file_name = "ECG.csv"
     abs_file_path = os.path.join(script_dir, file_name)
-    file_upload.selected_signal = "ECG"
+    file_upload.signal = "ECG"
     with open(abs_file_path, "rb") as f:
         file_upload.file_input.filename = file_name
-        file_upload.handle_csv_file(f.read())
+        file_upload.handle_csv_file(file_name, f.read())
     assert file_upload.file_input.filename == "ECG.csv"
     assert file_upload.ready == True
-    assert isinstance(file_upload.data, pd.DataFrame)
+    assert isinstance(file_upload.data, dict)
     file_name = "EEG.csv"
     abs_file_path = os.path.join(script_dir, file_name)
-    file_upload.selected_signal = "EEG"
+    file_upload.signal = "EEG"
     with open(abs_file_path, "rb") as f:
         file_upload.file_input.filename = file_name
-        file_upload.handle_csv_file(f.read())
+        file_upload.handle_csv_file(file_name, f.read())
     assert file_upload.file_input.filename == "EEG.csv"
     assert file_upload.ready == True
-    assert isinstance(file_upload.data, MuseDataset)
+    assert isinstance(file_upload.data, dict)
     with pytest.raises(Exception):
-        file_upload.handle_csv_file(None)
+        file_upload.handle_csv_file(file_name, None)
 
 
 def test_handle_bin_file(file_upload, script_dir):
@@ -125,9 +126,9 @@ def test_handle_bin_file(file_upload, script_dir):
     abs_file_path = os.path.join(script_dir, file_name)
     with open(abs_file_path, "rb") as f:
         file_upload.file_input.filename = file_name
-        file_upload.handle_bin_file(f.read())
+        file_upload.handle_bin_file(file_name, f.read())
     assert file_upload.file_input.filename == "ecg_sample_Vp01.bin"
     assert file_upload.ready == True
-    assert isinstance(file_upload.data, pd.DataFrame)
-    assert file_upload.data.shape == (157790, 7)
+    assert isinstance(file_upload.data, dict)
+    assert file_upload.data[file_name].shape == (157790, 7)
     assert file_upload.sampling_rate == 256.0
