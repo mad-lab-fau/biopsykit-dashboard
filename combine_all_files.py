@@ -1,6 +1,6 @@
 import ast
 from _ast import ImportFrom
-
+from tqdm import tqdm
 from setuptools import glob
 
 OWN_NAME = "combine_all_files.py"
@@ -41,7 +41,7 @@ def read_python_files() -> dict:
 
 def get_combined_files_string(python_file_dict: dict) -> str:
     out_file_text = ""
-    for key, value in python_file_dict.items():
+    for key, value in tqdm(python_file_dict.items()):
         if key in files_added:
             continue
         if len(out_file_text) == 0:
@@ -75,24 +75,18 @@ def replace_all_imports(out_file_text: str, python_file_dict: dict) -> str:
 def add_subpart(
     import_from: ImportFrom, out_file_text: str, python_file_dict: dict
 ) -> str:
-    if import_from.module in files_added:
-        out_file_text_array = out_file_text.splitlines(keepends=True)
-        out_file_text_array = (
-            out_file_text_array[: import_from.lineno - 1]
-            + out_file_text_array[import_from.end_lineno :]
-        )
-        out_file_text = "".join(out_file_text_array)
-        return out_file_text
-    else:
-        out_file_text_array = out_file_text.splitlines(keepends=True)
-        out_file_text_array = (
-            out_file_text_array[: import_from.lineno - 1]
-            + python_file_dict[import_from.module].splitlines(keepends=True)
-            + out_file_text_array[import_from.end_lineno :]
-        )
-        out_file_text = "".join(out_file_text_array)
-        files_added.append(import_from.module)
-        return out_file_text
+    text_to_add = []
+    if import_from.module not in files_added:
+        text_to_add = python_file_dict[import_from.module].splitlines(keepends=True)
+    out_file_text_array = out_file_text.splitlines(keepends=True)
+    out_file_text_array = (
+        out_file_text_array[: import_from.lineno - 1]
+        + text_to_add
+        + out_file_text_array[import_from.end_lineno :]
+    )
+    out_file_text = "".join(out_file_text_array)
+    files_added.append(import_from.module)
+    return out_file_text
 
 
 def combine_all_files():
