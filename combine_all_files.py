@@ -90,16 +90,21 @@ def add_subpart(
 
 
 def combine_all_files():
+    print("Reading python files")
     files_dict = read_python_files()
+    print("Combining files:")
     out_file_text = get_combined_files_string(files_dict)
     out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
+    print("Adding main file")
     with open(MAIN_FILE, "r") as file:
         main_file_text = file.read()
         out_file_text += "\n\n"
         out_file_text += main_file_text
     out_file_text = replace_all_imports(out_file_text, files_dict)
+    print("Writing resulting file")
     with open(RESULTING_FILENAME, "w") as outfile:
         outfile.write(out_file_text)
+    print("Done")
 
 
 if __name__ == "__main__":

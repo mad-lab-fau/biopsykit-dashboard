@@ -72,3 +72,8 @@ def test_change_subject(data_arrived_with_one_file):
     end_timestamp = Timestamp(1571827327367187000, tz="Europe/Berlin")
     assert data_arrived_with_one_file.session_start.value == start_timestamp
     assert data_arrived_with_one_file.session_end.value == end_timestamp
+    data_arrived_with_one_file.subject_selector.value = ""
+    assert data_arrived_with_one_file.subject_selector.value == ""
+    assert data_arrived_with_one_file.session_start.visible == False
+    assert data_arrived_with_one_file.session_end.visible == False
+    assert data_arrived_with_one_file.data_view.visible == False

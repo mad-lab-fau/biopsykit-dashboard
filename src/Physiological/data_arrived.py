@@ -76,8 +76,14 @@ class DataArrived(PhysiologicalBase):
 
     def subject_selected(self, _, event):
         if not event.new:
+            self.session_end.visible = False
+            self.session_start.visible = False
+            self.data_view.visible = False
             return
         if self.data is None:
+            self.session_end.visible = False
+            self.session_start.visible = False
+            self.data_view.visible = False
             return
         if isinstance(self.data[event.new], pd.DataFrame):
             self.data_view.value = self.data[event.new]
