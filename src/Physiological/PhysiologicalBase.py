@@ -20,7 +20,7 @@ class PhysiologicalBase(param.Parameterized):
     )
     signal = param.String(default="")
     data = param.Dynamic()
-    sampling_rate = param.Number()
+    sampling_rate = param.Number(default=-1.0)
     skip_hrv = param.Boolean(default=True)
     session = param.String(default="Single Session")
     sensors = param.Dynamic()
@@ -30,7 +30,6 @@ class PhysiologicalBase(param.Parameterized):
     subject = param.Dynamic()
     recordings = param.String()
     synced = param.Boolean(default=False)
-    subject_selector = pn.widgets.Select()
     dict_hr_subjects = {}
     phase_series = param.Dynamic()
     hardware = param.Selector(
