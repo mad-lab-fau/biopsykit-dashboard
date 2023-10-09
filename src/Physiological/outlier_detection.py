@@ -96,17 +96,21 @@ class OutlierDetection(PhysiologicalBase):
             self.selected_outlier_methods = None
         self.selected_outlier_methods = event.new
 
-    def check_upper_bound(self):
+    def check_upper_bound(self, target, event):
         if self.physiological_upper.value < 0:
             self.physiological_upper.value = 0
         if self.physiological_lower.value > self.physiological_upper.value:
+            switched_value = self.physiological_lower.value
             self.physiological_lower.value = self.physiological_upper.value
+            self.physiological_upper.value = switched_value
 
-    def check_lower_bound(self):
-        if self.physiological_upper.value < 0:
-            self.physiological_upper.value = 0
+    def check_lower_bound(self, target, event):
+        if self.physiological_lower.value < 0:
+            self.physiological_lower.value = 0
         if self.physiological_lower.value > self.physiological_upper.value:
+            switched_value = self.physiological_upper.value
             self.physiological_upper.value = self.physiological_lower.value
+            self.physiological_lower.value = switched_value
 
     def panel(self):
         return self._view

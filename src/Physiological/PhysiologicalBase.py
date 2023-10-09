@@ -203,7 +203,7 @@ class PhysiologicalBase(param.Parameterized):
             "quality": self.quality.value,
             "artifact": self.artifact.value,
             "statistical_rr": self.statistical_rr.value,
-            "statistical_rr_diff": self.statistical_rr_diff,
+            "statistical_rr_diff": self.statistical_rr_diff.value,
             "physiological": (
                 self.physiological_lower.value,
                 self.physiological_upper.value,
