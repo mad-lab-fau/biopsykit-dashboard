@@ -54,7 +54,7 @@ class AskToAddTimes(PhysiologicalBase):
 
 class AddTimes(PhysiologicalBase):
     time_upload = pn.widgets.FileInput(
-        styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx"
+        styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx,.csv"
     )
     datetime = [
         (
@@ -110,51 +110,55 @@ class AddTimes(PhysiologicalBase):
         self._view = pane
 
     def panel(self):
-        # self.ready = False
         if self.signal == "EEG":
             self.next = "Frequency Bands"
         self.times_to_subject.initialize_filenames(list(self.data.keys()))
         return self._view
 
     def parse_time_file(self, target, event):
-        self.ecg_processed = False
         self.select_condition.visible = False
         self.select_subject.visible = False
         self.select_vp.visible = False
-        if ".csv" in self.time_upload.filename:
-            string_io = StringIO(self.time_upload.value.decode("utf8"))
-            df = pd.read_csv(string_io)
-            self.handle_time_file(df)
-        else:
-            df = pd.read_excel(self.time_upload.value)
-            df = self.handle_time_file(df)
-            self.df = df
-        if not self.ready:
-            row = pn.Row()
-            cols = list(self.df.columns)
-            cols.insert(0, " ")
-            if "subject" not in self.df.columns:
-                self.select_subject.options = cols
-                self.select_subject.visible = True
-
-                self.select_subject.link(
-                    "subject",
-                    callbacks={"value": self.subject_column_changed},
-                )
-            if "condition" not in self.df.columns:
-                self.select_condition.options = cols
-                self.select_condition.visible = True
-                self.select_condition.link(
-                    "condition",
-                    callbacks={"value": self.condition_column_changed},
-                )
-            self.pane.append(row)
-            return
-        if df is None:
+        self.df = self.parse_file(self.time_upload.filename, self.time_upload.value)
+        if self.df is None:
             pn.state.notifications.error("Could not parse the given time File")
             return
-        self.df = df
+        if not self.ready:
+            self.ask_for_additional_infos()
+            return
         self.set_subject_time_dict()
+
+    def ask_for_additional_infos(self):
+        row = pn.Row()
+        cols = list(self.df.columns)
+        cols.insert(0, " ")
+        if "subject" not in self.df.columns:
+            self.select_subject.options = cols
+            self.select_subject.visible = True
+            self.select_subject.link(
+                "subject",
+                callbacks={"value": self.subject_column_changed},
+            )
+        if "condition" not in self.df.columns:
+            self.select_condition.options = cols
+            self.select_condition.visible = True
+            self.select_condition.link(
+                "condition",
+                callbacks={"value": self.condition_column_changed},
+            )
+        self.pane.append(row)
+
+    def parse_file(self, file_name, file_content) -> pd.DataFrame:
+        if file_content is None:
+            pn.state.notifications.error("No file content")
+            return pd.DataFrame()
+        if ".csv" in file_name:
+            string_io = StringIO(file_content.decode("utf8"))
+            df = pd.read_csv(string_io)
+        else:
+            df = pd.read_excel(file_content)
+        df = self.handle_time_file(df)
+        return df
 
     def select_vp_changed(self, _, event):
         self.subject = event.new
