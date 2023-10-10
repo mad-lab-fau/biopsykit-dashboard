@@ -1,4 +1,5 @@
 import ast
+import os
 from _ast import ImportFrom
 from tqdm import tqdm
 from setuptools import glob
@@ -16,6 +17,16 @@ class_file_dict = {}
 function_file_dict = {}
 files_added = []
 functions_dict = {}
+changed_imports = (
+    "  const env_spec = ['https://cdn.holoviz.org/panel/1.2.3/dist/wheels/bokeh-3.2.2-py3-none-any.whl', "
+    "'https://cdn.holoviz.org/panel/1.2.3/dist/wheels/panel-1.2.3-py3-none-any.whl', "
+    "'pyodide-http==0.2.1', "
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
+    "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
+    "'seaborn == 0.11.2', 'biopsykit', 'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
+    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions']\n"
+)
 
 
 def is_ignored(filename) -> bool:
@@ -95,17 +106,42 @@ def combine_all_files():
     print("Combining files:")
     out_file_text = get_combined_files_string(files_dict)
     out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
-    print("Adding main file")
     with open(MAIN_FILE, "r") as file:
         main_file_text = file.read()
         out_file_text += "\n\n"
         out_file_text += main_file_text
     out_file_text = replace_all_imports(out_file_text, files_dict)
-    print("Writing resulting file")
     with open(RESULTING_FILENAME, "w") as outfile:
         outfile.write(out_file_text)
-    print("Done")
+    print("Everything combined")
+
+
+def change_imports():
+    print("Changing imports of pyodide File")
+    with open("pyodide/dashboard.js", "r") as file:
+        text = file.read()
+        text = substring_replace(text)
+    with open("pyodide/dashboard.js", "w") as file:
+        file.write(text)
+    print("Imports changed")
+
+
+def substring_replace(string_file: str) -> str:
+    result = []
+    for line in string_file.splitlines():
+        if line.startswith("  const env_spec = ["):
+            line = changed_imports
+        result.append(line)
+    return "\n".join(result)
 
 
 if __name__ == "__main__":
     combine_all_files()
+    exit_code = os.system(
+        "panel convert dashboard.py --to pyodide-worker --out pyodide"
+    )
+    if exit_code != 0:
+        print("Error while converting to pyodide")
+        exit(1)
+    change_imports()
+    print("Done")

@@ -8,7 +8,7 @@ from src.Psychological.psychological_pipeline import PsychologicalPipeline
 from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
 from src.Saliva.saliva_pipeline import SalivaPipeline
 from src.Sleep.sleep_pipeline import SleepPipeline
-import warnings
+
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(
@@ -18,6 +18,7 @@ pn.extension(
 pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 from src.MainPage.main_page import MainPage
+
 
 app = pn.template.BootstrapTemplate(
     title="BioPysKit Dashboard",
@@ -120,11 +121,11 @@ def get_sidebar():
 def get_mainMenu(event):
     fileString = """
         # Welcome to the BioPsyKit Dashboard
-
+        
         ## Here you can analyse your Data using the BioPsyKit without any manual programming.
-
+        
         Please select below one of the Signals you want to analyse. The corresponding guide will help you to get the best out of your data.
-
+        
         """
     physBtn = pn.widgets.Button(
         name="Physiological Data",
@@ -260,9 +261,15 @@ def get_mainMenu(event):
         app.main.append(pane)
 
 
-pn.config.console_output = "disable"
-app.sidebar.append(get_sidebar())
-get_mainMenu(None)
-app.servable()
+if __name__ == "__main__":
+    os.environ["OUTDATED_IGNORE"] = "1"
+    pn.config.console_output = "disable"
+    app.sidebar.append(get_sidebar())
+    get_mainMenu(None)
+    app.servable().show(
+        port=5022,
+        verbose=True,
+        autoreload=True,
+    )
 # ssl_certfile = "localhost.crt",
 # ssl_keyfile = "localhost.key",
