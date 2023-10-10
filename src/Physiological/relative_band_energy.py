@@ -1,5 +1,6 @@
 import numpy as np
 import panel as pn
+import param
 
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import SELECT_FREQUENCY_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
@@ -8,7 +9,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 class FrequencyBands(PhysiologicalBase):
     text = ""
     band_panel = pn.Column()
-
     freq_bands = {
         "theta": [4, 8],
         "alpha": [8, 13],

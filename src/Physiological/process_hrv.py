@@ -4,18 +4,13 @@ import panel as pn
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
     PROCESS_HRV_TEXT,
     ASK_PROCESS_HRV_TEXT,
+    HRV_METHODS,
 )
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class AskToProcessHRV(PhysiologicalBase):
     methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
-    hrv_types = pn.widgets.MultiChoice(
-        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
-    )
-    correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
-    index = pn.widgets.TextInput(name="Index", value="")
-    index_name = pn.widgets.TextInput(name="Index Name", value="")
     skip_btn = pn.widgets.Button(name="Skip", sizing_mode="stretch_width")
     expert_mode_btn = pn.widgets.Button(
         name="Expert Mode", button_type="warning", sizing_mode="stretch_width"
@@ -60,25 +55,41 @@ class AskToProcessHRV(PhysiologicalBase):
 
 
 class SetHRVParameters(PhysiologicalBase):
-    methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
-    hrv_types = pn.widgets.MultiChoice(
-        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=methods
+    select_hrv_types = pn.widgets.MultiChoice(
+        name="Methods", value=["hrv_time", "hrv_nonlinear"], options=HRV_METHODS
     )
-    correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
-    index = pn.widgets.TextInput(name="Index", value="")
-    index_name = pn.widgets.TextInput(name="Index Name", value="")
+    check_correct_rpeaks = pn.widgets.Checkbox(name="Correct RPeaks", value=True)
+    set_hrv_index_name = pn.widgets.TextInput(name="Index Name", value="")
+    ready = param.Boolean(default=False)
 
     def __init__(self):
         super().__init__()
         self.update_text(PROCESS_HRV_TEXT)
         self.update_step(7)
+        self.select_hrv_types.link(
+            self, callbacks={"value": self.hrv_types_selection_changed}
+        )
+        self.check_correct_rpeaks.link(
+            self, callbacks={"value": self.correct_rpeaks_checked}
+        )
+        self.set_hrv_index_name.link(
+            self, callbacks={"value": self.hrv_index_name_changed}
+        )
         self._view = pn.Column(
             self.header,
-            self.hrv_types,
-            self.correct_rpeaks,
-            self.index,
-            self.index_name,
+            self.select_hrv_types,
+            self.check_correct_rpeaks,
+            self.set_hrv_index_name,
         )
+
+    def hrv_index_name_changed(self, _, event):
+        self.hrv_index_name = event.new
+
+    def correct_rpeaks_checked(self, _, event):
+        self.correct_rpeaks = event.new
+
+    def hrv_types_selection_changed(self, _, event):
+        self.hrv_types = event.new
 
     def panel(self):
         return self._view

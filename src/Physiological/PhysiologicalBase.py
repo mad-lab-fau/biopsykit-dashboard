@@ -8,63 +8,63 @@ from src.Physiological.custom_components import PipelineHeader
 
 
 class PhysiologicalBase(param.Parameterized):
-    step = param.Integer(default=1)
-    max_steps = 12
-    progress = pn.indicators.Progress(
-        name="Progress", height=20, sizing_mode="stretch_width"
-    )
-    times = None
-    select_vp = pn.widgets.Select(
-        name="Select Subject",
-        visible=False,
-    )
-    signal = param.String(default="")
+    artifact = pn.widgets.FloatInput(name="artifact", value=0)
+    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
+    correct_rpeaks = param.Boolean(default=False)
+    cft_sheets = param.Dynamic()
+    cft_processor = {}
     data = param.Dynamic()
-    sampling_rate = param.Number(default=-1.0)
-    skip_hrv = param.Boolean(default=True)
-    session = param.String(default="Single Session")
-    sensors = param.Dynamic()
-    timezone = param.String(default="Europe/Berlin")
-    time_log_present = param.Boolean(default=False)
-    time_log = param.Dynamic()
-    subject = param.Dynamic()
-    recordings = param.String()
-    synced = param.Boolean(default=False)
+    data_processed = param.Boolean(default=False)
     dict_hr_subjects = {}
-    phase_series = param.Dynamic()
+    ecg_processor = param.Dynamic()
+    eeg_processor = {}
+    estimate_rsp = param.Boolean(default=False)
+    estimate_rsp_method = param.String(default="peak_trough_mean")
+    freq_bands = param.Dynamic(default=None)
     hardware = param.Selector(
         label="Select the Hardware with which you recorded your data",
         objects=PHYSIOLOGICAL_HW_OPTIONS,
         default="NilsPod",
     )
-    estimate_rsp = param.Boolean(default=False)
-    estimate_rsp_method = param.String(default="peak_trough_mean")
-    recording = param.String(default="Single Recording")
     hr_data = None
-    subject_time_dict = param.Dynamic(default={})
-    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
-    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
-    quality = pn.widgets.FloatInput(name="quality", value=0.4)
-    artifact = pn.widgets.FloatInput(name="artifact", value=0)
-    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
-    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
+    hrv_types = param.List(default=None)
+    hrv_index_name = param.String(default="")
+    original_data = param.Dynamic()
+    progress = pn.indicators.Progress(
+        name="Progress", height=20, sizing_mode="stretch_width"
+    )
+    phase_series = param.Dynamic()
     physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
     physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+    recording = param.String(default="Single Recording")
+    rsp_processor = {}
+    sampling_rate = param.Number(default=-1.0)
+    synced = param.Boolean(default=False)
+    skip_hrv = param.Boolean(default=True)
+    session = param.String(default="Single Session")
+    sensors = param.Dynamic()
+    subject = param.Dynamic()
+    select_vp = pn.widgets.Select(
+        name="Select Subject",
+        visible=False,
+    )
+    signal = param.String(default="")
+    step = param.Integer(default=1)
+    subject_time_dict = param.Dynamic(default={})
+    statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
+    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
+    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
     skip_outlier_detection = param.Boolean(default=True)
     selected_outlier_methods = param.Dynamic(default=None)
-    outlier_params = param.Dynamic(default=None)
-    ecg_processor = param.Dynamic()
-    eeg_processor = {}
-    rsp_processor = {}
-    cft_sheets = param.Dynamic()
-    freq_bands = param.Dynamic(default=None)
-    data_processed = param.Boolean(default=False)
-    cft_processor = {}
     textHeader = ""
-    original_data = param.Dynamic()
+    times = None
+    timezone = param.String(default="Europe/Berlin")
+    time_log_present = param.Boolean(default=False)
+    time_log = param.Dynamic()
     trimmed_data = param.Dynamic()
-    correct_rpeaks = param.Boolean(default=False)
-    hrv_types = param.List(default=None)
+    max_steps = 12
+    outlier_params = param.Dynamic(default=None)
+    quality = pn.widgets.FloatInput(name="quality", value=0.4)
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
@@ -219,7 +219,6 @@ class PhysiologicalBase(param.Parameterized):
         ("trimmed_data", param.Dynamic),
         ("session", param.String),
         ("selected_signal", param.String),
-        ("recordings", param.String),
         ("recording", param.String),
         ("data", param.Dynamic),
         ("sampling_rate", param.Number),
@@ -242,7 +241,6 @@ class PhysiologicalBase(param.Parameterized):
             self.trimmed_data,
             self.session,
             self.signal,
-            self.recordings,
             self.recording,
             self.data,
             self.sampling_rate,
