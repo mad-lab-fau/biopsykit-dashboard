@@ -10,12 +10,12 @@ from biopsykit.utils.datatype_helper import SalivaMeanSeDataFrame
 from fau_colors import cmaps
 from numpy import ndarray
 
+from src.Saliva.SALIVA_CONSTANTS import SHOW_FEATURES_TEXT
+from src.Saliva.SalivaBase import SalivaBase
 
-class ShowSalivaFeatures(param.Parameterized):
-    data = param.Dynamic(default=None)
+
+class ShowSalivaFeatures(SalivaBase):
     data_features = param.Dynamic(default=None)
-    saliva_type = param.String(default=None)
-    sample_times = param.Dynamic(default=None)
     auc_args = {"remove_s0": False, "compute_auc_post": False, "sample_times": None}
     slope_args = {"sample_idx": None, "sample_labels": None}
     standard_features_args = {"group_cols": None, "keep_index": True}
@@ -37,17 +37,17 @@ class ShowSalivaFeatures(param.Parameterized):
         "features": None,
         "palette": cmaps.faculties_light,
     }
+    feature_accordion = pn.Accordion(name="Features", sizing_mode="stretch_width")
 
-    def feature_accordion(self) -> pn.Accordion:
+    def get_feature_accordion(self) -> pn.Accordion:
         if self.data is None:
             return pn.Accordion()
         if self.saliva_type is None:
             return pn.Accordion()
-        acc = pn.Accordion()
+        acc = pn.Accordion(name="Features", sizing_mode="stretch_width")
         acc.append(self.get_mean_se_element())
         acc.append(self.get_auc())
         acc.append(self.get_max_increase())
-        # acc.append(self.get_slope())
         acc.append(self.get_max_value())
         acc.append(self.get_standard_features())
         acc.append(self.get_initial_value())
@@ -539,14 +539,18 @@ class ShowSalivaFeatures(param.Parameterized):
         )
         return col
 
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SHOW_FEATURES_TEXT
+        super().__init__(**params)
+        self.update_step(4)
+        self.update_text(SHOW_FEATURES_TEXT)
+        self._view = pn.Column(self.header, self.feature_accordion)
+
     def panel(self):
         if self.data_features is None and self.data is not None:
             self.data_features = bp.saliva.standard_features(self.data)
             self.data_features = bp.saliva.utils.saliva_feature_wide_to_long(
                 self.data_features, saliva_type=self.saliva_type
             )
-        co = pn.Column()
-        co.append(pn.pane.Markdown("# Show Features"))
-        acc = self.feature_accordion()
-        co.append(acc)
-        return co
+        self.feature_accordion = self.get_feature_accordion()
+        return self._view

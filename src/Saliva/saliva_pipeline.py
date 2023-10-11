@@ -3,7 +3,11 @@ import param
 
 from src.Saliva.ask_for_format import AskForFormat
 from src.Saliva.condition_list import AskToLoadConditionList, AddConditionList
-from src.Saliva.load_saliva_data import LoadSalivaDataPlate, LoadSalivaDataWide
+from src.Saliva.load_saliva_data import (
+    LoadSalivaDataPlate,
+    LoadSalivaDataWide,
+    LoadSalivaData,
+)
 from src.Saliva.saliva_features import ShowSalivaFeatures
 from src.Saliva.sample_times import SetSampleTimes
 
@@ -17,10 +21,10 @@ class SalivaPipeline:
     pipeline = None
 
     def __init__(self):
-        self.pipeline = pn.pipeline.Pipeline(
-            debug=True,
+        self.pipeline = pn.pipeline.Pipeline()
+        self.pipeline.add_stage(
+            "Ask for Format", AskForFormat(), ready_parameter="ready"
         )
-
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
             AskToLoadConditionList(),
@@ -32,31 +36,17 @@ class SalivaPipeline:
             "Add Condition List",
             AddConditionList(),
             ready_parameter="ready",
-            next_parameter="next_page",
         )
-
         self.pipeline.add_stage(
-            "Ask for Format", AskForFormat(), ready_parameter="ready"
-        )
-
-        self.pipeline.add_stage(
-            "Load Saliva Data Plate Format",
-            LoadSalivaDataPlate(),
+            "Load Saliva Data",
+            LoadSalivaData(),
             ready_parameter="ready",
         )
-
-        self.pipeline.add_stage(
-            "Load Saliva Data Wide Format",
-            LoadSalivaDataWide(),
-            ready_parameter="ready",
-        )
-
-        self.pipeline.add_stage(
-            "Set Sample times",
-            SetSampleTimes(),
-            ready_parameter="ready",
-        )
-
+        # self.pipeline.add_stage(
+        #     "Set Sample times",
+        #     SetSampleTimes(),
+        #     ready_parameter="ready",
+        # )
         self.pipeline.add_stage("Show Features", ShowSalivaFeatures())
 
         self.pipeline.define_graph(
@@ -64,15 +54,10 @@ class SalivaPipeline:
                 "Ask for Format": "Ask for Subject Condition List",
                 "Ask for Subject Condition List": (
                     "Add Condition List",
-                    "Load Saliva Data Plate Format",
-                    "Load Saliva Data Wide Format",
+                    "Load Saliva Data",
                 ),
-                "Add Condition List": (
-                    "Load Saliva Data Plate Format",
-                    "Load Saliva Data Wide Format",
-                ),
-                "Load Saliva Data Plate Format": "Set Sample times",
-                "Load Saliva Data Wide Format": "Set Sample times",
-                "Set Sample times": "Show Features",
+                "Add Condition List": "Load Saliva Data",
+                "Load Saliva Data": "Show Features",
+                # "Set Sample times": "Show Features",
             }
         )

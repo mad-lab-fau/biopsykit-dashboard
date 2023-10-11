@@ -1,29 +1,31 @@
 import param
 import panel as pn
 
+from src.Saliva.SALIVA_CONSTANTS import ASK_FOR_FORMAT_TEXT
+from src.Saliva.SalivaBase import SalivaBase
 
-class AskForFormat(param.Parameterized):
-    condition_list = param.Dynamic(default=None)
+
+class AskForFormat(SalivaBase):
     format_selector = pn.widgets.Select(
         options=["", "Wide Format", "Plate Format"],
         name="Format",
     )
     ready = param.Boolean(default=False)
-    format = param.String(default=None)
 
-    def format_changed(self, event):
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_FOR_FORMAT_TEXT
+        super().__init__(**params)
+        self.update_step(1)
+        self.update_text(ASK_FOR_FORMAT_TEXT)
+        self.format_selector.link(self, callbacks={"value": self.format_changed})
+        self._view = pn.Column(
+            self.header,
+            self.format_selector,
+        )
+
+    def format_changed(self, _, event):
         self.format = event.new
         self.ready = bool(event.new)
 
-    @param.output(
-        ("format", param.Dynamic),
-    )
-    def output(self):
-        return (self.format,)
-
     def panel(self):
-        self.format_selector.param.watch(self.format_changed, "value")
-        return pn.Column(
-            pn.pane.Markdown("# Choose the format your data is stored in"),
-            self.format_selector,
-        )
+        return self._view
