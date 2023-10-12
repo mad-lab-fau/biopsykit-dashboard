@@ -1,15 +1,13 @@
-import pandas
 import pandas as pd
 import panel as pn
-import param
 import biopsykit as bp
-import re
 
-# TODO: Custom Filter Function
-class SuggestQuestionnaireScores(param.Parameterized):
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import SUGGEST_QUESTIONNAIRE_SCORES_TEXT
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
+
+
+class SuggestQuestionnaireScores(QuestionnaireBase):
     text = ""
-    data = param.Dynamic(default=None)
-    dict_scores = {}
     accordion = pn.Accordion(sizing_mode="stretch_width")
     select_questionnaire = pn.widgets.Select(
         name="Choose Questionnaire:",
@@ -19,6 +17,12 @@ class SuggestQuestionnaireScores(param.Parameterized):
         name="Add Questionnaire", button_type="primary", align="end"
     )
 
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SUGGEST_QUESTIONNAIRE_SCORES_TEXT
+        super().__init__(**params)
+        self.update_step(3)
+        self.update_text(SUGGEST_QUESTIONNAIRE_SCORES_TEXT)
+
     def init_dict_scores(self):
         if bool(self.dict_scores):
             return
@@ -27,7 +31,7 @@ class SuggestQuestionnaireScores(param.Parameterized):
             # data_filt, cols = bp.questionnaires.utils.find_cols(
             #     data=self.data, regex_str=f"(?i)({name})"
             # )
-            col_sum = 0
+            # col_sum = 0
             list_col = list(questionnaire_cols)
             cols = {"-pre": [], "-post": [], "": []}
             for c in list_col:
@@ -40,15 +44,6 @@ class SuggestQuestionnaireScores(param.Parameterized):
             for key in cols.keys():
                 if len(cols[key]) != 0:
                     self.dict_scores[name + key] = pd.Index(data=cols[key])
-        # if any("post" in x.lower() for x in list_col):
-        #     self.dict_scores[name + "-post"] = pandas.Index(data=l)
-        #     col_sum += len(self.dict_scores[name + "-post"])
-        # if any("pre" in x.lower() for x in questionnaire_cols):
-        #     self.dict_scores[name + "-pre"] = pandas.Index(data=l)
-        #     col_sum += len(self.dict_scores[name + "-pre"])
-        # # Wenn col_sum != len(cols) müssen noch weiter cols hinzugefügt werden
-        # if not data_filt.empty:
-        #     self.dict_scores[name] = cols
 
     @staticmethod
     def edit_mode_on(target, event):
@@ -94,7 +89,7 @@ class SuggestQuestionnaireScores(param.Parameterized):
     def show_dict_scores(self):
         col = pn.Column()
         self.add_questionnaire_btn.link(
-            None,
+            self,
             callbacks={"value": self.add_questionnaire},
         )
         row = pn.Row()
@@ -116,17 +111,8 @@ class SuggestQuestionnaireScores(param.Parameterized):
         self.dict_scores.pop(target)
         pn.state.notifications.warning(f"Questionnaire {target} was removed")
 
-    def change_reg_ex(self, target, event):
-        pass
-
-    def change_ends_with(self, target, event):
-        pass
-
-    def change_starts_with(self, target, event):
-        pass
-
-    def add_questionnaire(self, target, event):
-        questionnaire = self.select_questionnaire.value
+    def add_questionnaire(self, _, event):
+        questionnaire = event.new
         i = 0
         while questionnaire in self.dict_scores.keys():
             questionnaire = self.select_questionnaire.value + f"-New{i}"
@@ -155,18 +141,6 @@ class SuggestQuestionnaireScores(param.Parameterized):
             f"Questionnaire {old_name} was renamed to {new_name}"
         )
 
-    @param.output(("data", param.Dynamic), ("dict_scores", param.Dict))
-    def output(self):
-        return (
-            self.data,
-            self.dict_scores,
-        )
-
     def panel(self):
-        self.accordion = pn.Accordion(sizing_mode="stretch_width")
-        if self.text == "":
-            f = open("../assets/Markdown/FillScoreDict.md", "r")
-            fileString = f.read()
-            self.text = fileString
         self.init_dict_scores()
-        return pn.Column(pn.pane.Markdown(self.text), self.show_dict_scores())
+        return pn.Column(self.header, self.show_dict_scores())

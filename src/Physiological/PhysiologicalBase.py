@@ -62,7 +62,7 @@ class PhysiologicalBase(param.Parameterized):
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
     trimmed_data = param.Dynamic()
-    max_steps = 12
+    max_steps = MAX_STEPS
     outlier_params = param.Dynamic(default=None)
     quality = pn.widgets.FloatInput(name="quality", value=0.4)
 

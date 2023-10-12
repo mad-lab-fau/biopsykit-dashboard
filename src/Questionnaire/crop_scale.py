@@ -4,12 +4,11 @@ import biopsykit as bp
 import numpy as np
 import pandas as pd
 
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import ASK_TO_CROP_SCALE_TEXT
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
-class AskToCropScale(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
+
+class AskToCropScale(QuestionnaireBase):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
     crop_btn = pn.widgets.Button(name="Yes")
@@ -26,33 +25,23 @@ class AskToCropScale(param.Parameterized):
         self.next_page = "Crop Scales"
         self.ready = True
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-    )
-    def output(self):
-        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_TO_CROP_SCALE_TEXT
+        super().__init__(**params)
+        self.update_step(6)
+        self.update_text(ASK_TO_CROP_SCALE_TEXT)
+        self.skip_btn.link(self, callbacks={"clicks": self.skip_crop})
+        self.crop_btn.link(self, callbacks={"clicks": self.crop_scales})
+        self._view = pn.Column(
+            self.header,
+            pn.Row(self.crop_btn, self.skip_btn),
+        )
 
     def panel(self):
-        text = "# Would you like to crop the scale(s) of your data?"
-        self.skip_btn.link(None, callbacks={"clicks": self.skip_crop})
-        self.crop_btn.link(None, callbacks={"clicks": self.crop_scales})
-        row = pn.Row()
-        row.append(self.crop_btn)
-        row.append(self.skip_btn)
-        col = pn.Column()
-        col.append(pn.pane.Markdown(text))
-        col.append(row)
-        return col
+        return self._view
 
 
-class CropScales(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
+class CropScales(QuestionnaireBase):
     crop_btn = pn.widgets.Button(name="Crop Scale", button_type="primary")
     questionnaire_selector = pn.widgets.Select(name="Questionnaire")
     set_nan_checkbox = pn.widgets.Checkbox(
@@ -115,18 +104,12 @@ class CropScales(param.Parameterized):
         except Exception as e:
             pn.state.notifications.error(f"Error while cropping the data: {e}")
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-    )
-    def output(self):
-        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
-
-    def panel(self):
-        self.questionnaire_selector.options = [""] + list(self.dict_scores.keys())
-        self.crop_btn.visible = False
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_TO_CROP_SCALE_TEXT
+        super().__init__(**params)
+        self.update_step(6)
+        self.update_text(ASK_TO_CROP_SCALE_TEXT)
+        self.crop_btn.link(self, callbacks={"clicks": self.crop_data})
         self.questionnaire_selector.link(
             (
                 self.set_nan_checkbox,
@@ -135,17 +118,16 @@ class CropScales(param.Parameterized):
             ),
             callbacks={"value": self.selection_changed},
         )
-        self.crop_btn.link(None, callbacks={"clicks": self.crop_data})
-        text = (
-            "# Crop scales"
-            + "\n"
-            + "Crop questionnaire scales, i.e., set values out of range to specific minimum and maximum values or to NaN."
+        self._view = pn.Column(
+            self.header,
+            self.questionnaire_selector,
+            self.score_range_arrayInput,
+            self.set_nan_checkbox,
+            self.questionnaire_stat_values_df,
+            self.crop_btn,
         )
-        col = pn.Column()
-        col.append(pn.pane.Markdown(text))
-        col.append(self.questionnaire_selector)
-        col.append(self.score_range_arrayInput)
-        col.append(self.set_nan_checkbox)
-        col.append(self.questionnaire_stat_values_df)
-        col.append(self.crop_btn)
-        return col
+
+    def panel(self):
+        self.questionnaire_selector.options = [""] + list(self.dict_scores.keys())
+        self.crop_btn.visible = False
+        return self._view

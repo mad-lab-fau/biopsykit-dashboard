@@ -1,22 +1,34 @@
 import io
-import re
 import zipfile
 
-import param
 import panel as pn
 import biopsykit as bp
 
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import DOWNLOAD_RESULTS_TEXT
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
-class DownloadQuestionnaireResults(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
-    results = param.Dynamic()
+
+class DownloadQuestionnaireResults(QuestionnaireBase):
     load_results_btn = pn.widgets.Button(name="Download Results", button_type="primary")
     zip_buffer = io.BytesIO()
+    download = pn.widgets.FileDownload(
+        name="Load Questionnaire Results",
+        filename="Results.zip",
+    )
+    # callback = self.load_results,
 
-    def load_results(self):
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = DOWNLOAD_RESULTS_TEXT
+        super().__init__(**params)
+        self.update_step(9)
+        self.update_text(DOWNLOAD_RESULTS_TEXT)
+        self.download.link(self, callbacks={"clicks": self.load_results})
+        self._view = pn.Column(
+            self.header,
+            self.download,
+        )
+
+    def load_results(self, _, event):
         with zipfile.ZipFile(
             self.zip_buffer, "a", zipfile.ZIP_DEFLATED, False
         ) as zip_file:
@@ -36,13 +48,4 @@ class DownloadQuestionnaireResults(param.Parameterized):
         return self.zip_buffer
 
     def panel(self):
-        text = "# Results"
-        col = pn.Column()
-        download = pn.widgets.FileDownload(
-            name="Load Questionnaire Results",
-            callback=self.load_results,
-            filename="Results.zip",
-        )
-        col.append(pn.pane.Markdown(text))
-        col.append(download)
-        return col
+        return self._view

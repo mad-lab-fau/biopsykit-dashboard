@@ -2,13 +2,14 @@ import panel as pn
 import biopsykit as bp
 import param
 
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import (
+    ASK_TO_CHANGE_FORMAT_TEXT,
+    CHANGE_FORMAT_TEXT,
+)
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
-class AskToChangeFormat(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
-    results = param.Dynamic()
+
+class AskToChangeFormat(QuestionnaireBase):
     ready = param.Boolean(default=False)
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
     convert_to_long_btn = pn.widgets.Button(name="Yes")
@@ -16,6 +17,20 @@ class AskToChangeFormat(param.Parameterized):
         default="Download Results",
         objects=["Download Results", "Change format"],
     )
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_TO_CHANGE_FORMAT_TEXT
+        super().__init__(**params)
+        self.update_step(8)
+        self.update_text(ASK_TO_CHANGE_FORMAT_TEXT)
+        self.skip_btn.link(self, callbacks={"clicks": self.skip_converting_to_long})
+        self.convert_to_long_btn.link(
+            self, callbacks={"clicks": self.proceed_to_convert_to_long}
+        )
+        self._view = pn.Column(
+            self.header,
+            pn.Row(self.convert_to_long_btn, self.skip_btn),
+        )
 
     def skip_converting_to_long(self, target, event):
         self.next_page = "Download Results"
@@ -25,47 +40,22 @@ class AskToChangeFormat(param.Parameterized):
         self.next_page = "Change format"
         self.ready = True
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-        ("results", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.dict_scores,
-            self.data_scores,
-            self.data_scaled,
-            self.results,
-        )
-
     def panel(self):
-        self.skip_btn.link(None, callbacks={"clicks": self.skip_converting_to_long})
-        self.convert_to_long_btn.link(
-            None, callbacks={"clicks": self.proceed_to_convert_to_long}
-        )
-        text = (
-            "# Do you want to change the format of your Dataframes? \n "
-            'If wou want to divide the Data of your questionnaires into different subscales please click on "Yes" '
-            "otherwise you may skip that step"
-        )
-        col = pn.Column()
-        col.append(pn.pane.Markdown(text))
-        row = pn.Row()
-        row.append(self.convert_to_long_btn)
-        row.append(self.skip_btn)
-        col.append(row)
-        return col
+        return self._view
 
 
-class ConvertToLong(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
-    results = param.Dynamic()
+class ConvertToLong(QuestionnaireBase):
+    converting_panel_column = pn.Column()
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = CHANGE_FORMAT_TEXT
+        super().__init__(**params)
+        self.update_step(8)
+        self.update_text(CHANGE_FORMAT_TEXT)
+        self._view = pn.Column(
+            self.header,
+            self.converting_panel_column,
+        )
 
     def converting_panel(self) -> pn.pane:
         acc = pn.Accordion()
@@ -94,7 +84,8 @@ class ConvertToLong(param.Parameterized):
             acc.append((questionnaire, col))
         return acc
 
-    def validate_level_input(self, target, event):
+    @staticmethod
+    def validate_level_input(target, event):
         if event.new is not None and len(event.new) != 0:
             target.disabled = False
         else:
@@ -109,41 +100,17 @@ class ConvertToLong(param.Parameterized):
             )
             return
         try:
-            t = bp.utils.dataframe_handling.wide_to_long(
+            self.data_in_long_format = bp.utils.dataframe_handling.wide_to_long(
                 self.results, stubname=questionnaire.upper(), levels=levels
             )
             pn.state.notifications.success(
                 f"The format of {questionnaire} is now in long format"
             )
         except Exception as e:
-            pn.state.notifications.error(f"The error {e} occured")
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-        ("results", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.dict_scores,
-            self.data_scores,
-            self.data_scaled,
-            self.results,
-        )
+            pn.state.notifications.error(f"The error {e} occurred")
 
     def panel(self):
         if self.data_scaled is None:
             self.data_scaled = self.data
-        text = (
-            "# Convert from wide to long format \n "
-            "In this step you can change the format of the datframe(s) of your questionnaire(s).\n"
-            "Below you can select from the questionnaire(s) of the provided data in order to change the format."
-            ' However only those questionnaire(s) which include column(s) that contain the symbol "_" are shown.'
-        )
-        col = pn.Column()
-        col.append(pn.pane.Markdown(text))
-        col.append(self.converting_panel())
-        return col
+        self.converting_panel_column.__setitem__(0, self.converting_panel())
+        return self._view

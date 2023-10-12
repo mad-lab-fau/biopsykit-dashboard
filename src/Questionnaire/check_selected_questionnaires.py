@@ -1,16 +1,28 @@
-import param
 import panel as pn
 
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import CHECK_SELECTED_QUESTIONNAIRES_TEXT
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
-class CheckSelectedQuestionnaires(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
+
+class CheckSelectedQuestionnaires(QuestionnaireBase):
     text = ""
     check_btn = pn.widgets.Button(
         name="Check Questionnaires", sizing_mode="stretch_width"
     )
     accordion = pn.Accordion(sizing_mode="stretch_width")
-    col = pn.Column(sizing_mode="stretch_width")
+    questionnaire_panel = pn.Column(sizing_mode="stretch_width")
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = CHECK_SELECTED_QUESTIONNAIRES_TEXT
+        super().__init__(**params)
+        self.update_step(4)
+        self.update_text(CHECK_SELECTED_QUESTIONNAIRES_TEXT)
+        self.check_btn.link(self, callbacks={"clicks": self.check_questionnaires})
+        self._view = pn.Column(
+            self.header,
+            self.check_btn,
+            self.questionnaire_panel,
+        )
 
     def init_questionnaire_panel(self, visible: bool) -> pn.Accordion:
         acc = pn.Accordion(sizing_mode="stretch_width", visible=visible)
@@ -29,27 +41,10 @@ class CheckSelectedQuestionnaires(param.Parameterized):
 
     def check_questionnaires(self, _, event):
         acc = self.init_questionnaire_panel((event.new % 2) != 0)
-        self.col.__setitem__(2, acc)
-
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.dict_scores,
-        )
+        self.questionnaire_panel.__setitem__(0, acc)
 
     def panel(self):
-        if len(self.col.objects) > 0:
-            return self.col
-        if self.text == "":
-            f = open("../assets/Markdown/CheckSelectedQuestionnaires.md", "r")
-            fileString = f.read()
-            self.text = fileString
-        self.check_btn.link(None, callbacks={"clicks": self.check_questionnaires})
-        self.col.append(pn.pane.Markdown(self.text))
-        self.col.append(self.check_btn)
-        self.col.append(self.init_questionnaire_panel(False))
-        return self.col
+        if len(self.questionnaire_panel.objects) > 0:
+            return self._view
+        self.questionnaire_panel.__setitem__(0, self.init_questionnaire_panel(False))
+        return self.questionnaire_panel

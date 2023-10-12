@@ -1,39 +1,21 @@
 import param
 import panel as pn
 import biopsykit as bp
-import re
-from src.Questionnaire.dataframe_styler import make_pretty
+
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import SHOW_RESULTS_TEXT
+from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
 
-class ShowResults(param.Parameterized):
-    data = param.Dynamic()
-    dict_scores = param.Dict()
-    data_scores = param.Dynamic()
-    data_scaled = param.Dynamic()
-    results = param.Dynamic()
+class ShowResults(QuestionnaireBase):
+
     text = "# Show Results"
     next_page = param.Selector(
         default="Download Results",
         objects=["Download Results", "Ask to change format"],
     )
+    questionnaire_results_Column = pn.Column()
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-        ("results", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.data,
-            self.dict_scores,
-            self.data_scores,
-            self.data_scaled,
-            self.results,
-        )
-
-    def showQuestionnaireResults(self) -> pn.Accordion:
+    def show_questionnaire_results(self) -> pn.Accordion:
         acc = pn.Accordion(sizing_mode="stretch_width")
         supported_questionnaires = (
             bp.questionnaires.utils.get_supported_questionnaires()
@@ -42,22 +24,26 @@ class ShowResults(param.Parameterized):
             questionnaire_results = self.results.filter(like=questionnaire.upper())
             if questionnaire_results.empty:
                 continue
-            df = questionnaire_results.style.pipe(make_pretty)
-            cell_hover = {
-                "selector": "td:hover",
-                "props": [("background-color", "#040fe0")],
-            }
-            df.set_table_styles([cell_hover])
-            df.set_sticky(axis="index")
-            a = df.to_html()
-            html = pn.pane.HTML(a)
+            tabulator = pn.widgets.Tabulator(
+                questionnaire_results,
+                pagination="local",
+                layout="fit_data_stretch",
+                page_size=10,
+            )
             acc.append(
                 (
                     questionnaire,
-                    html,
+                    tabulator,
                 )
             )
         return acc
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SHOW_RESULTS_TEXT
+        super().__init__(**params)
+        self.update_step(7)
+        self.update_text(SHOW_RESULTS_TEXT)
+        self._view = pn.Column(self.header, self.questionnaire_results_Column)
 
     def panel(self):
         if self.data_scaled is None:
@@ -67,15 +53,7 @@ class ShowResults(param.Parameterized):
         )
         if all("_" in cols for cols in self.results.columns.to_list()):
             self.next_page = "Ask to change format"
-        col = pn.Column()
-        col.append(pn.pane.Markdown(self.text))
-        col.append(self.showQuestionnaireResults())
-        return col
-        # return pn.Column(
-        #     pn.pane.Markdown(self.text),
-        #     pn.widgets.DataFrame(
-        #         self.results.head(),
-        #         autosize_mode="fit_columns",
-        #         sizing_mode="stretch_width",
-        #     ),
-        # )
+        self.questionnaire_results_Column.__setitem__(
+            0, self.show_questionnaire_results()
+        )
+        return self._view
