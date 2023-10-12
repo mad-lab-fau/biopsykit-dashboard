@@ -1,5 +1,6 @@
 import panel as pn
 
+from src.Saliva.condition_list import AskToLoadConditionList
 from src.Sleep.choose_device import ChooseRecordingDevice
 from src.Sleep.choose_file_or_folder import ZipFolder
 from src.Sleep.upload_parameters import SetSleepDataParameters
@@ -15,9 +16,7 @@ class SleepPipeline:
     pipeline = None
 
     def __init__(self):
-        self.pipeline = pn.pipeline.Pipeline(
-            debug=True,
-        )
+        self.pipeline = pn.pipeline.Pipeline()
 
         self.pipeline.add_stage("Set Parsing Parameters", SetSleepDataParameters())
 

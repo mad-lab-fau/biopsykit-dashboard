@@ -1,17 +1,14 @@
 import param
 
 from src.Physiological.custom_components import PipelineHeader
-from src.Saliva.SALIVA_CONSTANTS import MAX_STEPS
+from src.Sleep.SLEEP_CONSTANTS import MAX_STEPS
 
 
-class SalivaBase(param.Parameterized):
-    condition_list = param.Dynamic(default=None)
-    data = param.Dynamic()
-    format = param.String(default=None)
-    saliva_type = param.String(default="")
-    sample_id = param.String(default=None)
-    sample_times = param.Dynamic()
+class SleepBase(param.Parameterized):
+    selected_device = param.String(default="")
     step = param.Integer(default=1)
+    selected_parameters = {}
+    data = param.Dynamic(default=None)
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
@@ -26,17 +23,13 @@ class SalivaBase(param.Parameterized):
         self.header.update_text(text)
 
     @param.output(
-        ("condition_list", param.Dynamic),
-        ("format", param.String),
+        ("selected_device", param.String),
+        ("selected_parameters", param.Dict),
         ("data", param.Dynamic),
-        ("saliva_type", param.String),
-        ("sample_times", param.List),
     )
     def output(self):
         return (
-            self.condition_list,
-            self.format,
+            self.selected_device,
+            self.selected_parameters,
             self.data,
-            self.saliva_type,
-            self.sample_times,
         )

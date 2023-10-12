@@ -7,12 +7,12 @@ import panel as pn
 import param
 
 from src.Physiological.AdaptedNilspod import NilsPodAdapted
+from src.Sleep.SLEEP_CONSTANTS import UPLOAD_SLEEP_DATA_TEXT
+from src.Sleep.sleep_base import SleepBase
 from src.utils import load_withings_sleep_analyzer_raw_file
 
 
-class UploadSleepData(param.Parameterized):
-    selected_device = param.String(default="")
-    data = param.Dynamic(default=None)
+class UploadSleepData(SleepBase):
     fs = param.Dynamic(default=None)
     ready = param.Boolean(default=False)
     accepted_file_types = {
@@ -24,13 +24,12 @@ class UploadSleepData(param.Parameterized):
         name="Upload sleep data",
         multiple=False,
     )
-    selected_parameters = param.Dict(default={})
     next_page = param.Selector(
         default="Process Data",
         objects=["Process Data", "Convert Acc to g"],
     )
 
-    def process_data(self, _):
+    def process_data(self, target, _):
         try:
             if self.upload_data.value is None:
                 self.ready = False
@@ -124,20 +123,16 @@ class UploadSleepData(param.Parameterized):
         )
         return dataset
 
-    @param.output(
-        ("selected_device", param.String),
-        ("data", param.Dynamic),
-    )
-    def output(self):
-        return (
-            self.selected_device,
-            self.data,
-        )
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = UPLOAD_SLEEP_DATA_TEXT
+        super().__init__(**params)
+        self.update_step(3)
+        self.update_text(UPLOAD_SLEEP_DATA_TEXT)
+        self.upload_data.link(self, callbacks={"value": self.process_data})
+        self._view = pn.Column(self.header, self.upload_data)
 
     def panel(self):
         if self.selected_device == "Other IMU Device":
             self.next_page = "Convert Acc to g"
-        text = "# Upload your sleep data \n Please upload your sleep data in the following step. You can either upload a single file or a zip file containing all your files."
         self.upload_data.accept = self.accepted_file_types[self.selected_device]
-        self.upload_data.param.watch(self.process_data, "value")
-        return pn.Column(pn.pane.Markdown(text), self.upload_data)
+        return self._view

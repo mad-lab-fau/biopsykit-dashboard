@@ -1,10 +1,12 @@
 import panel as pn
-import param
 import pytz
 
+from src.Sleep.SLEEP_CONSTANTS import UPLOAD_PARAMETERS_TEXT
+from src.Sleep.sleep_base import SleepBase
 
-class SetSleepDataParameters(param.Parameterized):
-    selected_device = param.String(default="")
+
+class SetSleepDataParameters(SleepBase):
+    parameter_column = pn.Column()
     parameters = {
         "Withings": {
             "data_source": ["heart_rate", "respiration_rate", "sleep_state", "snoring"],
@@ -29,7 +31,6 @@ class SetSleepDataParameters(param.Parameterized):
             + list(pytz.all_timezones),
         },
     }
-    selected_parameters = {}
 
     def show_parameters(self) -> pn.Column:
         if self.selected_device == "":
@@ -58,17 +59,15 @@ class SetSleepDataParameters(param.Parameterized):
     def parameter_changed(self, event):
         self.selected_parameters[event.obj.name] = event.new
 
-    @param.output(
-        ("selected_device", param.String), ("selected_parameters", param.Dict)
-    )
-    def output(self):
-        return (
-            self.selected_device,
-            self.selected_parameters,
-        )
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = UPLOAD_PARAMETERS_TEXT
+        super().__init__(**params)
+        self.update_step(1)
+        self.update_text(UPLOAD_PARAMETERS_TEXT)
+        self._view = pn.Column(self.header, self.parameter_column)
 
     def panel(self):
-        text = "# Set sleep data parameters \n Below you can set the parameters for the sleep data. If you are unsure, you can leave the default values."
         if self.selected_device != "":
             self.selected_parameters = self.parameters[self.selected_device]
-        return pn.Column(pn.pane.Markdown(text), self.show_parameters())
+        self.parameter_column.__setitem__(0, self.show_parameters())
+        return self._view

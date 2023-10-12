@@ -1,14 +1,17 @@
 import panel as pn
 import param
 
+from src.Sleep.SLEEP_CONSTANTS import ZIP_OR_FOLDER_TEXT
+from src.Sleep.sleep_base import SleepBase
 
-class ZipFolder(param.Parameterized):
-    selected_device = param.String(default="")
 
-    @param.output(("selected_device", param.String))
-    def output(self):
-        return (self.selected_device,)
+class ZipFolder(SleepBase):
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ZIP_OR_FOLDER_TEXT
+        super().__init__(**params)
+        self.update_step(3)
+        self.update_text(ZIP_OR_FOLDER_TEXT)
+        self._view = pn.Column(self.header)
 
     def panel(self):
-        text = "# File or Folder? \n If you want to upload a complete folder, please zip it first. You can then upload the zip file in the following step."
-        return pn.Column(pn.pane.Markdown(text))
+        return self._view

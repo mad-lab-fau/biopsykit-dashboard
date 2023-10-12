@@ -1,31 +1,35 @@
 import panel as pn
 import param
 
+from src.Sleep.SLEEP_CONSTANTS import CHOOSE_DEVICE_TEXT
+from src.Sleep.sleep_base import SleepBase
 
-class ChooseRecordingDevice(param.Parameterized):
+
+class ChooseRecordingDevice(SleepBase):
     possible_devices = [
         "",
         "Polysomnography",
         "Other IMU Device",
         "Withings",
     ]
-    selected_device = param.String(default="")
     ready = param.Boolean(default=False)
+    select_device_widget = pn.widgets.Select(
+        name="Device",
+    )
 
-    def device_changed(self, event):
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = CHOOSE_DEVICE_TEXT
+        super().__init__(**params)
+        self.update_step(2)
+        self.update_text(CHOOSE_DEVICE_TEXT)
+        self.select_device_widget.link(self, callbacks={"value": self.device_changed})
+        self._view = pn.Column(self.header, self.select_device_widget)
+
+    def device_changed(self, _, event):
         self.selected_device = event.new
         self.ready = bool(event.new)
 
-    @param.output(("selected_device", param.String))
-    def output(self):
-        return (self.selected_device,)
-
     def panel(self):
-        text = "# Choose the recording device \n Below you can choose the device you used to record your sleep data. If you used a different device, please choose 'Other IMU Device'."
-        select_device_widget = pn.widgets.Select(
-            name="Device",
-            options=self.possible_devices,
-            value=self.selected_device,
-        )
-        select_device_widget.param.watch(self.device_changed, "value")
-        return pn.Column(pn.pane.Markdown(text), select_device_widget)
+        self.select_device_widget.options = self.possible_devices
+        self.select_device_widget.value = self.selected_device
+        return self._view
