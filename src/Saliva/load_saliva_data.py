@@ -11,7 +11,7 @@ class LoadSalivaData(SalivaBase):
     ready = param.Boolean(default=False)
     temporary_dataframe = param.DataFrame(default=None)
     upload_btn = pn.widgets.FileInput(accept=".csv,.xls,.xlsx", multiple=False)
-    saliva_selector = pn.widgets.Select(
+    select_saliva = pn.widgets.Select(
         name="Choose the saliva type",
         options=["", "cortisol", "amylase"],
         visible=False,
@@ -49,19 +49,19 @@ class LoadSalivaData(SalivaBase):
         placeholder="regular expression to extract subject ID, day ID and sample ID from the sample identifier",
         visible=False,
     )
-    fill_condition_list = pn.widgets.Button(name="Set Condition List", visible=False)
+    fill_condition_list = pn.widgets.Checkbox(name="Set Condition List", visible=False)
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = LOAD_PLATE_DATA_TEXT
         super().__init__(**params)
         self.update_step(3)
         self.update_text(LOAD_PLATE_DATA_TEXT)
-        self.saliva_selector.link(self, callbacks={"value": self.saliva_type_changed})
+        self.select_saliva.link(self, callbacks={"value": self.saliva_type_changed})
         self.upload_btn.link(self, callbacks={"value": self.parse_file_input})
         self._view = pn.Column(
             self.header,
             self.upload_btn,
-            self.saliva_selector,
+            self.select_saliva,
             self.get_wide_format_column(),
             self.get_plate_format_column(),
         )
@@ -115,10 +115,30 @@ class LoadSalivaData(SalivaBase):
             return
         try:
             self.temporary_dataframe.dropna(axis=1, how="all", inplace=True)
-            # self.show_param_input_plate()
+            self.fill_options()
+            self.show_param_input(True)
             pn.state.notifications.success("Files uploaded")
         except Exception as e:
+            self.show_param_input(False)
             self.handle_error(e)
+
+    def fill_options(self):
+        if self.format == "Plate Format":
+            self.select_sample_id_col.options = [""] + list(
+                self.temporary_dataframe.columns
+            )
+            self.select_data_col.options = [""] + list(self.temporary_dataframe.columns)
+            self.select_id_col_names.options = list(self.temporary_dataframe.columns)
+        elif self.format == "Wide Format":
+            self.select_subject_col.options = [""] + list(
+                self.temporary_dataframe.columns
+            )
+            self.select_condition_col.options = [""] + list(
+                self.temporary_dataframe.columns
+            )
+            self.select_additional_index_cols.options = list(
+                self.temporary_dataframe.columns
+            )
 
     def handle_error(self, e: Exception):
         pn.state.notifications.error("Error while loading data: " + str(e))
@@ -141,16 +161,27 @@ class LoadSalivaData(SalivaBase):
             self.handle_error(e)
             return pd.DataFrame()
 
-    def panel(self):
+    def show_param_input(self, visibility: bool):
+        self.select_saliva.visible = visibility
+        if not visibility:
+            self.switch_plate_format_visibility(False)
+            self.switch_wide_format_visibility(False)
+            return
         if self.format == "Plate Format":
             self.switch_plate_format_visibility(True)
             self.switch_wide_format_visibility(False)
         else:
             self.switch_plate_format_visibility(False)
             self.switch_wide_format_visibility(True)
+
+    def panel(self):
+        show_param_input = self.data is not None and len(self.data) > 0
+        self.show_param_input(show_param_input)
         return self._view
 
     @param.output(
+        ("condition_list", param.Dynamic),
+        ("format", param.String),
         ("data", param.Dynamic),
         ("saliva_type", param.String),
         ("sample_times", param.List),
@@ -163,6 +194,8 @@ class LoadSalivaData(SalivaBase):
         else:
             self.handle_error(ValueError("No format selected"))
         return (
+            self.condition_list,
+            self.format,
             self.data,
             self.saliva_type,
             self.sample_times_input.value,
@@ -201,7 +234,7 @@ class LoadSalivaData(SalivaBase):
         try:
             self.data = load_saliva_wide_format(
                 self.temporary_dataframe,
-                self.saliva_selector.value,
+                self.select_saliva.value,
                 self.select_subject_col.value,
                 self.select_condition_col.value,
                 self.select_additional_index_cols.value,

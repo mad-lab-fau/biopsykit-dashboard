@@ -290,12 +290,12 @@ def load_saliva_plate(
         data_col = _DATA_COL_NAMES[saliva_type]
 
     if type(file) == pd.DataFrame:
-        df_saliva = file[[sample_id_col, data_col]]
+        df_saliva = file[[sample_id_col, data_col]].copy()
     else:
         df_saliva = pd.read_excel(
             file, skiprows=2, usecols=[sample_id_col, data_col], **kwargs
         )
-    cols = df_saliva[sample_id_col].str.extract(regex_str)
+    cols = df_saliva[sample_id_col].str.extract(regex_str).copy()
     id_col_names = _get_id_columns(id_col_names, cols)
 
     df_saliva[id_col_names] = cols

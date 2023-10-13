@@ -37,7 +37,7 @@ class ShowSalivaFeatures(SalivaBase):
         "features": None,
         "palette": cmaps.faculties_light,
     }
-    feature_accordion = pn.Accordion(name="Features", sizing_mode="stretch_width")
+    feature_accordion_column = pn.Column(pn.Accordion(name="Features"))
 
     def get_feature_accordion(self) -> pn.Accordion:
         if self.data is None:
@@ -46,7 +46,7 @@ class ShowSalivaFeatures(SalivaBase):
             return pn.Accordion()
         acc = pn.Accordion(name="Features", sizing_mode="stretch_width")
         acc.append(self.get_mean_se_element())
-        acc.append(self.get_auc())
+        # acc.append(self.get_auc())
         acc.append(self.get_max_increase())
         acc.append(self.get_max_value())
         acc.append(self.get_standard_features())
@@ -56,7 +56,6 @@ class ShowSalivaFeatures(SalivaBase):
         return acc
 
     def get_mean_se_element(self):
-        col = pn.Column(name="Mean and SE")
         tab = pn.widgets.Tabulator(
             value=self.get_mean_se_df(),
             name="Mean and SE",
@@ -78,6 +77,7 @@ class ShowSalivaFeatures(SalivaBase):
             callback=pn.bind(self.download_mean_se_figure),
             filename="figure.png",
         )
+        col = pn.Column(name="Mean and SE")
         col.append(tab)
         col.append(
             pn.Row(
@@ -544,7 +544,7 @@ class ShowSalivaFeatures(SalivaBase):
         super().__init__(**params)
         self.update_step(4)
         self.update_text(SHOW_FEATURES_TEXT)
-        self._view = pn.Column(self.header, self.feature_accordion)
+        self._view = pn.Column(self.header, self.feature_accordion_column)
 
     def panel(self):
         if self.data_features is None and self.data is not None:
@@ -552,5 +552,5 @@ class ShowSalivaFeatures(SalivaBase):
             self.data_features = bp.saliva.utils.saliva_feature_wide_to_long(
                 self.data_features, saliva_type=self.saliva_type
             )
-        self.feature_accordion = self.get_feature_accordion()
+        self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
         return self._view

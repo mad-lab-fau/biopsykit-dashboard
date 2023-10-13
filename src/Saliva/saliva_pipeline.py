@@ -1,15 +1,12 @@
 import panel as pn
-import param
+
 
 from src.Saliva.ask_for_format import AskForFormat
 from src.Saliva.condition_list import AskToLoadConditionList, AddConditionList
 from src.Saliva.load_saliva_data import (
-    LoadSalivaDataPlate,
-    LoadSalivaDataWide,
     LoadSalivaData,
 )
 from src.Saliva.saliva_features import ShowSalivaFeatures
-from src.Saliva.sample_times import SetSampleTimes
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(notifications=True)
@@ -23,7 +20,10 @@ class SalivaPipeline:
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()
         self.pipeline.add_stage(
-            "Ask for Format", AskForFormat(), ready_parameter="ready"
+            "Ask for Format",
+            AskForFormat(),
+            ready_parameter="ready",
+            auto_advance=True,
         )
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
@@ -40,13 +40,7 @@ class SalivaPipeline:
         self.pipeline.add_stage(
             "Load Saliva Data",
             LoadSalivaData(),
-            ready_parameter="ready",
         )
-        # self.pipeline.add_stage(
-        #     "Set Sample times",
-        #     SetSampleTimes(),
-        #     ready_parameter="ready",
-        # )
         self.pipeline.add_stage("Show Features", ShowSalivaFeatures())
 
         self.pipeline.define_graph(
@@ -58,6 +52,5 @@ class SalivaPipeline:
                 ),
                 "Add Condition List": "Load Saliva Data",
                 "Load Saliva Data": "Show Features",
-                # "Set Sample times": "Show Features",
             }
         )
