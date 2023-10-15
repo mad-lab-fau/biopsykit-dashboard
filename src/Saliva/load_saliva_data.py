@@ -100,10 +100,7 @@ class LoadSalivaData(SalivaBase):
 
     def saliva_type_changed(self, _, event):
         self.saliva_type = event.new
-        if event.new == "":
-            self.ready = False
-        else:
-            self.ready = True
+        self.ready = self.is_ready()
 
     def parse_file_input(self, target, event):
         if ".csv" in self.upload_btn.filename:
@@ -228,7 +225,11 @@ class LoadSalivaData(SalivaBase):
             )
         except Exception as e:
             self.handle_error(e)
-            self.ready = False
+
+    def is_ready(self) -> bool:
+        if self.saliva_type == "":
+            return False
+        return True
 
     def process_wide_format(self):
         try:
@@ -240,7 +241,6 @@ class LoadSalivaData(SalivaBase):
                 self.select_additional_index_cols.value,
                 self.sample_times_input.value,
             )
-            self.ready = True
+            self.ready = self.is_ready()
         except Exception as e:
             self.handle_error(e)
-            self.ready = False

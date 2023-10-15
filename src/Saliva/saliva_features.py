@@ -47,7 +47,7 @@ class ShowSalivaFeatures(SalivaBase):
             return pn.Accordion()
         acc = pn.Accordion(name="Features", sizing_mode="stretch_width")
         acc.append(self.get_mean_se_element())
-        # acc.append(self.get_auc())
+        acc.append(self.get_auc())
         acc.append(self.get_max_increase())
         acc.append(self.get_max_value())
         acc.append(self.get_standard_features())
@@ -306,55 +306,60 @@ class ShowSalivaFeatures(SalivaBase):
         target.value = auc_df
 
     def get_auc(self) -> pn.Column:
-        switch_remove_s0 = pn.widgets.Checkbox(
-            name="Remove S0", value=False, align=("start", "start")
-        )
-        compute_auc_post = pn.widgets.Checkbox(name="Compute AUC Post", value=False)
-        auc_df = bp.saliva.auc(
-            data=self.data,
-            saliva_type=self.saliva_type,
-            sample_times=self.sample_times,
-            remove_s0=switch_remove_s0.value,
-            compute_auc_post=compute_auc_post.value,
-        )
-        auc_tabulator = pn.widgets.Tabulator(
-            auc_df,
-            pagination="local",
-            layout="fit_data_stretch",
-            page_size=10,
-            header_align="right",
-        )
-        switch_remove_s0.link(
-            auc_tabulator,
-            callbacks={"value": self.filter_auc},
-        )
-        compute_auc_post.link(auc_tabulator, callbacks={"value": self.filter_auc})
-        filename, button = auc_tabulator.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "auc.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        col = pn.Column(name="AUC")
-        col.append(
-            pn.Row(
-                "**Remove s0**",
-                switch_remove_s0,
-                pn.layout.HSpacer(),
-                align=("center"),
+        try:
+            switch_remove_s0 = pn.widgets.Checkbox(
+                name="Remove S0", value=False, align=("start", "start")
             )
-        )
-        col.append(pn.Row("**Compute AUC Post**", compute_auc_post))
-        col.append(auc_tabulator)
-        col.append(
-            pn.Row(
-                filename,
-                button,
+            compute_auc_post = pn.widgets.Checkbox(name="Compute AUC Post", value=False)
+            auc_df = bp.saliva.auc(
+                data=self.data,
+                saliva_type=self.saliva_type,
+                sample_times=self.sample_times,
+                remove_s0=switch_remove_s0.value,
+                compute_auc_post=compute_auc_post.value,
             )
-        )
-        return col
+            auc_tabulator = pn.widgets.Tabulator(
+                auc_df,
+                pagination="local",
+                layout="fit_data_stretch",
+                page_size=10,
+                header_align="right",
+            )
+            switch_remove_s0.link(
+                auc_tabulator,
+                callbacks={"value": self.filter_auc},
+            )
+            compute_auc_post.link(auc_tabulator, callbacks={"value": self.filter_auc})
+            filename, button = auc_tabulator.download_menu(
+                text_kwargs={"name": "Enter filename", "value": "auc.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            col = pn.Column(name="AUC")
+            col.append(
+                pn.Row(
+                    "**Remove s0**",
+                    switch_remove_s0,
+                    pn.layout.HSpacer(),
+                    align=("center"),
+                )
+            )
+            col.append(pn.Row("**Compute AUC Post**", compute_auc_post))
+            col.append(auc_tabulator)
+            col.append(
+                pn.Row(
+                    filename,
+                    button,
+                )
+            )
+            return col
+        except Exception as e:
+            col = pn.Column(name="AUC")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def max_value_switch_removes0(self, target, event):
         target.value = bp.saliva.max_value(self.data, remove_s0=event.new)
