@@ -3,6 +3,7 @@ import itertools
 
 import matplotlib.figure
 import numpy as np
+from matplotlib.figure import Figure
 import panel as pn
 import param
 import biopsykit as bp
@@ -102,18 +103,17 @@ class ShowSalivaFeatures(SalivaBase):
             name="Sample Times Absolute", value=False
         )
         test_times = pn.widgets.ArrayInput(name="Test Times", value=np.array([]))
-        title = pn.widgets.TextInput(name="Title", value="TEST")
+        title = pn.widgets.TextInput(name="Title", value="Mean_SE_Figure")
         plot = pn.pane.Matplotlib(
-            self.get_mean_se_figure(), format="svg", sizing_mode="scale_both"
+            object=self.get_mean_se_figure(),
+            format="svg",
+            tight=True,
         )
         remove_s0.link(plot, callbacks={"value": self.update_mean_se_figure})
         sample_times_absolut.link(plot, callbacks={"value": self.update_mean_se_figure})
         test_times.link(plot, callbacks={"value": self.update_mean_se_figure})
         title.link(plot, callbacks={"value": self.update_mean_se_figure})
-        return pn.Row(
-            pn.Column(remove_s0, sample_times_absolut, test_times, title),
-            plot,
-        )
+        return pn.Column(remove_s0, sample_times_absolut, test_times, title, plot)
 
     def update_mean_se_figure(self, target, event):
         if event.cls.name == "Title":
@@ -128,7 +128,7 @@ class ShowSalivaFeatures(SalivaBase):
 
     def get_mean_se_figure(self) -> matplotlib.figure.Figure:
         try:
-            fig, _ = bp.protocols.plotting.saliva_plot(
+            fig, ax = bp.protocols.plotting.saliva_plot(
                 self.get_mean_se_df(),
                 saliva_type=self.saliva_type,
                 sample_times=self.sample_times,
@@ -136,7 +136,7 @@ class ShowSalivaFeatures(SalivaBase):
             )
             return fig
         except Exception:
-            return matplotlib.figure.Figure()
+            return matplotlib.figure.Figure(figsize=(10, 10))
 
     def download_mean_se_figure(self):
         buf = io.BytesIO()
@@ -146,9 +146,7 @@ class ShowSalivaFeatures(SalivaBase):
         return buf
 
     def get_feature_boxplot_element(self) -> pn.Column:
-        plot = pn.pane.Matplotlib(
-            self.get_feature_boxplot_figure(), format="svg", sizing_mode="scale_both"
-        )
+        plot = pn.pane.Matplotlib(self.get_feature_boxplot_figure(), format="svg")
         col = pn.Column(name="Feature Boxplot")
         x_select = pn.widgets.Select(
             name="x",
@@ -199,7 +197,6 @@ class ShowSalivaFeatures(SalivaBase):
         target.object = self.get_feature_boxplot_figure()
 
     def get_feature_boxplot_figure(self) -> matplotlib.figure.Figure:
-        # Data = self.data_features, x = a column, hue = None or str, feature = None or str (argmax, kurt, mean, skew, std) (stats_kwargs?)
         try:
             fig, _ = bp.protocols.plotting.saliva_feature_boxplot(
                 data=self.data_features,
@@ -214,7 +211,6 @@ class ShowSalivaFeatures(SalivaBase):
         plot = pn.pane.Matplotlib(
             self.get_multi_feature_boxplot_figure(),
             format="svg",
-            sizing_mode="scale_both",
         )
         col = pn.Column(name="Multi Feature Boxplot")
         hue_multiChoice = pn.widgets.MultiChoice(
@@ -406,12 +402,16 @@ class ShowSalivaFeatures(SalivaBase):
             self.standard_features_args["keep_index"] = event.new
         else:
             return
+        # try:
         df = bp.saliva.standard_features(
             data=self.data,
             saliva_type=self.saliva_type,
             **self.standard_features_args,
         )
         target.value = df
+        # except Exception as e:
+        #     pn.state.notifications.error(e)
+        #     target.value = pd.DataFrame()
 
     def get_standard_features(self) -> pn.Column:
         group_cols = pn.widgets.MultiChoice(

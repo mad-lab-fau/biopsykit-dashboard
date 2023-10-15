@@ -10,7 +10,7 @@ from src.utils import load_subject_condition_list
 
 
 class AskToLoadConditionList(SalivaBase):
-    no_condition_list_btn = pn.widgets.Button(name="No")
+    no_condition_list_btn = pn.widgets.Button(name="No", button_type="primary")
     add_condition_list_btn = pn.widgets.Button(name="Yes")
     ready = param.Boolean(default=False)
     next_page = param.Selector(
@@ -34,7 +34,7 @@ class AskToLoadConditionList(SalivaBase):
         )
         self._view = pn.Column(
             self.header,
-            pn.Row(self.no_condition_list_btn, self.add_condition_list_btn),
+            pn.Row(self.add_condition_list_btn, self.no_condition_list_btn),
         )
 
     def no_condition_list(self, _, event):
@@ -81,8 +81,4 @@ class AddConditionList(SalivaBase):
             self.ready = False
 
     def panel(self):
-        if "Wide" in self.format:
-            self.next = "Load Saliva Data Wide Format"
-        else:
-            self.next = "Load Saliva Data Plate Format"
         return self._view
