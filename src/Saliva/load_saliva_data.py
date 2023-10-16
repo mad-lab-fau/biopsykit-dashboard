@@ -220,7 +220,10 @@ class LoadSalivaData(SalivaBase):
                 ),
                 (self.regex_input.value if self.regex_input.value != "" else None),
                 condition_list=(
-                    self.condition_list if self.condition_list is not None else None
+                    self.condition_list
+                    if self.condition_list is not None
+                    and self.fill_condition_list.value
+                    else None
                 ),
             )
         except Exception as e:
