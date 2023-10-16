@@ -3,7 +3,6 @@ import itertools
 
 import matplotlib.figure
 import numpy as np
-from matplotlib.figure import Figure
 import panel as pn
 import param
 import biopsykit as bp
@@ -57,39 +56,44 @@ class ShowSalivaFeatures(SalivaBase):
         return acc
 
     def get_mean_se_element(self):
-        tab = pn.widgets.Tabulator(
-            value=self.get_mean_se_df(),
-            name="Mean and SE",
-            pagination="local",
-            layout="fit_data_stretch",
-            page_size=10,
-        )
-        filename, button = tab.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "mean_se.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        download_btn = pn.widgets.FileDownload(
-            label="Download",
-            button_type="primary",
-            callback=pn.bind(self.download_mean_se_figure),
-            filename="figure.png",
-        )
-        col = pn.Column(name="Mean and SE")
-        col.append(tab)
-        col.append(
-            pn.Row(
-                filename,
-                button,
+        try:
+            tab = pn.widgets.Tabulator(
+                value=self.get_mean_se_df(),
+                name="Mean and SE",
+                pagination="local",
+                layout="fit_data_stretch",
+                page_size=10,
             )
-        )
-        col.append(pn.layout.Divider())
-        col.append(self.edit_mean_se_figure())
-        col.append(download_btn)
-        return col
+            filename, button = tab.download_menu(
+                text_kwargs={"name": "Enter filename", "value": "mean_se.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            download_btn = pn.widgets.FileDownload(
+                label="Download",
+                button_type="primary",
+                callback=pn.bind(self.download_mean_se_figure),
+                filename="figure.png",
+            )
+            col = pn.Column(name="Mean and SE")
+            col.append(tab)
+            col.append(
+                pn.Row(
+                    filename,
+                    button,
+                )
+            )
+            col.append(pn.layout.Divider())
+            col.append(self.edit_mean_se_figure())
+            col.append(download_btn)
+            return col
+        except Exception as e:
+            col = pn.Column(name="Mean and SE")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def get_mean_se_df(self) -> SalivaMeanSeDataFrame:
         return bp.saliva.mean_se(
@@ -146,39 +150,44 @@ class ShowSalivaFeatures(SalivaBase):
         return buf
 
     def get_feature_boxplot_element(self) -> pn.Column:
-        plot = pn.pane.Matplotlib(self.get_feature_boxplot_figure(), format="svg")
-        col = pn.Column(name="Feature Boxplot")
-        x_select = pn.widgets.Select(
-            name="x",
-            value=None,
-            options=list(x.name for x in self.data_features.index.levels),
-        )
-        hue_textInput = pn.widgets.TextInput(name="hue", value="condition")
-        feature_multichoice = pn.widgets.MultiChoice(
-            name="feature", value=[], options=[]
-        )
-        hue_textInput.link(
-            plot, callbacks={"value": self.update_feature_boxplot_figure}
-        )
-        x_select.link(plot, callbacks={"value": self.update_feature_boxplot_figure})
-        feature_multichoice.link(
-            plot, callbacks={"value": self.update_feature_boxplot_figure}
-        )
-        download_btn = pn.widgets.FileDownload(
-            label="Download",
-            button_type="primary",
-            callback=pn.bind(self.download_boxplot_figure),
-            filename="mean_se_figure.png",
-        )
-        col.append(
-            pn.Row(
-                pn.Column(hue_textInput, x_select, feature_multichoice),
-                plot,
+        try:
+            plot = pn.pane.Matplotlib(self.get_feature_boxplot_figure(), format="svg")
+            col = pn.Column(name="Feature Boxplot")
+            x_select = pn.widgets.Select(
+                name="x",
+                value=None,
+                options=list(x.name for x in self.data_features.index.levels),
             )
-        )
-        col.append(pn.layout.Divider())
-        col.append(download_btn)
-        return col
+            hue_textInput = pn.widgets.TextInput(name="hue", value="condition")
+            feature_multichoice = pn.widgets.MultiChoice(
+                name="feature", value=[], options=[]
+            )
+            hue_textInput.link(
+                plot, callbacks={"value": self.update_feature_boxplot_figure}
+            )
+            x_select.link(plot, callbacks={"value": self.update_feature_boxplot_figure})
+            feature_multichoice.link(
+                plot, callbacks={"value": self.update_feature_boxplot_figure}
+            )
+            download_btn = pn.widgets.FileDownload(
+                label="Download",
+                button_type="primary",
+                callback=pn.bind(self.download_boxplot_figure),
+                filename="mean_se_figure.png",
+            )
+            col.append(
+                pn.Row(
+                    pn.Column(hue_textInput, x_select, feature_multichoice),
+                    plot,
+                )
+            )
+            col.append(pn.layout.Divider())
+            col.append(download_btn)
+            return col
+        except Exception as e:
+            col = pn.Column(name="Feature Boxplot")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def download_boxplot_figure(self):
         buf = io.BytesIO()
@@ -208,56 +217,63 @@ class ShowSalivaFeatures(SalivaBase):
             return matplotlib.figure.Figure()
 
     def get_multi_feature_boxplot_element(self) -> pn.Column:
-        plot = pn.pane.Matplotlib(
-            self.get_multi_feature_boxplot_figure(),
-            format="svg",
-        )
-        col = pn.Column(name="Multi Feature Boxplot")
-        hue_multiChoice = pn.widgets.MultiChoice(
-            name="hue",
-            value=[],
-            options=list(x.name for x in self.data_features.index.levels),
-            max_items=1,
-        )
-        hue_order_multichoice = pn.widgets.MultiChoice(
-            name="hue_order",
-            value=[],
-            max_items=1,
-            options=list(x.values for x in self.data_features.index.levels),
-        )
-        features_multichoice = pn.widgets.MultiChoice(
-            name="features",
-            value=[],
-            options=list(
-                itertools.chain(
-                    *list(x.values for x in self.data_features.index.levels)
-                )
-            ),
-        )
-        hue_multiChoice.link(
-            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
-        )
-        hue_order_multichoice.link(
-            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
-        )
-        features_multichoice.link(
-            plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
-        )
-        download_btn = pn.widgets.FileDownload(
-            label="Download",
-            button_type="primary",
-            callback=pn.bind(self.download_multi_boxplot_figure),
-            filename="figure.png",
-        )
-        col.append(
-            pn.Row(
-                pn.Column(hue_multiChoice, hue_order_multichoice, features_multichoice),
-                plot,
+        try:
+            plot = pn.pane.Matplotlib(
+                self.get_multi_feature_boxplot_figure(),
+                format="svg",
             )
-        )
-        col.append(pn.layout.Divider())
-        col.append(download_btn)
-        return col
+            col = pn.Column(name="Multi Feature Boxplot")
+            hue_multiChoice = pn.widgets.MultiChoice(
+                name="hue",
+                value=[],
+                options=list(x.name for x in self.data_features.index.levels),
+                max_items=1,
+            )
+            hue_order_multichoice = pn.widgets.MultiChoice(
+                name="hue_order",
+                value=[],
+                max_items=1,
+                options=list(x.values for x in self.data_features.index.levels),
+            )
+            features_multichoice = pn.widgets.MultiChoice(
+                name="features",
+                value=[],
+                options=list(
+                    itertools.chain(
+                        *list(x.values for x in self.data_features.index.levels)
+                    )
+                ),
+            )
+            hue_multiChoice.link(
+                plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+            )
+            hue_order_multichoice.link(
+                plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+            )
+            features_multichoice.link(
+                plot, callbacks={"value": self.update_multi_feature_boxplot_figure}
+            )
+            download_btn = pn.widgets.FileDownload(
+                label="Download",
+                button_type="primary",
+                callback=pn.bind(self.download_multi_boxplot_figure),
+                filename="figure.png",
+            )
+            col.append(
+                pn.Row(
+                    pn.Column(
+                        hue_multiChoice, hue_order_multichoice, features_multichoice
+                    ),
+                    plot,
+                )
+            )
+            col.append(pn.layout.Divider())
+            col.append(download_btn)
+            return col
+        except Exception as e:
+            col = pn.Column(name="Multi Feature Boxplot")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def download_multi_boxplot_figure(self):
         buf = io.BytesIO()
@@ -365,36 +381,41 @@ class ShowSalivaFeatures(SalivaBase):
         target.value = bp.saliva.max_value(self.data, remove_s0=event.new)
 
     def get_max_value(self) -> pn.Column:
-        switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-        df = bp.saliva.max_value(self.data, remove_s0=switch_remove_s0.value)
-        max_value_tabulator = pn.widgets.Tabulator(
-            df,
-            pagination="local",
-            layout="fit_data_stretch",
-            page_size=10,
-            header_align="right",
-        )
-        filename, button = max_value_tabulator.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "max_value.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        switch_remove_s0.link(
-            max_value_tabulator, callbacks={"value": self.max_value_switch_removes0}
-        )
-        col = pn.Column(name="Max Value")
-        col.append(pn.Row("**Remove s0**", switch_remove_s0, pn.layout.HSpacer()))
-        col.append(max_value_tabulator)
-        col.append(
-            pn.Row(
-                filename,
-                button,
+        try:
+            switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
+            df = bp.saliva.max_value(self.data, remove_s0=switch_remove_s0.value)
+            max_value_tabulator = pn.widgets.Tabulator(
+                df,
+                pagination="local",
+                layout="fit_data_stretch",
+                page_size=10,
+                header_align="right",
             )
-        )
-        return col
+            filename, button = max_value_tabulator.download_menu(
+                text_kwargs={"name": "Enter filename", "value": "max_value.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            switch_remove_s0.link(
+                max_value_tabulator, callbacks={"value": self.max_value_switch_removes0}
+            )
+            col = pn.Column(name="Max Value")
+            col.append(pn.Row("**Remove s0**", switch_remove_s0, pn.layout.HSpacer()))
+            col.append(max_value_tabulator)
+            col.append(
+                pn.Row(
+                    filename,
+                    button,
+                )
+            )
+            return col
+        except Exception as e:
+            col = pn.Column(name="Max Value")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def change_standard_feature(self, target, event):
         if event is None or event.cls is None:
@@ -419,105 +440,123 @@ class ShowSalivaFeatures(SalivaBase):
         #     target.value = pd.DataFrame()
 
     def get_standard_features(self) -> pn.Column:
-        group_cols = pn.widgets.MultiChoice(
-            name="Group Columns", value=[], options=list(self.data.columns)
-        )
-        keep_index = pn.widgets.Checkbox(name="Keep Index", value=True)
-        df = bp.saliva.standard_features(
-            self.data,
-            saliva_type=self.saliva_type,
-            group_cols=(group_cols.value if group_cols.value != [] else None),
-            keep_index=keep_index.value,
-        )
-        standard_features_tabulator = pn.widgets.Tabulator(
-            df, pagination="local", layout="fit_data_stretch", page_size=10
-        )
-        group_cols.link(
-            standard_features_tabulator,
-            callbacks={"value": self.change_standard_feature},
-        )
-        keep_index.link(
-            standard_features_tabulator,
-            callbacks={"value": self.change_standard_feature},
-        )
-        filename, button = standard_features_tabulator.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "standard_features.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        col = pn.Column(name="Standard Features")
-        col.append(group_cols)
-        col.append(keep_index)
-        col.append(standard_features_tabulator)
-        col.append(
-            pn.Row(
-                filename,
-                button,
+        try:
+            group_cols = pn.widgets.MultiChoice(
+                name="Group Columns", value=[], options=list(self.data.columns)
             )
-        )
-        return col
+            keep_index = pn.widgets.Checkbox(name="Keep Index", value=True)
+            df = bp.saliva.standard_features(
+                self.data,
+                saliva_type=self.saliva_type,
+                group_cols=(group_cols.value if group_cols.value != [] else None),
+                keep_index=keep_index.value,
+            )
+            standard_features_tabulator = pn.widgets.Tabulator(
+                df, pagination="local", layout="fit_data_stretch", page_size=10
+            )
+            group_cols.link(
+                standard_features_tabulator,
+                callbacks={"value": self.change_standard_feature},
+            )
+            keep_index.link(
+                standard_features_tabulator,
+                callbacks={"value": self.change_standard_feature},
+            )
+            filename, button = standard_features_tabulator.download_menu(
+                text_kwargs={
+                    "name": "Enter filename",
+                    "value": "standard_features.csv",
+                },
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            col = pn.Column(name="Standard Features")
+            col.append(group_cols)
+            col.append(keep_index)
+            col.append(standard_features_tabulator)
+            col.append(
+                pn.Row(
+                    filename,
+                    button,
+                )
+            )
+            return col
+        except Exception as e:
+            col = pn.Column(name="Standard Features")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def initial_value_switch_removes0(self, target, event):
         target.value = bp.saliva.initial_value(self.data, remove_s0=event.new)
 
     def get_initial_value(self) -> pn.Column:
-        switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-        df = bp.saliva.initial_value(self.data, remove_s0=switch_remove_s0.value)
-        initial_value_tabulator = pn.widgets.Tabulator(
-            df, pagination="local", layout="fit_data_stretch", page_size=10
-        )
-        filename, button = initial_value_tabulator.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "initial_value.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        switch_remove_s0.link(
-            initial_value_tabulator,
-            callbacks={"value": self.initial_value_switch_removes0},
-        )
-        col = pn.Column(name="Initial Value")
-        col.append(pn.Row("**Remove s0**", switch_remove_s0))
-        col.append(initial_value_tabulator)
-        col.append(
-            pn.Row(
-                filename,
-                button,
+        try:
+            switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
+            df = bp.saliva.initial_value(self.data, remove_s0=switch_remove_s0.value)
+            initial_value_tabulator = pn.widgets.Tabulator(
+                df, pagination="local", layout="fit_data_stretch", page_size=10
             )
-        )
-        return col
+            filename, button = initial_value_tabulator.download_menu(
+                text_kwargs={"name": "Enter filename", "value": "initial_value.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            switch_remove_s0.link(
+                initial_value_tabulator,
+                callbacks={"value": self.initial_value_switch_removes0},
+            )
+            col = pn.Column(name="Initial Value")
+            col.append(pn.Row("**Remove s0**", switch_remove_s0))
+            col.append(initial_value_tabulator)
+            col.append(
+                pn.Row(
+                    filename,
+                    button,
+                )
+            )
+            return col
+        except Exception as e:
+            col = pn.Column(name="Initial Value")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def max_increase_switch_removes0(self, target, event):
         target.value = bp.saliva.max_increase(self.data, remove_s0=event.new)
 
     def get_max_increase(self) -> pn.Column:
-        switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-        df = bp.saliva.max_increase(self.data)
-        max_increase_tabulator = pn.widgets.Tabulator(
-            df, pagination="local", layout="fit_data_stretch", page_size=10
-        )
-        switch_remove_s0.link(
-            max_increase_tabulator,
-            callbacks={"value": self.max_increase_switch_removes0},
-        )
-        filename, button = max_increase_tabulator.download_menu(
-            text_kwargs={"name": "Enter filename", "value": "max_increase.csv"},
-            button_kwargs={
-                "name": "Download table",
-                "button_type": "primary",
-                "align": "end",
-            },
-        )
-        col = pn.Column(name="Max Increase")
-        col.append(pn.Row("**Remove s0**", switch_remove_s0))
-        col.append(max_increase_tabulator)
-        col.append(pn.Row(filename, button))
-        return col
+        try:
+            switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
+            df = bp.saliva.max_increase(self.data)
+            max_increase_tabulator = pn.widgets.Tabulator(
+                df, pagination="local", layout="fit_data_stretch", page_size=10
+            )
+            switch_remove_s0.link(
+                max_increase_tabulator,
+                callbacks={"value": self.max_increase_switch_removes0},
+            )
+            filename, button = max_increase_tabulator.download_menu(
+                text_kwargs={"name": "Enter filename", "value": "max_increase.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            col = pn.Column(name="Max Increase")
+            col.append(pn.Row("**Remove s0**", switch_remove_s0))
+            col.append(max_increase_tabulator)
+            col.append(pn.Row(filename, button))
+            return col
+        except Exception as e:
+            col = pn.Column(name="Max Increase")
+            col.append(pn.pane.Str(str(e)))
+            return col
 
     def get_slope(self) -> pn.Column:
         sample_times_input = pn.widgets.ArrayInput(
