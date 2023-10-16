@@ -42,7 +42,7 @@ CHECK_SELECTED_QUESTIONNAIRES_TEXT = (
 ASK_TO_CONVERT_SCALES_TEXT = (
     "# Do you want to convert the scales of the selected questionnaires?\n\n"
     "If you want to change the scales of the selected questionnaires, "
-    'click on the ")Yes" button. Otherwise, click on the "No" button to proceed.'
+    'click on the "Yes" button. Otherwise, click on the "No" button to proceed.'
 )
 
 CONVERT_SCALES_TEXT = "# Convert Scales"
@@ -68,7 +68,7 @@ ASK_TO_CHANGE_FORMAT_TEXT = (
 
 CHANGE_FORMAT_TEXT = (
     "# Convert from wide to long format \n "
-    "In this step you can change the format of the datframe(s) of your questionnaire(s).\n"
+    "In this step you can change the format of the dataframe(s) of your questionnaire(s).\n"
     "Below you can select from the questionnaire(s) of the provided data in order to change the format."
     ' However only those questionnaire(s) which include column(s) that contain the symbol "_" are shown.'
 )
