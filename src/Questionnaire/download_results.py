@@ -15,7 +15,6 @@ class DownloadQuestionnaireResults(QuestionnaireBase):
         name="Load Questionnaire Results",
         filename="Results.zip",
     )
-    # callback = self.load_results,
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = DOWNLOAD_RESULTS_TEXT
@@ -23,13 +22,12 @@ class DownloadQuestionnaireResults(QuestionnaireBase):
         self.update_step(9)
         self.update_text(DOWNLOAD_RESULTS_TEXT)
         self.download.callback = pn.bind(self.load_results)
-        # self.download.link(self, callbacks={"value": self.load_results})
         self._view = pn.Column(
             self.header,
             self.download,
         )
 
-    def load_results(self, _, event):
+    def load_results(self):
         with zipfile.ZipFile(
             self.zip_buffer, "a", zipfile.ZIP_DEFLATED, False
         ) as zip_file:
@@ -49,4 +47,8 @@ class DownloadQuestionnaireResults(QuestionnaireBase):
         return self.zip_buffer
 
     def panel(self):
+        self.download.callback = pn.bind(self.load_results)
+        self.download.filename = "Results.zip"
+        self.download.name = "Download Results"
+        self.download.param.update()
         return self._view
