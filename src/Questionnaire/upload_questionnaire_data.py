@@ -1,5 +1,3 @@
-from io import StringIO
-
 import param
 import panel as pn
 
@@ -8,8 +6,7 @@ from src.Questionnaire.questionnaire_base import QuestionnaireBase
 from src.utils import load_questionnaire_data
 
 
-class LoadQuestionnaireData(QuestionnaireBase):
-    text = ""
+class UploadQuestionnaireData(QuestionnaireBase):
     ready = param.Boolean(default=False)
     file_input = pn.widgets.FileInput(
         styles={"background": "whitesmoke"},
@@ -41,7 +38,7 @@ class LoadQuestionnaireData(QuestionnaireBase):
         super().__init__(**params)
         self.update_step(2)
         self.update_text(LOADING_DATA_TEXT)
-        self.file_input.link(self, callbacks={"clicks": self.parse_file_input})
+        self.file_input.link(self, callbacks={"value": self.parse_file_input})
         self._view = pn.Column(
             self.header,
             self.file_input,

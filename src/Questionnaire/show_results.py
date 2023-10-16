@@ -30,10 +30,21 @@ class ShowResults(QuestionnaireBase):
                 layout="fit_data_stretch",
                 page_size=10,
             )
+            filename, button = tabulator.download_menu(
+                text_kwargs={
+                    "name": "Enter filename",
+                    "value": f"{questionnaire}_results.csv",
+                },
+                button_kwargs={
+                    "name": "Download Results",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
             acc.append(
                 (
                     questionnaire,
-                    tabulator,
+                    pn.Column(tabulator, pn.layout.Divider(), pn.Row(filename, button)),
                 )
             )
         return acc
@@ -53,7 +64,10 @@ class ShowResults(QuestionnaireBase):
         )
         if all("_" in cols for cols in self.results.columns.to_list()):
             self.next_page = "Ask to change format"
-        self.questionnaire_results_Column.__setitem__(
-            0, self.show_questionnaire_results()
-        )
+        if len(self.questionnaire_results_Column.objects) == 0:
+            self.questionnaire_results_Column.append(self.show_questionnaire_results())
+        else:
+            self.questionnaire_results_Column.__setitem__(
+                0, self.show_questionnaire_results()
+            )
         return self._view

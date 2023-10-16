@@ -7,7 +7,6 @@ from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
 
 class SuggestQuestionnaireScores(QuestionnaireBase):
-    text = ""
     accordion = pn.Accordion(sizing_mode="stretch_width")
     select_questionnaire = pn.widgets.Select(
         name="Choose Questionnaire:",
@@ -20,6 +19,10 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
     def __init__(self, **params):
         params["HEADER_TEXT"] = SUGGEST_QUESTIONNAIRE_SCORES_TEXT
         super().__init__(**params)
+        self.add_questionnaire_btn.link(
+            self.select_questionnaire.value,
+            callbacks={"clicks": self.add_questionnaire},
+        )
         self.update_step(3)
         self.update_text(SUGGEST_QUESTIONNAIRE_SCORES_TEXT)
 
@@ -28,10 +31,6 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
             return
         for name in bp.questionnaires.utils.get_supported_questionnaires().keys():
             questionnaire_cols = self.data.filter(regex=f"(?i)({name})").columns
-            # data_filt, cols = bp.questionnaires.utils.find_cols(
-            #     data=self.data, regex_str=f"(?i)({name})"
-            # )
-            # col_sum = 0
             list_col = list(questionnaire_cols)
             cols = {"-pre": [], "-post": [], "": []}
             for c in list_col:
@@ -59,7 +58,10 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
         height = min(400, 100 + len(self.data.columns.tolist()) * 5)
         edit_btn = pn.widgets.Button(name="Edit", button_type="primary")
         remove_btn = pn.widgets.Button(
-            name="Remove", button_type="light", align="end", disabled=True
+            name="Remove",
+            align="end",
+            disabled=True,
+            button_type="danger",
         )
         remove_btn.link(
             questionnaire_key,
@@ -88,10 +90,7 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
 
     def show_dict_scores(self):
         col = pn.Column()
-        self.add_questionnaire_btn.link(
-            self,
-            callbacks={"value": self.add_questionnaire},
-        )
+
         row = pn.Row()
         row.append(self.select_questionnaire)
         row.append(self.add_questionnaire_btn)
@@ -105,14 +104,26 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
         col.append(row)
         return col
 
-    def remove_questionnaire(self, target, _):
-        index = [x.name for x in self.accordion.objects].index(target)
-        self.accordion.pop(index)
-        self.dict_scores.pop(target)
-        pn.state.notifications.warning(f"Questionnaire {target} was removed")
+    def remove_questionnaire(self, questionnaire_to_remove: str, _):
+        try:
+            index = [x.name for x in self.accordion.objects].index(
+                questionnaire_to_remove
+            )
+            self.accordion.pop(index)
+            self.dict_scores.pop(questionnaire_to_remove)
+            pn.state.notifications.warning(
+                f"Questionnaire {questionnaire_to_remove} was removed"
+            )
+        except ValueError as e:
+            pn.state.notifications.error(
+                f"Questionnaire {questionnaire_to_remove} could not be removed: {e}"
+            )
 
-    def add_questionnaire(self, _, event):
-        questionnaire = event.new
+    def add_questionnaire(self, selected_questionnaire, _):
+        questionnaire = selected_questionnaire
+        if questionnaire is None or questionnaire == "":
+            pn.state.notifications.error("No Questionnaire selected")
+            return
         i = 0
         while questionnaire in self.dict_scores.keys():
             questionnaire = self.select_questionnaire.value + f"-New{i}"

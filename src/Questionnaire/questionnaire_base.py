@@ -7,13 +7,13 @@ from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import MAX_STEPS
 
 
 class QuestionnaireBase(param.Parameterized):
-    additional_index_cols = param.Dynamic()
-    condition_col = param.String()
+    additional_index_cols = param.Dynamic(default=None)
+    condition_col = param.String(default=None)
     data = param.Dynamic(default=None)
     data_in_long_format = param.Dynamic(default=None)
     data_scaled = param.Dynamic(default=None)
     data_scores = param.Dynamic()
-    dict_scores = {}
+    dict_scores = param.Dynamic(default={})
     progress = pn.indicators.Progress(
         name="Progress", height=20, sizing_mode="stretch_width"
     )
@@ -22,7 +22,7 @@ class QuestionnaireBase(param.Parameterized):
     remove_nan_rows = param.Boolean(default=False)
     sheet_name = param.Dynamic()
     step = param.Integer(default=1)
-    subject_col = param.String()
+    subject_col = param.String(default=None)
     max_steps = MAX_STEPS
 
     def __init__(self, **params):
@@ -76,6 +76,7 @@ class QuestionnaireBase(param.Parameterized):
             self.sheet_name,
             self.data,
             self.dict_scores,
+            self.data_scores,
             self.data_scaled,
             self.results,
             self.data_in_long_format,

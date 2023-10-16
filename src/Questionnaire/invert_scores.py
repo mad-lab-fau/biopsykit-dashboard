@@ -8,11 +8,10 @@ from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
 
 class AskToInvertScores(QuestionnaireBase):
-    text = "# Do you want to invert the scores of selected column(s) ?"
     ready = param.Boolean(default=False)
     next_page = param.Selector(
-        default="Invert Scores",
-        objects=["Invert Scores", "Show Results"],
+        default="Invert scores",
+        objects=["Invert scores", "Show Results"],
     )
     skip_btn = pn.widgets.Button(name="No", button_type="primary")
     invert_scores_btn = pn.widgets.Button(name="Yes")
@@ -22,7 +21,7 @@ class AskToInvertScores(QuestionnaireBase):
         self.ready = True
 
     def invert_scores(self, target, event):
-        self.next_page = "Invert Scores"
+        self.next_page = "Invert scores"
         self.ready = True
 
     def __init__(self, **params):
@@ -42,7 +41,6 @@ class AskToInvertScores(QuestionnaireBase):
 
 
 class InvertScores(QuestionnaireBase):
-    text = "# Invert Scores"
     questionnaire_selector = pn.widgets.Select(name="Select Questionnaire")
     select_all_checkbox = pn.widgets.Checkbox(
         name="Select All", value=False, visible=False

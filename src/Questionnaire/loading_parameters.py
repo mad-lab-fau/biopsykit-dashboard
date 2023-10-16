@@ -9,7 +9,6 @@ from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
 
 class AskToSetLoadingParameters(QuestionnaireBase):
-    text = ""
     next = param.Selector(
         default="Upload Questionnaire Data",
         objects=["Upload Questionnaire Data", "Set Loading Parameters"],
@@ -17,9 +16,8 @@ class AskToSetLoadingParameters(QuestionnaireBase):
     ready = param.Boolean(default=False)
     default_btn = pn.widgets.Button(name="Default")
     set_parameters_manually = pn.widgets.Button(
-        styles={"background": "whitesmoke"},
         name="Set Loading Parameters",
-        button_type="success",
+        button_type="primary",
     )
 
     def __init__(self, **params):
@@ -27,20 +25,18 @@ class AskToSetLoadingParameters(QuestionnaireBase):
         super().__init__(**params)
         self.update_step(1)
         self.update_text(ASK_TO_SET_LOADING_PARAMETERS_TEXT)
-        self.set_parameters_manually.link(
-            self, callbacks={"clicks": self.click_set_parameters}
-        )
-        self.default_btn.link(self, callbacks={"clicks": self.click_default})
+        self.set_parameters_manually.on_click(self.click_set_parameters)
+        self.default_btn.on_click(self.click_default)
         self._view = pn.Column(
             self.header,
             pn.Row(self.default_btn, self.set_parameters_manually),
         )
 
-    def click_default(self, target, _):
+    def click_default(self, _):
         self.next = "Upload Questionnaire Data"
         self.ready = True
 
-    def click_set_parameters(self, target, _):
+    def click_set_parameters(self, _):
         self.next = "Set Loading Parameters"
         self.ready = True
 
@@ -48,8 +44,7 @@ class AskToSetLoadingParameters(QuestionnaireBase):
         return self._view
 
 
-class SetLoadingParametersExpert(QuestionnaireBase):
-    text = ""
+class SetLoadingParametersManually(QuestionnaireBase):
     select_subject_col = pn.widgets.TextInput(
         name="subject_col",
         value=None,

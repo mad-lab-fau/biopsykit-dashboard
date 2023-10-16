@@ -22,7 +22,8 @@ class DownloadQuestionnaireResults(QuestionnaireBase):
         super().__init__(**params)
         self.update_step(9)
         self.update_text(DOWNLOAD_RESULTS_TEXT)
-        self.download.link(self, callbacks={"clicks": self.load_results})
+        self.download.callback = pn.bind(self.load_results)
+        # self.download.link(self, callbacks={"value": self.load_results})
         self._view = pn.Column(
             self.header,
             self.download,

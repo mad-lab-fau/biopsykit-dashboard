@@ -5,13 +5,13 @@ from src.Questionnaire.convert_scale import AskToConvertScales, ConvertScales
 from src.Questionnaire.crop_scale import AskToCropScale, CropScales
 from src.Questionnaire.download_results import DownloadQuestionnaireResults
 from src.Questionnaire.invert_scores import AskToInvertScores, InvertScores
-from src.Questionnaire.load_data import LoadQuestionnaireData
 from src.Questionnaire.loading_parameters import (
     AskToSetLoadingParameters,
-    SetLoadingParametersExpert,
+    SetLoadingParametersManually,
 )
 from src.Questionnaire.select_scores import SuggestQuestionnaireScores
 from src.Questionnaire.show_results import ShowResults
+from src.Questionnaire.upload_questionnaire_data import UploadQuestionnaireData
 from src.Questionnaire.wide_to_long import AskToChangeFormat, ConvertToLong
 
 pn.extension(sizing_mode="stretch_width")
@@ -24,19 +24,22 @@ class QuestionnairePipeline:
     pipeline = None
 
     def __init__(self):
-        self.pipeline = pn.pipeline.Pipeline(debug=True)
+        self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)
         self.pipeline.add_stage(
             "Ask for additional parameters",
             AskToSetLoadingParameters(),
-            auto_advance=True,
             ready_parameter="ready",
             next_parameter="next",
+            auto_advance=True,
         )
-        self.pipeline.add_stage("Set Loading Parameters", SetLoadingParametersExpert())
+        self.pipeline.add_stage(
+            "Set Loading Parameters", SetLoadingParametersManually()
+        )
         self.pipeline.add_stage(
             "Upload Questionnaire Data",
-            LoadQuestionnaireData(),
+            UploadQuestionnaireData(),
             ready_parameter="ready",
+            auto_advance=True,
         )
         self.pipeline.add_stage("Set Questionnaires", SuggestQuestionnaireScores())
         self.pipeline.add_stage(

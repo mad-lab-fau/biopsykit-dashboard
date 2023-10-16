@@ -41,23 +41,23 @@ class AskToConvertScales(QuestionnaireBase):
         self.next_page = "Ask To crop scales"
         self.ready = True
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-    )
-    def output(self):
-        if self.next_page == "Show Results":
-            return (
-                self.data,
-                self.dict_scores,
-                None,
-            )
-        return (
-            self.data,
-            self.dict_scores,
-            None,
-        )
+    # @param.output(
+    #     ("data", param.Dynamic),
+    #     ("dict_scores", param.Dict),
+    #     ("data_scores", param.Dynamic),
+    # )
+    # def output(self):
+    #     if self.next_page == "Show Results":
+    #         return (
+    #             self.data,
+    #             self.dict_scores,
+    #             None,
+    #         )
+    #     return (
+    #         self.data,
+    #         self.dict_scores,
+    #         None,
+    #     )
 
     def panel(self):
         return self._view
@@ -67,8 +67,24 @@ class ConvertScales(QuestionnaireBase):
     convert_column = pn.Column(sizing_mode="stretch_width")
     change_questionnaires_btn = pn.widgets.Button(name="Change Questionnaire scales")
     change_columns_btn = pn.widgets.Button(name="Change Columns", button_type="primary")
-    change_columns_col = pn.Column(sizing_mode="stretch_width", visible=False)
-    questionnaire_col = pn.Column(sizing_mode="stretch_width", visible=False)
+    change_columns_col = pn.Column(
+        sizing_mode="stretch_width", visible=False, objects=[pn.Column(name=None)]
+    )
+    questionnaire_col = pn.Column(
+        sizing_mode="stretch_width", visible=False, objects=[pn.Column(name=None)]
+    )
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = CONVERT_SCALES_TEXT
+        super().__init__(**params)
+        self.update_step(5)
+        self.update_text(CONVERT_SCALES_TEXT)
+        self.change_questionnaires_btn.link(
+            self.questionnaire_col, callbacks={"clicks": self.show_questionnaire_col}
+        )
+        self.change_columns_btn.link(
+            self.change_columns_col, callbacks={"clicks": self.show_name_col}
+        )
 
     @staticmethod
     def activate_btn(target, event):
@@ -111,28 +127,32 @@ class ConvertScales(QuestionnaireBase):
         )
 
     def show_questionnaire_col(self, _, event):
-        if (
-            len(self.convert_column.objects) == 1
-            and self.convert_column.objects[0] == self.questionnaire_col
-        ):
-            return
-        self.questionnaire_col = self.get_questionnaire_col()
         self.questionnaire_col.visible = True
-        if len(self.convert_column.objects) == 1:
-            self.convert_column.pop(0)
-        self.convert_column.append(self.questionnaire_col)
+        self.change_columns_col.visible = False
+        if len(self.questionnaire_col.objects) == 0:
+            self.questionnaire_col.append(self.get_questionnaire_col())
+        elif len(self.questionnaire_col.objects) > 1:
+            while len(self.questionnaire_col.objects) > 1:
+                self.questionnaire_col.pop(0)
+        elif (
+            len(self.questionnaire_col.objects) == 1
+            and self.questionnaire_col.objects[0].name is None
+        ):
+            self.questionnaire_col.__setitem__(0, self.get_questionnaire_col())
 
     def show_name_col(self, target, _):
-        if (
-            len(self.convert_column.objects) == 1
-            and self.convert_column.objects[0] == self.change_columns_col
-        ):
-            return
-        self.change_columns_col = self.get_column_col()
+        self.questionnaire_col.visible = False
         self.change_columns_col.visible = True
-        if len(self.convert_column.objects) == 1:
-            self.convert_column.pop(0)
-        self.convert_column.append(self.change_columns_col)
+        if len(self.change_columns_col.objects) == 0:
+            self.change_columns_col.append(self.get_column_col())
+        elif len(self.change_columns_col.objects) > 1:
+            while len(self.change_columns_col.objects) > 1:
+                self.change_columns_col.pop(0)
+        elif (
+            len(self.change_columns_col.objects) == 1
+            and self.change_columns_col.objects[0].name is None
+        ):
+            self.change_columns_col.__setitem__(0, self.get_column_col())
 
     def get_questionnaire_col(self) -> pn.Column:
         quest_col = pn.Column()
@@ -158,14 +178,14 @@ class ConvertScales(QuestionnaireBase):
         quest_col.append(btn)
         return quest_col
 
-    @param.output(
-        ("data", param.Dynamic),
-        ("dict_scores", param.Dict),
-        ("data_scores", param.Dynamic),
-        ("data_scaled", param.Dynamic),
-    )
-    def output(self):
-        return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
+    # @param.output(
+    #     ("data", param.Dynamic),
+    #     ("dict_scores", param.Dict),
+    #     ("data_scores", param.Dynamic),
+    #     ("data_scaled", param.Dynamic),
+    # )
+    # def output(self):
+    #     return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
 
     def get_column_col(self) -> pn.Column:
         col = pn.Column()
@@ -190,27 +210,16 @@ class ConvertScales(QuestionnaireBase):
         col.append(btn)
         return col
 
-    def __init__(self, **params):
-        params["HEADER_TEXT"] = CONVERT_SCALES_TEXT
-        super().__init__(**params)
-        self.update_step(5)
-        self.update_text(CONVERT_SCALES_TEXT)
-        self.change_questionnaires_btn.link(
-            self.questionnaire_col, callbacks={"clicks": self.show_questionnaire_col}
-        )
-        self.change_columns_btn.link(
-            self.change_columns_col, callbacks={"clicks": self.show_name_col}
-        )
-        self._view = pn.Column(
+    def panel(self):
+        if self.data_scaled is None:
+            self.data_scaled = self.data
+        return pn.Column(
             self.header,
             pn.Row(
                 self.change_questionnaires_btn,
                 self.change_columns_btn,
             ),
             self.convert_column,
+            self.questionnaire_col,
+            self.change_columns_col,
         )
-
-    def panel(self):
-        if self.data_scaled is None:
-            self.data_scaled = self.data
-        return self._view

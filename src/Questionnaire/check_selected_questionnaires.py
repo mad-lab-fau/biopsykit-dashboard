@@ -5,12 +5,11 @@ from src.Questionnaire.questionnaire_base import QuestionnaireBase
 
 
 class CheckSelectedQuestionnaires(QuestionnaireBase):
-    text = ""
     check_btn = pn.widgets.Button(
         name="Check Questionnaires", sizing_mode="stretch_width"
     )
     accordion = pn.Accordion(sizing_mode="stretch_width")
-    questionnaire_panel = pn.Column(sizing_mode="stretch_width")
+    questionnaire_panel = pn.Column(sizing_mode="stretch_width", objects=[pn.Column()])
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = CHECK_SELECTED_QUESTIONNAIRES_TEXT
@@ -28,15 +27,30 @@ class CheckSelectedQuestionnaires(QuestionnaireBase):
         acc = pn.Accordion(sizing_mode="stretch_width", visible=visible)
         for questionnaire in self.dict_scores.keys():
             df = self.data[list(self.dict_scores[questionnaire])]
+            if df is None:
+                continue
             df_widget = pn.widgets.Tabulator(
                 df,
                 pagination="local",
                 layout="fit_data_stretch",
                 page_size=20,
                 header_align="right",
-                theme="midnight",
+                selectable=False,
             )
-            acc.append((questionnaire, df_widget))
+            filename, button = df_widget.download_menu(
+                text_kwargs={"name": "Enter filename", "value": f"{questionnaire}.csv"},
+                button_kwargs={
+                    "name": "Download table",
+                    "button_type": "primary",
+                    "align": "end",
+                },
+            )
+            acc.append(
+                (
+                    questionnaire,
+                    pn.Column(df_widget, pn.layout.Divider(), pn.Row(filename, button)),
+                )
+            )
         return acc
 
     def check_questionnaires(self, _, event):

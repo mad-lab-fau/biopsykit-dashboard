@@ -112,5 +112,8 @@ class ConvertToLong(QuestionnaireBase):
     def panel(self):
         if self.data_scaled is None:
             self.data_scaled = self.data
-        self.converting_panel_column.__setitem__(0, self.converting_panel())
+        if len(self.converting_panel_column.objects) == 0:
+            self.converting_panel_column.append(self.converting_panel())
+        else:
+            self.converting_panel_column.__setitem__(0, self.converting_panel())
         return self._view
