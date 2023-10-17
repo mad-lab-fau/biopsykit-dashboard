@@ -1,6 +1,7 @@
 import panel as pn
 import param
 import biopsykit as bp
+from biopsykit.utils.exceptions import ValidationError
 
 from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import (
     ASK_TO_CONVERT_SCALES_TEXT,
@@ -40,24 +41,6 @@ class AskToConvertScales(QuestionnaireBase):
     def skip_converting(self, _, event):
         self.next_page = "Ask To crop scales"
         self.ready = True
-
-    # @param.output(
-    #     ("data", param.Dynamic),
-    #     ("dict_scores", param.Dict),
-    #     ("data_scores", param.Dynamic),
-    # )
-    # def output(self):
-    #     if self.next_page == "Show Results":
-    #         return (
-    #             self.data,
-    #             self.dict_scores,
-    #             None,
-    #         )
-    #     return (
-    #         self.data,
-    #         self.dict_scores,
-    #         None,
-    #     )
 
     def panel(self):
         return self._view
@@ -106,25 +89,57 @@ class ConvertScales(QuestionnaireBase):
         target[1].disabled = False
 
     def apply_questionnaire_scale(self, target, _):
+        if type(target) is not tuple or len(target) != 2:
+            return
+        if self.data is None or self.data.empty or self.dict_scores is None:
+            return
         key = target[0].value
         offset = target[1].value
-        cols = self.dict_scores[key].to_list()
-        self.data_scaled = bp.questionnaires.utils.convert_scale(
-            self.data, cols=cols, offset=offset
-        )
-        pn.state.notifications.success(
-            f"Changed the scaling of the questionnaire: {key} by offset: {offset}"
-        )
+        if key is None or not isinstance(key, str):
+            pn.state.notifications.warning("No Questionnaire selected")
+            return
+        if offset is None or not isinstance(offset, int):
+            pn.state.notifications.warning("No offset selected")
+            return
+        if key not in self.dict_scores.keys():
+            pn.state.notifications.warning("No Questionnaire selected")
+            return
+        try:
+            cols = self.dict_scores[key].to_list()
+            self.data_scaled = bp.questionnaires.utils.convert_scale(
+                self.data, cols=cols, offset=offset
+            )
+            pn.state.notifications.success(
+                f"Changed the scaling of the questionnaire: {key} by offset: {offset}"
+            )
+        except ValidationError as e:
+            pn.state.notifications.error(f"Validation Error: {e}")
 
     def apply_column_scale(self, target, _):
+        if type(target) is not tuple or len(target) != 2:
+            return
         cols = target[0].value
+        if cols is None or len(cols) == 0:
+            pn.state.notifications.warning("No Columns selected")
+            return
         offset = target[1].value
-        self.data_scaled = bp.questionnaires.utils.convert_scale(
-            self.data, cols=cols, offset=offset
-        )
-        pn.state.notifications.success(
-            f"Changed the scaling of {len(cols)} Columns by offset: {offset}"
-        )
+        if offset is None or not isinstance(offset, int):
+            pn.state.notifications.warning("No offset selected")
+            return
+        if any([col not in self.data.columns.to_list() for col in cols]):
+            pn.state.notifications.warning("Not all columns are in the data")
+            return
+        try:
+            self.data_scaled = bp.questionnaires.utils.convert_scale(
+                self.data, cols=cols, offset=offset
+            )
+            pn.state.notifications.success(
+                f"Changed the scaling of {len(cols)} Columns by offset: {offset}"
+            )
+        except ValidationError as e:
+            pn.state.notifications.error(f"Validation Error: {e}")
+        except KeyError as ke:
+            pn.state.notifications.error(f"Key Error: {ke}")
 
     def show_questionnaire_col(self, _, event):
         self.questionnaire_col.visible = True
@@ -173,19 +188,11 @@ class ConvertScales(QuestionnaireBase):
         )
         input_offset.link(btn, callbacks={"value": self.activate_btn})
         btn.link(
-            (select, input_offset), callbacks={"clicks": self.apply_questionnaire_scale}
+            (select, input_offset),
+            callbacks={"clicks": self.apply_questionnaire_scale},
         )
         quest_col.append(btn)
         return quest_col
-
-    # @param.output(
-    #     ("data", param.Dynamic),
-    #     ("dict_scores", param.Dict),
-    #     ("data_scores", param.Dynamic),
-    #     ("data_scaled", param.Dynamic),
-    # )
-    # def output(self):
-    #     return (self.data, self.dict_scores, self.data_scores, self.data_scaled)
 
     def get_column_col(self) -> pn.Column:
         col = pn.Column()

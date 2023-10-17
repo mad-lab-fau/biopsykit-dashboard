@@ -2,7 +2,6 @@ import panel as pn
 import param
 import biopsykit as bp
 import numpy as np
-import pandas as pd
 
 from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import ASK_TO_CROP_SCALE_TEXT
 from src.Questionnaire.questionnaire_base import QuestionnaireBase
@@ -81,6 +80,8 @@ class CropScales(QuestionnaireBase):
         if self.questionnaire_selector.value is None:
             return
         key = self.questionnaire_selector.value
+        if key is None or key not in self.dict_scores.keys():
+            return
         set_nan = self.set_nan_checkbox.value
         cols = self.dict_scores[key].to_list()
         score_range = self.score_range_arrayInput.value
@@ -93,7 +94,10 @@ class CropScales(QuestionnaireBase):
             self.data_scaled = self.data
         try:
             self.data_scaled[cols] = bp.questionnaires.utils.crop_scale(
-                data=self.data_scaled[cols], score_range=score_range, set_nan=set_nan
+                data=self.data_scaled[cols],
+                score_range=score_range,
+                set_nan=set_nan,
+                inplace=False,
             )
             self.questionnaire_stat_values_df.value = (
                 self.data_scaled[cols].describe().transpose()

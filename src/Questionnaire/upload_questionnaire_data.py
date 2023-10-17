@@ -27,6 +27,7 @@ class UploadQuestionnaireData(QuestionnaireBase):
                 remove_nan_rows=self.remove_nan_rows,
                 sheet_name=self.sheet_name,
             )
+            self.data_scaled = self.data.copy()
             self.ready = True
             pn.state.notifications.success("Files uploaded")
         except Exception as e:

@@ -90,7 +90,6 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
 
     def show_dict_scores(self):
         col = pn.Column()
-
         row = pn.Row()
         row.append(self.select_questionnaire)
         row.append(self.add_questionnaire_btn)

@@ -58,7 +58,7 @@ class ShowResults(QuestionnaireBase):
 
     def panel(self):
         if self.data_scaled is None:
-            self.data_scaled = self.data
+            self.data_scaled = self.data.copy()
         self.results = bp.questionnaires.utils.compute_scores(
             data=self.data_scaled, quest_dict=self.dict_scores
         )

@@ -72,13 +72,18 @@ class InvertScores(QuestionnaireBase):
         self.score_range_array_input.visible = True
         self.invert_scores_btn.visible = True
 
-    def select_all_checked(self, target, event):
-        if event.new:
+    def select_all_checked(self, _, event):
+        if (
+            event.new
+            and self.questionnaire_selector.value is not None
+            and self.questionnaire_selector.value != ""
+        ):
             self.column_cross_selector.value = self.dict_scores[
                 self.questionnaire_selector.value
             ].to_list()
         else:
             self.column_cross_selector.value = []
+            self.select_all_checkbox.value = False
 
     def invert_scores(self, target, event):
         if len(self.column_cross_selector.value) == 0:
@@ -92,12 +97,13 @@ class InvertScores(QuestionnaireBase):
             )
             return
         if self.data_scaled is None:
-            self.data_scaled = self.data
+            self.data_scaled = self.data.copy()
         try:
             self.data_scaled = bp.questionnaires.utils.invert(
                 data=self.data_scaled,
                 score_range=self.score_range_array_input.value,
                 cols=self.column_cross_selector.value,
+                inplace=False,
             )
             pn.state.notifications.success(
                 f"Successfully inverted the scores of the selected columns to the range {self.score_range_array_input.value}"

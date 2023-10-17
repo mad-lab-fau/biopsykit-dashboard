@@ -8,8 +8,9 @@ class CheckSelectedQuestionnaires(QuestionnaireBase):
     check_btn = pn.widgets.Button(
         name="Check Questionnaires", sizing_mode="stretch_width"
     )
-    accordion = pn.Accordion(sizing_mode="stretch_width")
-    questionnaire_panel = pn.Column(sizing_mode="stretch_width", objects=[pn.Column()])
+    questionnaire_panel = pn.Column(
+        sizing_mode="stretch_width", objects=[pn.Accordion()]
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = CHECK_SELECTED_QUESTIONNAIRES_TEXT
@@ -58,7 +59,10 @@ class CheckSelectedQuestionnaires(QuestionnaireBase):
         self.questionnaire_panel.__setitem__(0, acc)
 
     def panel(self):
-        if len(self.questionnaire_panel.objects) > 0:
-            return self._view
-        self.questionnaire_panel.__setitem__(0, self.init_questionnaire_panel(False))
-        return self.questionnaire_panel
+        if len(self.questionnaire_panel.objects) == 0:
+            self.questionnaire_panel.append(self.init_questionnaire_panel(False))
+        else:
+            self.questionnaire_panel.__setitem__(
+                0, self.init_questionnaire_panel(False)
+            )
+        return self._view
