@@ -30,7 +30,6 @@ app.config.log_level = "CRITICAL"
 app.sidebar.constant = False
 app.main.constant = False
 app.theme_toggle = False
-current_page = pn.Column()
 current_page = MainPage(app.main)
 
 

@@ -5,7 +5,7 @@ from src.Sleep import (
     process_sleep_data,
     results_preview,
     sleep_pipeline,
-    upload_parameters,
+    set_sleep_data_parameters,
     upload_sleep_data,
 )
 
@@ -16,7 +16,7 @@ __all__ = [
     "process_sleep_data",
     "results_preview",
     "sleep_pipeline",
-    "upload_parameters",
+    "set_sleep_data_parameters",
     "upload_sleep_data",
 ]
 

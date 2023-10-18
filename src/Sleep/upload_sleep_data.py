@@ -29,6 +29,14 @@ class UploadSleepData(SleepBase):
         objects=["Process Data", "Convert Acc to g"],
     )
 
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = UPLOAD_SLEEP_DATA_TEXT
+        super().__init__(**params)
+        self.update_step(4)
+        self.update_text(UPLOAD_SLEEP_DATA_TEXT)
+        self.upload_data.link(self, callbacks={"value": self.process_data})
+        self._view = pn.Column(self.header, self.upload_data)
+
     def process_data(self, target, _):
         try:
             if self.upload_data.value is None:
@@ -43,6 +51,9 @@ class UploadSleepData(SleepBase):
             else:
                 pn.state.notifications.error("Please choose a device")
                 self.ready = False
+                return
+            self.ready = True
+            pn.state.notifications.success("Successfully loaded data")
         except Exception as e:
             pn.state.notifications.error("Error while loading data: " + str(e))
             self.ready = False
@@ -59,38 +70,36 @@ class UploadSleepData(SleepBase):
             self.ready = False
 
     def parse_other_imu(self):
-        try:
-            if self.upload_data.filename.endswith(".bin"):
-                dataset = NilsPodAdapted.from_bin_file(
-                    filepath_or_buffer=BytesIO(self.upload_data.value),
-                    **self.selected_parameters,
-                )
-                df, _ = bp.io.nilspod.load_dataset_nilspod(dataset=dataset)
-                self.data = [df]
-            elif self.upload_data.filename.endswith(".csv"):
-                string_io = StringIO(self.upload_data.value.decode("utf-8"))
-                dataset = pd.read_csv(string_io)
-                self.data = [dataset]
-            elif self.upload_data.filename.endswith(".zip"):
-                input_zip = ZipFile(BytesIO(self.upload_data.value))
-                datasets = []
-                list_of_files = input_zip.infolist()
-                for file in list_of_files:
-                    if file.filename.endswith(".bin"):
-                        dataset = NilsPodAdapted.from_bin_file(
-                            filepath_or_buffer=input_zip.open(file),
-                            **self.selected_parameters,
-                        )
-                        datasets.append(dataset)
-                    elif file.filename.endswith(".csv"):
-                        string_io = StringIO(input_zip.open(file))
-                        dataset = pd.read_csv(string_io)
-                        datasets.append(dataset)
-                self.data = datasets
-            self.ready = True
-        except Exception as e:
-            pn.state.notifications.error("Error while loading data: " + str(e))
-            self.ready = False
+        if self.upload_data.filename.endswith(".bin"):
+            dataset = NilsPodAdapted.from_bin_file(
+                filepath_or_buffer=BytesIO(self.upload_data.value),
+                legacy_support="resolve",
+                **self.selected_parameters[self.selected_device],
+            )
+            df, _ = bp.io.nilspod.load_dataset_nilspod(dataset=dataset)
+            self.add_data(df, self.upload_data.filename)
+        elif self.upload_data.filename.endswith(".csv"):
+            string_io = StringIO(self.upload_data.value.decode("utf-8"))
+            dataset = pd.read_csv(string_io)
+            self.add_data(dataset, self.upload_data.filename)
+        elif self.upload_data.filename.endswith(".zip"):
+            input_zip = ZipFile(BytesIO(self.upload_data.value))
+            datasets = []
+            list_of_files = input_zip.infolist()
+            for file in list_of_files:
+                if file.filename.endswith(".bin"):
+                    dataset = NilsPodAdapted.from_bin_file(
+                        filepath_or_buffer=BytesIO(input_zip.read(file)),
+                        **self.selected_parameters[self.selected_device],
+                    )
+                    datasets.append(dataset)
+                elif file.filename.endswith(".csv"):
+                    string_io = StringIO(str(input_zip.open(file)))
+                    dataset = pd.read_csv(string_io)
+                    datasets.append(dataset)
+            self.add_data(datasets, self.upload_data.filename)
+        self.ready = True
+        pn.state.notifications.success("Successfully loaded data")
 
     def parse_withings(self):
         if self.upload_data.filename.endswith(".zip"):
@@ -102,7 +111,7 @@ class UploadSleepData(SleepBase):
             for file in list_of_files:
                 if file.filename.endswith(".csv"):
                     dataset = self.load_withings(
-                        file=BytesIO(input_zip.open(file)),
+                        file=BytesIO(input_zip.read(file)),
                         filename=file.filename,
                     )
                     datasets.append(dataset)
@@ -116,20 +125,13 @@ class UploadSleepData(SleepBase):
     def load_withings(self, file, filename):
         dataset = load_withings_sleep_analyzer_raw_file(
             file=file,
-            data_source=self.selected_parameters["data_source"],
             file_name=filename,
-            timezone=self.selected_parameters["timezone"],
-            split_into_nights=self.selected_parameters["split_into_nights"],
+            **self.selected_parameters[self.selected_device]
+            # data_source=self.selected_parameters["data_source"],
+            # timezone=self.selected_parameters["timezone"],
+            # split_into_nights=self.selected_parameters["split_into_nights"],
         )
         return dataset
-
-    def __init__(self, **params):
-        params["HEADER_TEXT"] = UPLOAD_SLEEP_DATA_TEXT
-        super().__init__(**params)
-        self.update_step(3)
-        self.update_text(UPLOAD_SLEEP_DATA_TEXT)
-        self.upload_data.link(self, callbacks={"value": self.process_data})
-        self._view = pn.Column(self.header, self.upload_data)
 
     def panel(self):
         if self.selected_device == "Other IMU Device":

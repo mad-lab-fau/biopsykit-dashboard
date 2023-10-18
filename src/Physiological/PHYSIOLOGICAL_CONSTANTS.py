@@ -122,7 +122,7 @@ PRESTEP_PROCESSING_TEXT = (
     "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
 )
 
-SET_RSP_PARAMETERS_TEXT = PRESTEP_PROCESSING_TEXT = (
+SET_RSP_PARAMETERS_TEXT = (
     "# RSP Parameters\n"
     "Here you can set the different parameters for the RSP analysis. You may select if the data is "
     "a Raw respiration signal or if it has to be estimated by the ECG. \n"

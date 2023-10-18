@@ -20,7 +20,7 @@ class ShowSalivaFeatures(SalivaBase):
     slope_args = {"sample_idx": None, "sample_labels": None}
     standard_features_args = {"group_cols": None, "keep_index": True}
     mean_se_args = {
-        "test_times": None,
+        "test_times": [],
         "sample_times_absolute": False,
         "test_title": "Test",
         "remove_s0": False,

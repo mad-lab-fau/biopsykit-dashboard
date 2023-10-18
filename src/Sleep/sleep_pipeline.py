@@ -1,9 +1,8 @@
 import panel as pn
 
-from src.Saliva.condition_list import AskToLoadConditionList
 from src.Sleep.choose_device import ChooseRecordingDevice
 from src.Sleep.choose_file_or_folder import ZipFolder
-from src.Sleep.upload_parameters import SetSleepDataParameters
+from src.Sleep.set_sleep_data_parameters import SetSleepDataParameters
 from src.Sleep.upload_sleep_data import UploadSleepData
 
 pn.extension(sizing_mode="stretch_width")
@@ -13,21 +12,24 @@ pn.extension("katex")
 
 
 class SleepPipeline:
-    pipeline = None
-
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()
-
-        self.pipeline.add_stage("Set Parsing Parameters", SetSleepDataParameters())
-
         self.pipeline.add_stage(
-            "Ask for Recording Device", ChooseRecordingDevice(), ready_parameter="ready"
+            "Ask for Recording Device",
+            ChooseRecordingDevice(),
+            **{"ready_parameter": "ready", "auto_advance": True},
+        )
+        self.pipeline.add_stage(
+            "Set Parsing Parameters",
+            SetSleepDataParameters(),
         )
 
         self.pipeline.add_stage("Ask for Format", ZipFolder())
 
         self.pipeline.add_stage(
-            "Upload Sleep Data", UploadSleepData(), ready_parameter="ready"
+            "Upload Sleep Data",
+            UploadSleepData(),
+            **{"ready_parameter": "ready", "auto_advance": True},
         )
 
         # self.pipeline.add_stage(

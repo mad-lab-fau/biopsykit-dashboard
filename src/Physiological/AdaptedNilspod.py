@@ -112,19 +112,19 @@ class NilsPodAdapted(nilspodlib.Dataset):
 
 class SyncedSessionAdapted(nilspodlib.SyncedSession):
     def __init__(self, datasets: Iterable[Dataset]):
-        super.__init__(datasets)
+        super().__init__(datasets)
 
     @classmethod
-    def from_file_paths(
+    def from_zip_file(
         cls,
         paths: Iterable[str],
-        zip: ZipFile,
+        zip_file: ZipFile,
         legacy_support: str = "error",
-        force_version: Optional[Version] = None,
-        tz: Optional[str] = None,
+        force_version: Version | None = None,
+        tz: str | None = None,
     ) -> Self:
         ds = ()
-        with zip as archive:
+        with zip_file as archive:
             for path in paths:
                 ds += NilsPodAdapted.from_bin_file(
                     BytesIO(archive.read(path)),
@@ -137,23 +137,23 @@ class SyncedSessionAdapted(nilspodlib.SyncedSession):
     @classmethod
     def from_folder_path(
         cls,
-        zip: ZipFile,
+        zip_file: ZipFile,
         filter_pattern: str = "*.bin",
         legacy_support: str = "error",
         force_version: Optional[Version] = None,
         tz: Optional[str] = None,
     ) -> Self:
         ds = list(
-            filter(lambda file: file.endswith(filter_pattern), zip.namelist())
+            filter(lambda file: file.endswith(filter_pattern), zip_file.namelist())
         )  # hier müssen noch alle Dateien gesucht werden
         if not ds:
             raise ValueError(
                 'No files matching "{}" where found in zipFile'.format(filter_pattern)
             )
         return SyncedSession(
-            cls.from_file_paths(
-                ds,
-                zip=zip,
+            cls.from_zip_file(
+                paths=ds,
+                zip_file=zip_file,
                 legacy_support=legacy_support,
                 force_version=force_version,
                 tz=tz,

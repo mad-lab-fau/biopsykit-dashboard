@@ -1,4 +1,5 @@
 import param
+import pytz
 
 from src.Physiological.custom_components import PipelineHeader
 from src.Sleep.SLEEP_CONSTANTS import MAX_STEPS
@@ -7,8 +8,32 @@ from src.Sleep.SLEEP_CONSTANTS import MAX_STEPS
 class SleepBase(param.Parameterized):
     selected_device = param.String(default="")
     step = param.Integer(default=1)
-    selected_parameters = {}
-    data = param.Dynamic(default=None)
+    parsing_parameters = {
+        "Withings": {
+            "data_source": ["heart_rate", "respiration_rate", "sleep_state", "snoring"],
+            "timezone": [
+                "None",
+            ]
+            + list(pytz.all_timezones),
+            "split_into_nights": True,
+        },
+        "Polysomnography": {
+            "datastreams": None,
+            "tz": [
+                "None",
+            ]
+            + list(pytz.all_timezones),
+        },
+        "Other IMU Device": {
+            # "handle_counter_inconsistency": ["raise", "warn", "ignore"],
+            "tz": [
+                "None",
+            ]
+            + list(pytz.all_timezones),
+        },
+    }
+    selected_parameters = parsing_parameters.copy()
+    data = param.Dynamic(default={})
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
@@ -21,6 +46,11 @@ class SleepBase(param.Parameterized):
 
     def update_text(self, text: str | param.String):
         self.header.update_text(text)
+
+    def add_data(self, parsed_file, filename: str):
+        if filename in self.data.keys():
+            self.data.remove(filename)
+        self.data[filename] = parsed_file
 
     @param.output(
         ("selected_device", param.String),

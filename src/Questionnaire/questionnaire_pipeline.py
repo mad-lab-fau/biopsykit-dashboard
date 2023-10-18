@@ -81,7 +81,7 @@ class QuestionnairePipeline:
         )
         self.pipeline.add_stage(
             "Ask to change format",
-            AskToChangeFormat,
+            AskToChangeFormat(),
             ready_parameter="ready",
             next_parameter="next_page",
             auto_advance=True,

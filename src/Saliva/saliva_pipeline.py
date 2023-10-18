@@ -22,20 +22,21 @@ class SalivaPipeline:
         self.pipeline.add_stage(
             "Ask for Format",
             AskForFormat(),
-            ready_parameter="ready",
-            auto_advance=True,
+            **{"ready_parameter": "ready", "auto_advance": True},
         )
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
             AskToLoadConditionList(),
-            ready_parameter="ready",
-            next_parameter="next_page",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
         self.pipeline.add_stage(
             "Add Condition List",
             AddConditionList(),
-            ready_parameter="ready",
+            **{"ready_parameter": "ready"},
         )
         self.pipeline.add_stage(
             "Load Saliva Data",
