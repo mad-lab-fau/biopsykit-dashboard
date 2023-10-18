@@ -33,7 +33,7 @@ def test_upload_sleep_data_constructor(upload_sleep_data):
     assert upload_sleep_data.next_page == "Process Data"
 
 
-def test_upload_sleep_data_process_data(
+def test_upload_sleep_data_process_imu_bin_file(
     upload_sleep_data, script_dir, imu_bin_file_example_path
 ):
     upload_sleep_data.selected_device = "Other IMU Device"
