@@ -28,9 +28,11 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Ask for additional parameters",
             AskToSetLoadingParameters(),
-            ready_parameter="ready",
-            next_parameter="next",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next",
+            },
         )
         self.pipeline.add_stage(
             "Set Loading Parameters", SetLoadingParametersManually()
@@ -38,8 +40,10 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Upload Questionnaire Data",
             UploadQuestionnaireData(),
-            ready_parameter="ready",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+            },
         )
         self.pipeline.add_stage("Set Questionnaires", SuggestQuestionnaireScores())
         self.pipeline.add_stage(
@@ -48,9 +52,11 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Ask to convert scales",
             AskToConvertScales(),
-            ready_parameter="ready",
-            next_parameter="next_page",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
 
         self.pipeline.add_stage("Convert Scales", ConvertScales())
@@ -58,9 +64,11 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Ask To crop scales",
             AskToCropScale(),
-            ready_parameter="ready",
-            next_parameter="next_page",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
 
         self.pipeline.add_stage("Crop Scales", CropScales())
@@ -68,23 +76,29 @@ class QuestionnairePipeline:
         self.pipeline.add_stage(
             "Ask to invert scores",
             AskToInvertScores(),
-            ready_parameter="ready",
-            next_parameter="next_page",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
 
         self.pipeline.add_stage("Invert scores", InvertScores())
         self.pipeline.add_stage(
             "Show Results",
             ShowResults(),
-            next_parameter="next_page",
+            **{
+                "next_parameter": "next_page",
+            },
         )
         self.pipeline.add_stage(
             "Ask to change format",
             AskToChangeFormat(),
-            ready_parameter="ready",
-            next_parameter="next_page",
-            auto_advance=True,
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
         self.pipeline.add_stage("Change format", ConvertToLong())
 

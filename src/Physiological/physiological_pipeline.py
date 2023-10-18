@@ -33,55 +33,78 @@ class PhysiologicalPipeline:
         self.pipeline.add_stage(
             "Select Physiological Session Type",
             PhysSignalType(),
-            ready_parameter="ready",
-            auto_advance=True,
-            inherit_params=True,
+            **{"ready_parameter": "ready", "auto_advance": True},
         )
-        self.pipeline.add_stage("Sessions", Session(), inherit_params=True)
-        self.pipeline.add_stage("Recordings", Recordings(), next_parameter="next")
+        self.pipeline.add_stage("Sessions", Session())
+        self.pipeline.add_stage(
+            "Recordings",
+            Recordings(),
+            **{
+                "next_parameter": "next",
+            },
+        )
         self.pipeline.add_stage("Multiple Files", Compress())
-        self.pipeline.add_stage("Upload Files", FileUpload(), ready_parameter="ready")
+        self.pipeline.add_stage(
+            "Upload Files",
+            FileUpload(),
+            **{"ready_parameter": "ready"},
+        )
         self.pipeline.add_stage(
             "Data arrived",
             DataArrived(),
-            next_parameter="next_page",
-            ready_parameter="proceed",
+            **{"ready_parameter": "proceed", "next_parameter": "next_page"},
         )
         self.pipeline.add_stage("Set RSP Parameters", SetRspParameters())
         self.pipeline.add_stage(
-            "Select CFT Sheet", SelectCFTSheet(), ready_parameter="ready"
+            "Select CFT Sheet",
+            SelectCFTSheet(),
+            **{"ready_parameter": "ready"},
         )
         self.pipeline.add_stage(
             "Do you want to add time logs?",
             AskToAddTimes(),
-            auto_advance=True,
-            ready_parameter="ready",
-            next_parameter="next",
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next",
+            },
         )
-        self.pipeline.add_stage("Add Times", AddTimes(), next_parameter="next")
         self.pipeline.add_stage(
-            "Frequency Bands", FrequencyBands(), next_parameter="next"
+            "Add Times",
+            AddTimes(),
+            **{"next_parameter": "next"},
+        )
+        self.pipeline.add_stage(
+            "Frequency Bands",
+            FrequencyBands(),
+            **{"next_parameter": "next"},
         )
         self.pipeline.add_stage(
             "Do you want to detect Outlier?",
             AskToDetectOutliers(),
-            auto_advance=True,
-            ready_parameter="ready",
-            next_parameter="next",
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next",
+            },
         )
         self.pipeline.add_stage("Expert Outlier Detection", OutlierDetection())
         self.pipeline.add_stage(
             "Do you want to process the HRV also?",
             AskToProcessHRV(),
-            auto_advance=True,
-            ready_parameter="ready",
-            next_parameter="next_page",
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
         )
         self.pipeline.add_stage(
             "Now the Files will be processed",
             ProcessingPreStep(),
-            auto_advance=True,
-            ready_parameter="ready",
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+            },
         )
 
         self.pipeline.add_stage("Set HRV Parameters", SetHRVParameters())
