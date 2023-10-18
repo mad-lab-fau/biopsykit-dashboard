@@ -20,6 +20,11 @@ def imu_bin_file_example_path():
     return "sleep_imu_sample_01.bin"
 
 
+@pytest.fixture
+def withings_csv_file_example_path():
+    return "sleep.csv"
+
+
 def test_upload_sleep_data_constructor(upload_sleep_data):
     assert upload_sleep_data.fs == None
     assert upload_sleep_data.ready == False

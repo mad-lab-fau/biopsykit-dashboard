@@ -111,18 +111,20 @@ class UploadSleepData(SleepBase):
             for file in list_of_files:
                 if file.filename.endswith(".csv"):
                     dataset = self.load_withings(
-                        file=BytesIO(input_zip.read(file)),
+                        file=bytes(input_zip.read(file)),
                         filename=file.filename,
                     )
                     datasets.append(dataset)
-            self.data = datasets
+            self.add_data(datasets, self.upload_data.filename)
         elif self.upload_data.filename.endswith(".csv"):
             dataset = self.load_withings(
-                file=BytesIO(self.upload_data.value), filename=self.upload_data.filename
+                file=bytes(self.upload_data.value), filename=self.upload_data.filename
             )
-            self.data = [dataset]
+            self.add_data(dataset, self.upload_data.filename)
+        self.ready = True
+        pn.state.notifications.success("Successfully loaded data")
 
-    def load_withings(self, file, filename):
+    def load_withings(self, file: bytes, filename):
         dataset = load_withings_sleep_analyzer_raw_file(
             file=file,
             file_name=filename,

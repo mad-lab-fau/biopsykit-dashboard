@@ -32,7 +32,23 @@ class SleepBase(param.Parameterized):
             + list(pytz.all_timezones),
         },
     }
-    selected_parameters = parsing_parameters.copy()
+    selected_parameters = param.Dynamic(
+        default={
+            "Withings": {
+                "data_source": "heart_rate",
+                "timezone": None,
+                "split_into_nights": True,
+            },
+            "Polysomnography": {
+                "datastreams": None,
+                "tz": None,
+            },
+            "Other IMU Device": {
+                # "handle_counter_inconsistency": ["raise", "warn", "ignore"],
+                "tz": None,
+            },
+        }
+    )
     data = param.Dynamic(default={})
 
     def __init__(self, **params):
