@@ -20,7 +20,7 @@ class QuestionnaireBase(param.Parameterized):
     results = param.Dynamic()
     replace_missing_vals = param.Boolean(default=False)
     remove_nan_rows = param.Boolean(default=False)
-    sheet_name = param.Dynamic()
+    sheet_name = param.Dynamic(default=0)
     step = param.Integer(default=1)
     subject_col = param.String(default=None)
     max_steps = MAX_STEPS

@@ -189,7 +189,6 @@ class ProcessingAndPreview(PhysiologicalBase):
 
     def process_ecg(self):
         col = pn.Column()
-        # if self.session == "Single Session":
         self.ecg_processor = {}
         for subject in self.data.keys():
             ep = EcgProcessor(

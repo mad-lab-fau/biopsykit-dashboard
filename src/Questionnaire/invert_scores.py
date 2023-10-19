@@ -55,7 +55,7 @@ class InvertScores(QuestionnaireBase):
 
     def questionnaire_changed(self, _, event):
         questionnaire = event.new
-        if questionnaire == "":
+        if questionnaire == "" or questionnaire is None:
             self.select_all_checkbox.visible = False
             self.column_cross_selector.visible = False
             self.invert_scores_btn.visible = False
