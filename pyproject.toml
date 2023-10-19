@@ -4,6 +4,7 @@ version = "0.1.0"
 description = ""
 authors = ["Simon Meske <simon.h.meske@fau.de>"]
 readme = "README.md"
+license = "MIT"
 
 [tool.poetry.dependencies]
 python = ">=3.8,<3.11"
@@ -22,6 +23,32 @@ six = "^1.16.0"
 plotly = "^5.17.0"
 xgboost = "^2.0.0"
 
+[tool.poetry.dev-dependencies]
+black = { version="^22", extras=["jupyter", "d"] }
+poethepoet = "^0.10.0"
+pytest = "^6"
+pytest-cov = "^2"
+ipykernel = "^6"
+ruff = "^0.0.261"
+sphinx = "^4"
+numpydoc = "^1"
+sphinx-gallery = "^0.10.0"
+sphinx_issues = "^1.2.0"
+pydata-sphinx-theme = "^0.6.2"
+recommonmark = "^0.6.0"
+toml = "^0.10.1"
+memory_profiler = "^0.57.0"
+coverage-badge = "^1.0.1"
+sphinx-copybutton = "^0.4.0"
+nbsphinx = "^0.8.7"
+mne = {version = "^1.2.1", optional = true}
+
+[tool.poetry.extras]
+mne = ["mne"]
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poe.tasks]
+test = {cmd = "pytest tests/ ", help = "Run Pytest." }
