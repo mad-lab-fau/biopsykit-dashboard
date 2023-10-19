@@ -18,15 +18,16 @@ packaging = "21.3"
 param = "1.12.2"
 pytz = "2022.6"
 holoviews = "1.17.0"
-pytest = "7.4.0"
+pytest = "~7"
 six = "^1.16.0"
 plotly = "^5.17.0"
 xgboost = "^2.0.0"
+mne = "~1.2.1"
 
 [tool.poetry.dev-dependencies]
 black = { version="^22", extras=["jupyter", "d"] }
 poethepoet = "^0.10.0"
-pytest = "^6"
+pytest = "^7"
 pytest-cov = "^2"
 ipykernel = "^6"
 ruff = "^0.0.261"
