@@ -72,8 +72,6 @@ class AddTimes(PhysiologicalBase):
         name="Select Subject",
         visible=False,
     )
-    select_subject = pn.widgets.Select(name="Select Subject column", visible=False)
-    select_condition = pn.widgets.Select(name="Select Condition column", visible=False)
     next = param.Selector(
         default="Do you want to detect Outlier?",
         objects=["Do you want to detect Outlier?", "Frequency Bands"],
@@ -89,6 +87,21 @@ class AddTimes(PhysiologicalBase):
             self.datetime[0][0], self.datetime[0][1], self.add_button
         )
         self.times_to_subject = TimesToSubject([])
+        self.select_subject = pn.widgets.Select(
+            name="Select Subject column", visible=False
+        )
+        self.select_condition = pn.widgets.Select(
+            name="Select Condition column", visible=False
+        )
+        self.select_condition.visible = True
+        self.select_condition.link(
+            self,
+            callbacks={"value": self.condition_column_changed},
+        )
+        self.select_subject.link(
+            self,
+            callbacks={"value": self.subject_column_changed},
+        )
         pane = pn.Column(self.header)
         pane.append(
             pn.Row(
@@ -135,17 +148,9 @@ class AddTimes(PhysiologicalBase):
         if "subject" not in self.df.columns:
             self.select_subject.options = cols
             self.select_subject.visible = True
-            self.select_subject.link(
-                "subject",
-                callbacks={"value": self.subject_column_changed},
-            )
         if "condition" not in self.df.columns:
             self.select_condition.options = cols
             self.select_condition.visible = True
-            self.select_condition.link(
-                "condition",
-                callbacks={"value": self.condition_column_changed},
-            )
         self.pane.append(row)
 
     def parse_file(self, file_name, file_content) -> pd.DataFrame:

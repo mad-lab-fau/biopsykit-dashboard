@@ -43,14 +43,18 @@ class TestAddTimes:
         assert ask_to_add_times.ready == True
         assert ask_to_add_times.next == "Add Times"
 
-    def test_upload_perfect_file(self, add_times, script_dir):
-        file_name = "ecg_time_log.xlsx"
+    def test_upload_subject_time_file_all_missing(self, add_times, script_dir):
+        file_name = "ecg_time_log_changed_all.xlsx"
         abs_file_path = os.path.join(script_dir, file_name)
         with open(abs_file_path, "rb") as f:
             add_times.time_upload.filename = file_name
             add_times.time_upload.value = f.read()
+        assert add_times.ready == False
+        add_times.select_subject.value = "versuchspersonen"
+        assert "subject" in add_times.df.columns.to_list()
+        assert add_times.ready == False
+        add_times.select_condition.value = "cas"
         assert add_times.ready == True
-        assert add_times.next == "Do you want to detect Outlier?"
         keys = ["Vp01", "Vp02"]
         for key in keys:
             assert key in add_times.subject_time_dict.keys()
@@ -68,17 +72,14 @@ class TestAddTimes:
         for key in keys:
             assert key in add_times.subject_time_dict.keys()
 
-    def test_upload_subject_time_file_all_missing(self, add_times, script_dir):
-        file_name = "ecg_time_log_changed_all.xlsx"
+    def test_upload_perfect_file(self, add_times, script_dir):
+        file_name = "ecg_time_log.xlsx"
         abs_file_path = os.path.join(script_dir, file_name)
         with open(abs_file_path, "rb") as f:
             add_times.time_upload.filename = file_name
             add_times.time_upload.value = f.read()
-        assert add_times.ready == False
-        add_times.select_subject.value = "versuchspersonen"
-        assert add_times.ready == False
-        add_times.select_condition.value = "cas"
         assert add_times.ready == True
+        assert add_times.next == "Do you want to detect Outlier?"
         keys = ["Vp01", "Vp02"]
         for key in keys:
             assert key in add_times.subject_time_dict.keys()

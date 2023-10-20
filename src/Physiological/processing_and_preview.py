@@ -1,3 +1,5 @@
+import datetime
+
 import param
 import panel as pn
 import biopsykit as bp
@@ -8,11 +10,11 @@ from biopsykit.signals.rsp import RspProcessor
 from nilspodlib import Dataset
 import plotly.express as px
 import matplotlib.pyplot as plt
+from pandas import Timestamp
 
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
     PROCESSING_PREVIEW_TEXT,
     PRESTEP_PROCESSING_TEXT,
-    HRV_METHODS,
 )
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
@@ -44,6 +46,7 @@ class ProcessingAndPreview(PhysiologicalBase):
         params["HEADER_TEXT"] = PROCESSING_PREVIEW_TEXT
         super().__init__(**params)
         self.update_step(9)
+        self.subject_time_dict = {}
         self.result_view = SubjectDataFrameView({})
         self.result_graph = PlotViewer(None, None, None)
         self._view = pn.Column(

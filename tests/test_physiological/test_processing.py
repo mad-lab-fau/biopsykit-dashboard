@@ -9,6 +9,7 @@ import pytest
 from biopsykit.io.eeg import MuseDataset
 from nilspodlib import Dataset
 
+from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.add_times import AddTimes
 from src.Physiological.processing_and_preview import ProcessingAndPreview
 
