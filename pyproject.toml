@@ -46,6 +46,7 @@ mne = {version = "^1.2.3", optional = true}
 
 [tool.poetry.extras]
 mne = ["mne"]
+jupyter = ["IPython", "ipympl", "ipywidgets"]
 
 [build-system]
 requires = ["poetry-core"]
