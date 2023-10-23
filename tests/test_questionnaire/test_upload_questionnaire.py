@@ -59,5 +59,5 @@ class TestUploadQuestionnaireData:
     def test_upload_corrupted_csv_file(self, upload_questionnaire):
         upload_questionnaire.file_input.filename = "corrupted.csv"
         upload_questionnaire.file_input.value = b"corrupted"
-        assert upload_questionnaire.ready is False
         assert upload_questionnaire.data is None
+        assert upload_questionnaire.ready is False
