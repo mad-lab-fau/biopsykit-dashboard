@@ -1,6 +1,5 @@
 import panel as pn
 
-from src.Psychological.TestPage import TestPage
 from src.Psychological.setup_study import SetUpStudyDesign
 
 pn.extension(sizing_mode="stretch_width")
