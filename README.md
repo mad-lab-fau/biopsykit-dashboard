@@ -2,7 +2,7 @@
 
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/mad-lab-fau/biopsykit-dashboard)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
+[![Test](https://github.com/mad-lab-fau/biopsykit-dashboard/actions/workflows/test.yml/badge.svg)](https://github.com/mad-lab-fau/biopsykit-dashboard/actions/workflows/test.yml)
 
 ## Table of contents
 * [General info](#general-info)
