@@ -23,6 +23,9 @@ six = "^1.16.0"
 plotly = "^5.17.0"
 xgboost = "^2.0.0"
 mne = "~1.2.1"
+ipython = {version = "^7", optional = true}
+ipywidgets = {version = "^8", optional = true}
+ipympl = {version = "^0.9", optional = true}
 
 [tool.poetry.dev-dependencies]
 black = { version="^22", extras=["jupyter", "d"] }
@@ -46,7 +49,7 @@ mne = {version = "^1.2.3", optional = true}
 
 [tool.poetry.extras]
 mne = ["mne"]
-jupyter = ["IPython", "ipympl", "ipywidgets"]
+jupyter = ["ipython", "ipympl", "ipywidgets"]
 
 [build-system]
 requires = ["poetry-core"]
