@@ -15,7 +15,7 @@ pn.extension(notifications=True)
 pn.extension("plotly", "tabulator")
 
 app = pn.template.BootstrapTemplate(
-    title="BioPysKit Dashboard",
+    title=f"BioPysKit Dashboard - {pipeline.name}",
     header_background="#186FEF",
     logo="./assets/Icons/biopsykit_Icon.png",
     collapsed_sidebar=True,
@@ -26,7 +26,6 @@ app.config.log_level = "CRITICAL"
 app.sidebar.constant = False
 app.main.constant = False
 app.theme_toggle = False
-app.title = "BioPysKit Dashboard - Physiological Signals"
 
 
 app.main.append(
