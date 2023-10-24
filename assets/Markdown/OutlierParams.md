@@ -1,1 +1,0 @@
-Furthermore, you can set the parameters for the outlier detection methods you chose down below. If you don't change anything the default values for the corresponding method will be used.

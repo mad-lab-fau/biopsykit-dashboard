@@ -1,2 +1,0 @@
-# Selecting Physiological Signal Type
-
