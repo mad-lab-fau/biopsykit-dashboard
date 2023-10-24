@@ -10,6 +10,7 @@ class Recordings(PhysiologicalBase):
         options=["Multiple Recording", "Single Recording"],
         name="Select recording type",
         value="Single Recording",
+        sizing_mode="stretch_width",
     )
     next = param.Selector(
         default="Upload Files", objects=["Upload Files", "Multiple Files"]

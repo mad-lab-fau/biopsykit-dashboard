@@ -1,11 +1,16 @@
 import ast
 import os
 from _ast import ImportFrom
+from typing import List
+
 from tqdm import tqdm
 from setuptools import glob
 
+POSSIBLE_PIPELINES = ["physiological", "sleep", "questionnaire", "saliva"]
 OWN_NAME = "combine_all_files.py"
-RESULTING_FILENAME = "dashboard.py"
+RESULTING_FILENAME = "dashboard"
+RESULTING_SINGLE_PIPELINE_FILENAME = "single_dashboard"
+SINGLE_PIPELINE_FILENAME = "single_pipeline.py"
 MAIN_FILE = "main.py"
 IGNORE_FOLDERS = [
     "build",
@@ -111,17 +116,17 @@ def combine_all_files():
         out_file_text += "\n\n"
         out_file_text += main_file_text
     out_file_text = replace_all_imports(out_file_text, files_dict)
-    with open(RESULTING_FILENAME, "w") as outfile:
+    with open(RESULTING_FILENAME + ".py", "w") as outfile:
         outfile.write(out_file_text)
     print("Everything combined")
 
 
-def change_imports():
+def change_imports(combined_file: str):
     print("Changing imports of pyodide File")
-    with open("pyodide/dashboard.js", "r") as file:
+    with open(f"pyodide/{combined_file}.js", "r") as file:
         text = file.read()
         text = substring_replace(text)
-    with open("pyodide/dashboard.js", "w") as file:
+    with open(f"pyodide/{combined_file}.js", "w") as file:
         file.write(text)
     print("Imports changed")
 
@@ -135,13 +140,113 @@ def substring_replace(string_file: str) -> str:
     return "\n".join(result)
 
 
-if __name__ == "__main__":
-    combine_all_files()
+def build_single_pipeline_app(pipeline_type: str):
+    files_dict = read_python_files()
+    pipeline_type = pipeline_type.lower() + "_pipeline"
+
+    pipeline_class_names = [
+        name for name in files_dict.keys() if pipeline_type in name.lower()
+    ]
+
+    if len(pipeline_class_names) != 1:
+        print("Wrong pipeline")
+        exit(1)
+
+    with open(SINGLE_PIPELINE_FILENAME, "r") as file:
+        main_file_text = file.read()
+
+    pipeline_file_key = pipeline_class_names[0]
+    pipeline_class_names = get_pipeline_class_names(files_dict[pipeline_file_key])
+
+    if len(pipeline_class_names) != 1:
+        print("Wrong pipeline")
+        exit(1)
+
+    pipeline_class_name = pipeline_class_names[0]
+    result = []
+    splitted_text = main_file_text.splitlines()
+
+    pipeline_index = find_pipeline_index(splitted_text)
+
+    if pipeline_index == -1:
+        print("Wrong pipeline")
+        exit(1)
+
+    for line in splitted_text:
+        if line.startswith("pipeline = None"):
+            line = (
+                f"{files_dict[pipeline_file_key]}\n\npipeline = {pipeline_class_name}()"
+            )
+        result.append(line)
+
+    result_text = "\n".join(result)
+    out_file_text = replace_all_imports(result_text, files_dict)
+
+    output_filename = RESULTING_SINGLE_PIPELINE_FILENAME + ".py"
+
+    with open(output_filename, "w") as outfile:
+        outfile.write(out_file_text)
+
+    print("Everything combined")
+
+
+def get_pipeline_class_names(file_contents: str) -> List[str]:
+    return [
+        name
+        for name in get_class_names_from_file(file_contents)
+        if "pipeline" in name.lower()
+    ]
+
+
+def find_pipeline_index(lines: List[str]) -> int:
+    try:
+        return lines.index("pipeline = None")
+    except ValueError:
+        return -1
+
+
+def get_class_names_from_file(file_text: str) -> list:
+    node = ast.parse(file_text)
+    classes = [n.name for n in node.body if isinstance(n, ast.ClassDef)]
+    return classes
+
+
+def set_pipeline(pipeline_type: str, files_dict: dict):
+    print("Setting pipeline")
+    out_file_text = files_dict[pipeline_type]
+    out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
+    with open(SINGLE_PIPELINE_FILENAME, "w") as outfile:
+        outfile.write(out_file_text)
+    print("Pipeline set")
+
+
+def convert_to_pyodide(combined_file: str):
+    print("Converting to pyodide")
     exit_code = os.system(
-        "panel convert dashboard.py --to pyodide-worker --out pyodide"
+        f"panel convert {combined_file}.py --to pyodide-worker --out pyodide"
     )
     if exit_code != 0:
         print("Error while converting to pyodide")
         exit(1)
-    change_imports()
+    change_imports(combined_file)
+    print("Converted to pyodide")
+
+
+if __name__ == "__main__":
+    print("Starting")
+    combine_all_files_input = input("Do you want to combine all files? (y/n)\n")
+    if combine_all_files_input == "y":
+        combine_all_files()
+        convert_to_pyodide(RESULTING_FILENAME)
+    else:
+        pipeline = input(
+            "Which pipeline do you want to build? (physiological, sleep, questionnaire, saliva)\n"
+        )
+        pipeline = pipeline.lower()
+        if pipeline not in POSSIBLE_PIPELINES:
+            print("Wrong pipeline")
+            exit(1)
+        print(f"{pipeline} selected\n")
+        build_single_pipeline_app(pipeline)
+        convert_to_pyodide(RESULTING_SINGLE_PIPELINE_FILENAME)
     print("Done")

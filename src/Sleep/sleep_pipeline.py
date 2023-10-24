@@ -12,6 +12,8 @@ pn.extension("katex")
 
 
 class SleepPipeline:
+    name = "Sleep"
+
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()
         self.pipeline.add_stage(

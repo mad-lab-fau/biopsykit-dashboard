@@ -6,8 +6,9 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 
 class SelectCFTSheet(PhysiologicalBase):
-    text = ""
-    select_cft_sheets = pn.widgets.CheckBoxGroup()
+    select_cft_sheets = pn.widgets.CheckBoxGroup(
+        sizing_mode="stretch_width",
+    )
     ready = param.Boolean(default=False)
 
     def __init__(self, **params):

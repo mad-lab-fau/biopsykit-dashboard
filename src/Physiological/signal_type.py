@@ -12,6 +12,7 @@ class PhysSignalType(PhysiologicalBase):
     select_signal = pn.widgets.Select(
         name="Select Signal Type",
         options=PHYSIOLOGICAL_SIGNAL_OPTIONS,
+        sizing_mode="stretch_width",
     )
 
     def __init__(self, **params):

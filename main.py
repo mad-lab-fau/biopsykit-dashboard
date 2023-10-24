@@ -4,11 +4,6 @@ os.environ["OUTDATED_IGNORE"] = "1"
 import panel as pn
 
 from src.Physiological.physiological_pipeline import PhysiologicalPipeline
-from src.Psychological.psychological_pipeline import PsychologicalPipeline
-from src.Questionnaire.questionnaire_pipeline import QuestionnairePipeline
-from src.Saliva.saliva_pipeline import SalivaPipeline
-from src.Sleep.sleep_pipeline import SleepPipeline
-import warnings
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension(
@@ -33,59 +28,18 @@ app.theme_toggle = False
 current_page = MainPage(app.main)
 
 
-def startPhysPipeline(event):
-    ecg = PhysiologicalPipeline()
-    pane = pn.Column(
-        pn.Row(
-            pn.layout.HSpacer(),
-            ecg.pipeline.prev_button,
-            ecg.pipeline.next_button,
-        ),
-        ecg.pipeline.stage,
-    )
-    app.main[0].objects = [pane]
-
-
-def startQuestionnairePipeline(event):
-    questionnaire = QuestionnairePipeline()
-    pane = pn.Column(
-        pn.Row(
-            pn.layout.HSpacer(),
-            questionnaire.pipeline.prev_button,
-            questionnaire.pipeline.next_button,
-        ),
-        questionnaire.pipeline.stage,
-    )
-    app.main[0].objects = [pane]
-
-
-def startSalivaPipeline(event):
-    questionnaire = SalivaPipeline()
-    pane = pn.Column(
-        pn.Row(
-            pn.layout.HSpacer(),
-            questionnaire.pipeline.prev_button,
-            questionnaire.pipeline.next_button,
-        ),
-        questionnaire.pipeline.stage,
-        min_height=2000,
-    )
-    app.main[0].objects = [pane]
-
-
 def startPipeline(event):
     btn_name = event.obj.name
-    pipeline = None
-    if "Sleep" in btn_name:
-        pipeline = SleepPipeline()
-    elif "Physiological" in btn_name:
+    if "Physiological" in btn_name:
         pipeline = PhysiologicalPipeline()
-    elif "Questionnaire" in btn_name:
-        pipeline = QuestionnairePipeline()
-    elif "Saliva" in btn_name:
-        pipeline = SalivaPipeline()
-    elif "Psychological" in btn_name:
-        pipeline = PsychologicalPipeline()
+    # elif "Sleep" in btn_name:
+    #     pipeline = SleepPipeline()
+    # elif "Questionnaire" in btn_name:
+    #     pipeline = QuestionnairePipeline()
+    # elif "Saliva" in btn_name:
+    #     pipeline = SalivaPipeline()
+    # elif "Psychological" in btn_name:
+    #     pipeline = PsychologicalPipeline()
     else:
         pn.state.notifications.error("No Pipeline found for this Button")
         return
@@ -105,13 +59,13 @@ def get_sidebar():
     homeBtn = pn.widgets.Button(name="Home", button_type="primary")
     homeBtn.on_click(get_mainMenu)
     physBtn = pn.widgets.Button(name="Physiological Data")
-    physBtn.on_click(startPhysPipeline)
+    physBtn.on_click(startPipeline)
     questionnaireBtn = pn.widgets.Button(name="Questionnaire Data")
-    questionnaireBtn.on_click(startQuestionnairePipeline)
+    questionnaireBtn.on_click(startPipeline)
     psychBtn = pn.widgets.Button(name="Psychological Data")
     sleepBtn = pn.widgets.Button(name="Sleep Data")
     salBtn = pn.widgets.Button(name="Saliva Data")
-    salBtn.on_click(startSalivaPipeline)
+    salBtn.on_click(startPipeline)
     column = pn.Column(homeBtn, physBtn, psychBtn, questionnaireBtn, salBtn, sleepBtn)
     return column
 
@@ -131,7 +85,7 @@ def get_mainMenu(event):
         align="end",
         button_type="primary",
     )
-    physBtn.on_click(startPhysPipeline)
+    physBtn.on_click(startPipeline)
     sleepBtn = pn.widgets.Button(
         name="Sleep Data",
         sizing_mode="stretch_width",
@@ -144,7 +98,7 @@ def get_mainMenu(event):
         sizing_mode="stretch_width",
         button_type="primary",
     )
-    questionnaireBtn.on_click(startQuestionnairePipeline)
+    questionnaireBtn.on_click(startPipeline)
     psychBtn = pn.widgets.Button(
         name="Psychological Data",
         sizing_mode="stretch_width",
@@ -156,7 +110,7 @@ def get_mainMenu(event):
         sizing_mode="stretch_width",
         button_type="primary",
     )
-    salBtn.on_click(startSalivaPipeline)
+    salBtn.on_click(startPipeline)
     pathToIcons = "./assets/Icons/"
     iconNames = [
         "Physiological.svg",
@@ -263,5 +217,3 @@ pn.config.console_output = "disable"
 app.sidebar.append(get_sidebar())
 get_mainMenu(None)
 app.servable()
-# ssl_certfile = "localhost.crt",
-# ssl_keyfile = "localhost.key",

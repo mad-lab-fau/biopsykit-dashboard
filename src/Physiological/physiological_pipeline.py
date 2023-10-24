@@ -26,6 +26,7 @@ pn.extension("katex")
 
 class PhysiologicalPipeline:
     pipeline = None
+    name = "Physiological"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)

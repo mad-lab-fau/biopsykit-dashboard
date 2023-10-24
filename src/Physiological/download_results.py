@@ -6,7 +6,7 @@ import pandas as pd
 import panel as pn
 import seaborn as sns
 from biopsykit.protocols import CFT
-from fau_colors import cmaps
+import fau_colors
 from matplotlib import pyplot as plt
 
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import DOWNLOAD_RESULT_TEXT
@@ -14,7 +14,6 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.utils import get_datetime_columns_of_data_frame
 
 
-# ECG_results (als xlsx), HRV_results + option für die Plots
 def delete_timezone_of_datetime_columns_(df):
     datetime_columns = get_datetime_columns_of_data_frame(df)
     for col in datetime_columns:
@@ -22,6 +21,7 @@ def delete_timezone_of_datetime_columns_(df):
     return df
 
 
+# noinspection PyUnusedLocal
 class DownloadResults(PhysiologicalBase):
     load_plots_ecg = pn.widgets.Checkbox(name="Download ECG Plots")
     load_plots_eeg = pn.widgets.Checkbox(name="Download EEG Plots")
@@ -37,7 +37,6 @@ class DownloadResults(PhysiologicalBase):
         self.update_step(12)
         self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
         self._view = pn.Column(self.header)
-
         self._view.append(self._load_results_checkbox)
         self._view.append(self.load_plots_hrv)
 
@@ -149,7 +148,7 @@ class DownloadResults(PhysiologicalBase):
     def load_eeg_plots(self, zip_file):
         for key in self.eeg_processor.keys():
             buf = io.BytesIO()
-            palette = sns.color_palette(cmaps.faculties)
+            palette = sns.color_palette(fau_colors.cmaps.faculties)
             sns.set_theme(
                 context="notebook", style="ticks", font="sans-serif", palette=palette
             )
@@ -159,7 +158,7 @@ class DownloadResults(PhysiologicalBase):
             zip_file.writestr(f"ECG_{key}.png", buf.getvalue())
 
     def load_cft_plots(self, zip_file):
-        palette = sns.color_palette(cmaps.faculties)
+        palette = sns.color_palette(fau_colors.cmaps.faculties)
         sns.set_theme(
             context="notebook", style="ticks", font="sans-serif", palette=palette
         )
@@ -184,4 +183,6 @@ class DownloadResults(PhysiologicalBase):
                 callback=self.get_selected_files, filename="Results.zip"
             )
             self._view.append(self.download_btn)
+        else:
+            self.download_btn.filename = "Results.zip"
         return self._view

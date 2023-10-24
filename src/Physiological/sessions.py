@@ -7,7 +7,10 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 class Session(PhysiologicalBase):
     select_session = pn.widgets.Select(
-        name="", value="Single Session", options=["Multiple Sessions", "Single Session"]
+        name="",
+        value="Single Session",
+        options=["Multiple Sessions", "Single Session"],
+        sizing_mode="stretch_width",
     )
     ready = param.Boolean(default=False)
 

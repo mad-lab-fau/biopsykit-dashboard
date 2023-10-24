@@ -7,7 +7,10 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 class SetRspParameters(PhysiologicalBase):
     checkbox_estimate_rsp = pn.widgets.Checkbox(name="Estimate RSP", value=False)
     select_estimation_method = pn.widgets.Select(
-        name="Estimation Method", options=EDR_TYPES, visible=False
+        name="Estimation Method",
+        options=EDR_TYPES,
+        visible=False,
+        sizing_mode="stretch_width",
     )
 
     def __init__(self, **params):

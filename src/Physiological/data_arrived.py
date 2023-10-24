@@ -11,7 +11,9 @@ from src.Physiological.PhysiologicalBase import PhysiologicalBase
 
 class DataArrived(PhysiologicalBase):
     ready = param.Boolean(default=False)
-    subject_selector = pn.widgets.Select(sizing_mode="stretch_width")
+    subject_selector = pn.widgets.Select(
+        sizing_mode="stretch_width",
+    )
     sampling_rate_input = pn.widgets.TextInput(
         name="Sampling rate Input",
         placeholder="Enter your sampling rate here...",
@@ -29,12 +31,16 @@ class DataArrived(PhysiologicalBase):
         header_align="right",
         visible=False,
         disabled=True,
+        sizing_mode="stretch_width",
     )
     session_start = pn.widgets.DatetimePicker(
         name="Session start:", disabled=True, sizing_mode="stretch_width", visible=False
     )
     session_end = pn.widgets.DatetimePicker(
-        name="Session end:", disabled=True, sizing_mode="stretch_width", visible=False
+        name="Session end:",
+        disabled=True,
+        sizing_mode="stretch_width",
+        visible=False,
     )
 
     def __init__(self, **params):

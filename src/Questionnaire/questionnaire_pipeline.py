@@ -22,6 +22,7 @@ pn.extension("katex")
 
 class QuestionnairePipeline:
     pipeline = None
+    name = "Questionnaire"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)

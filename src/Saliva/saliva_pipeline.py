@@ -16,6 +16,7 @@ pn.extension("katex")
 
 class SalivaPipeline:
     pipeline = None
+    name = "Saliva"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()

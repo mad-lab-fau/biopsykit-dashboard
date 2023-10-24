@@ -24,16 +24,19 @@ class FileUpload(PhysiologicalBase):
         styles={"background": "whitesmoke"},
         multiple=False,
         accept=".csv,.bin,.xlsx",
+        sizing_mode="stretch_width",
     )
     select_timezone = pn.widgets.Select(
         options=["None Selected"] + list(pytz.all_timezones),
         value="Europe/Berlin",
         name="Timezone",
+        sizing_mode="stretch_width",
     )
     select_hardware = pn.widgets.Select(
         options=["NilsPod", "BioPac"],
         value="NilsPod",
         name="Hardware",
+        sizing_mode="stretch_width",
     )
     ready = param.Boolean(default=False)
 
