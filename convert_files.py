@@ -128,7 +128,6 @@ def change_imports(combined_file: str):
         text = substring_replace(text)
     with open(f"pyodide/{combined_file}.js", "w") as file:
         file.write(text)
-    print("Imports changed")
 
 
 def substring_replace(string_file: str) -> str:
@@ -229,7 +228,6 @@ def convert_to_pyodide(combined_file: str):
         print("Error while converting to pyodide")
         exit(1)
     change_imports(combined_file)
-    print("Converted to pyodide")
 
 
 if __name__ == "__main__":
@@ -249,4 +247,4 @@ if __name__ == "__main__":
         print(f"{pipeline} selected\n")
         build_single_pipeline_app(pipeline)
         convert_to_pyodide(RESULTING_SINGLE_PIPELINE_FILENAME)
-    print("Done")
+    print("Finished")
