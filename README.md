@@ -40,11 +40,11 @@ You can also convert the application to a pyodide application. This will create 
 To do so, run the following command:
 
 ```bash
-poetry run python convert_files.py
+poetry run poe convert_files
 ```
 
-There you will be asked if you want to convert all the pipelines into one large app. However if you choose to do this
-the resulting file will be too large to be run in the browser. Therefore you should choose to convert the pipelines 
+There you will be asked if you want to convert all the pipelines into one large app. However, if you choose to do this
+the resulting file will be too large to be run in the browser. Therefore, you should choose to convert the pipelines 
 individually. You can do this pipeline by pipeline. 
 
 
