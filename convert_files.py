@@ -29,9 +29,13 @@ changed_imports = (
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
     "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
-    "'seaborn == 0.11.2', 'biopsykit', 'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
+    "'pingouin==0.5.3', "
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/biopsykit-0.9.0-py3-none-any.whl',"
+    "'seaborn', "
+    "'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
     "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions']\n"
 )
+# == 0.11.2
 
 
 def is_ignored(filename) -> bool:
@@ -230,6 +234,17 @@ def convert_to_pyodide(combined_file: str):
     change_imports(combined_file)
 
 
+def get_pipeline_name(pipeline_input: str) -> str:
+    pipeline_input = pipeline_input.lower()
+    if pipeline_input in POSSIBLE_PIPELINES:
+        return pipeline
+    l = [p for p in POSSIBLE_PIPELINES if p.startswith(pipeline_input)]
+    if len(l) != 1:
+        print("Wrong pipeline")
+        exit(1)
+    return l[0]
+
+
 if __name__ == "__main__":
     print("Starting")
     combine_all_files_input = input("Do you want to combine all files? (y/n)\n")
@@ -240,10 +255,7 @@ if __name__ == "__main__":
         pipeline = input(
             "Which pipeline do you want to build? (physiological, sleep, questionnaire, saliva)\n"
         )
-        pipeline = pipeline.lower()
-        if pipeline not in POSSIBLE_PIPELINES:
-            print("Wrong pipeline")
-            exit(1)
+        pipeline = get_pipeline_name(pipeline)
         print(f"{pipeline} selected\n")
         build_single_pipeline_app(pipeline)
         convert_to_pyodide(RESULTING_SINGLE_PIPELINE_FILENAME)

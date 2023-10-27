@@ -30,7 +30,7 @@ poetry install
 To then run the Dashboard locally in your Browser:
 
 ```bash
-poetry run python main.py
+poetry run poe run_local
 ```
 
 after that the Dashboard should start in your default Browser.
