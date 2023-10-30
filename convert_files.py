@@ -10,7 +10,6 @@ POSSIBLE_PIPELINES = ["physiological", "sleep", "questionnaire", "saliva"]
 OWN_NAME = "combine_all_files.py"
 RESULTING_FILENAME = "dashboard"
 RESULTING_SINGLE_PIPELINE_FILENAME = "single_dashboard"
-SINGLE_PIPELINE_FILENAME = "single_pipeline.py"
 MAIN_FILE = "main.py"
 IGNORE_FOLDERS = [
     "build",
@@ -18,23 +17,23 @@ IGNORE_FOLDERS = [
     "pyodide",
     "pyscript",
 ]
-class_file_dict = {}
-function_file_dict = {}
 files_added = []
-functions_dict = {}
+
+
 changed_imports = (
     "  const env_spec = ['https://cdn.holoviz.org/panel/1.2.3/dist/wheels/bokeh-3.2.2-py3-none-any.whl', "
     "'https://cdn.holoviz.org/panel/1.2.3/dist/wheels/panel-1.2.3-py3-none-any.whl', "
     "'pyodide-http==0.2.1', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
-    "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
-    "'pingouin==0.5.3', "
+    # "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/pingouin-0.5.4-py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/biopsykit-0.9.0-py3-none-any.whl',"
     "'seaborn', "
     "'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
-    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions']\n"
+    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions','holoviews']\n"
 )
+
 # == 0.11.2
 
 
@@ -155,7 +154,7 @@ def build_single_pipeline_app(pipeline_type: str):
         print("Wrong pipeline")
         exit(1)
 
-    with open(SINGLE_PIPELINE_FILENAME, "r") as file:
+    with open("single_pipeline.py", "r") as file:
         main_file_text = file.read()
 
     pipeline_file_key = pipeline_class_names[0]
@@ -172,7 +171,9 @@ def build_single_pipeline_app(pipeline_type: str):
     pipeline_index = find_pipeline_index(splitted_text)
 
     if pipeline_index == -1:
-        print("Wrong pipeline")
+        print(
+            "Could not find the right place to insert the pipeline at the file: single_pipeline.py"
+        )
         exit(1)
 
     for line in splitted_text:
@@ -185,7 +186,7 @@ def build_single_pipeline_app(pipeline_type: str):
     result_text = "\n".join(result)
     out_file_text = replace_all_imports(result_text, files_dict)
 
-    output_filename = RESULTING_SINGLE_PIPELINE_FILENAME + ".py"
+    output_filename = pipeline_type + ".py"
 
     with open(output_filename, "w") as outfile:
         outfile.write(out_file_text)
@@ -218,12 +219,13 @@ def set_pipeline(pipeline_type: str, files_dict: dict):
     print("Setting pipeline")
     out_file_text = files_dict[pipeline_type]
     out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
-    with open(SINGLE_PIPELINE_FILENAME, "w") as outfile:
+    with open(RESULTING_SINGLE_PIPELINE_FILENAME + ".py", "w") as outfile:
         outfile.write(out_file_text)
     print("Pipeline set")
 
 
-def convert_to_pyodide(combined_file: str):
+def convert_to_pyodide(selected_pipeline: str):
+    combined_file = selected_pipeline + "_pipeline"
     print("Converting to pyodide")
     exit_code = os.system(
         f"panel convert {combined_file}.py --to pyodide-worker --out pyodide"
@@ -258,5 +260,5 @@ if __name__ == "__main__":
         pipeline = get_pipeline_name(pipeline)
         print(f"{pipeline} selected\n")
         build_single_pipeline_app(pipeline)
-        convert_to_pyodide(RESULTING_SINGLE_PIPELINE_FILENAME)
+        convert_to_pyodide(pipeline)
     print("Finished")

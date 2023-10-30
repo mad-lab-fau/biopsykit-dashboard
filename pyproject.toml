@@ -26,6 +26,7 @@ mne = "~1.2.1"
 ipython = {version = "^7", optional = true}
 ipywidgets = {version = "^8", optional = true}
 ipympl = {version = "^0.9", optional = true}
+pingouin = "^0.5.3"
 
 [tool.poetry.dev-dependencies]
 black = { version="^22", extras=["jupyter", "d"] }

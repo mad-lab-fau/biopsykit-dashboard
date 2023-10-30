@@ -23,6 +23,9 @@ __version__ = "0.1.0"
 
 def version() -> None:
     """Prints the version of BioPsyKit and its dependencies."""
+    import os
+
+    os.environ["OUTDATED_IGNORE"] = "1"
     import biopsykit as bp
     import param
     import panel as pn
@@ -51,6 +54,7 @@ def version() -> None:
     import pytz
     import plotly.express as px
     import matplotlib.pyplot as plt
+
     #
     # print(
     #     f"Operating System: {platform.system()} ({platform.architecture()[1]} {platform.architecture()[0]})\n",
