@@ -12,12 +12,7 @@ OWN_NAME = "combine_all_files.py"
 RESULTING_FILENAME = "dashboard"
 RESULTING_SINGLE_PIPELINE_FILENAME = "single_dashboard"
 MAIN_FILE = "main.py"
-IGNORE_FOLDERS = [
-    "build",
-    "dist",
-    "pyodide",
-    "pyscript",
-]
+IGNORE_FOLDERS = ["build", "dist", "pyodide", "pyscript", "Miscellaneous"]
 files_added = []
 
 
@@ -225,8 +220,10 @@ def set_pipeline(pipeline_type: str, files_dict: dict):
 
 
 def remove_redundant_imports(pipeline_type: str):
-    pipeline_type = f"{pipeline_type.lower()}_pipeline.py"
-
+    if pipeline_type != RESULTING_FILENAME:
+        pipeline_type = f"{pipeline_type.lower()}_pipeline.py"
+    else:
+        pipeline_type = f"{pipeline_type}.py"
     if not os.path.exists(pipeline_type):
         print("Pipeline does not exist")
         exit(1)
@@ -253,7 +250,9 @@ def remove_redundant_imports(pipeline_type: str):
 
 
 def convert_to_pyodide(selected_pipeline: str):
-    combined_file = selected_pipeline + "_pipeline"
+    combined_file = selected_pipeline
+    if selected_pipeline != RESULTING_FILENAME:
+        combined_file += "_pipeline"
     print("Converting to pyodide")
     exit_code = os.system(
         f"panel convert {combined_file}.py --to pyodide-worker --out pyodide"
@@ -290,22 +289,23 @@ def build_all_pipelines():
 
 def build_all_pipelines_into_one():
     combine_all_files()
+    remove_redundant_imports(RESULTING_FILENAME)
     convert_to_pyodide(RESULTING_FILENAME)
 
 
 if __name__ == "__main__":
     if len(sys.argv) > 1 and sys.argv[1] == "--build-all":
-        build_all_pipelines()
+        build_all_pipelines_into_one()
         exit(0)
     print("Starting")
     combine_all_files_input = input(
-        "Do you want to combine all pipelines into one large file (only for local testing)? (y/n)\n"
+        "Do you want to combine all pipelines into one large file? (y/n)\n"
     )
     if combine_all_files_input == "y":
         build_all_pipelines_into_one()
     else:
         build_every_pipeline_input = input(
-            "Do you want to build every pipeline? (y/n)\n"
+            "Do you want to build every pipeline (each into one extra file)? (y/n)\n"
         )
         if build_every_pipeline_input == "y":
             build_all_pipelines()

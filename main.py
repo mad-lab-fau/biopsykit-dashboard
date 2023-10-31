@@ -111,7 +111,12 @@ def get_mainMenu(event):
         button_type="primary",
     )
     salBtn.on_click(startPipeline)
-    pathToIcons = "./assets/Icons/"
+    if os.path.exists("./assets/Icons/"):
+        pathToIcons = "./assets/Icons/"
+    elif os.path.exists("../assets/Icons/"):
+        pathToIcons = "../assets/Icons/"
+    else:
+        pathToIcons = "../../assets/Icons/"
     iconNames = [
         "Physiological.svg",
         "Psychological.svg",
