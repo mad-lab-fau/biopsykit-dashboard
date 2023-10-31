@@ -174,11 +174,11 @@ class AddTimes(PhysiologicalBase):
             cond_name = conditions.condition
             t_condition = conditions.drop(labels=["condition"])
             t_condition = t_condition.apply(
-                lambda time: datetime.datetime.combine(
-                    datetime.datetime.now().date(),
+                lambda time: datetime.combine(
+                    datetime.now().date(),
                     time,
                 )
-                if not isinstance(time, datetime.datetime)
+                if not isinstance(time, datetime)
                 else time
             )
             self.subject_time_dict[subject_name] = {}

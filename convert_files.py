@@ -279,11 +279,11 @@ def build_one_pipeline(pipeline_input: str):
     build_single_pipeline_app(pipeline_input)
     remove_redundant_imports(pipeline_input)
     convert_to_pyodide(pipeline_input)
-    files_added.clear()
 
 
 def build_all_pipelines():
     for pipeline in POSSIBLE_PIPELINES:
+        files_added.clear()
         print(f"Building: {pipeline}\n")
         build_one_pipeline(pipeline)
 
