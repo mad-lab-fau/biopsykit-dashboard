@@ -60,3 +60,4 @@ build-backend = "poetry.core.masonry.api"
 test = {cmd = "pytest tests/ ", help = "Run Pytest." }
 run_local = {cmd = "panel serve  main.py --autoreload --show", help = "Run dashboard locally." }
 convert_files = {cmd = "python convert_files.py", help = "Convert files to HDF5." }
+build_pipelines = {cmd = "python convert_files.py --build-all", help = "Build pipelines." }

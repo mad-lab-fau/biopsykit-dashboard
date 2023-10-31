@@ -1,5 +1,6 @@
 import ast
 import os
+import sys
 from _ast import ImportFrom
 from typing import List
 
@@ -278,6 +279,13 @@ def build_one_pipeline(pipeline_input: str):
     build_single_pipeline_app(pipeline_input)
     remove_redundant_imports(pipeline_input)
     convert_to_pyodide(pipeline_input)
+    files_added.clear()
+
+
+def build_all_pipelines():
+    for pipeline in POSSIBLE_PIPELINES:
+        print(f"Building: {pipeline}\n")
+        build_one_pipeline(pipeline)
 
 
 def build_all_pipelines_into_one():
@@ -286,6 +294,9 @@ def build_all_pipelines_into_one():
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1 and sys.argv[1] == "--build-all":
+        build_all_pipelines()
+        exit(0)
     print("Starting")
     combine_all_files_input = input(
         "Do you want to combine all pipelines into one large file (only for local testing)? (y/n)\n"
@@ -297,10 +308,7 @@ if __name__ == "__main__":
             "Do you want to build every pipeline? (y/n)\n"
         )
         if build_every_pipeline_input == "y":
-            for pipeline in POSSIBLE_PIPELINES:
-                files_added = []
-                print(f"Building: {pipeline}\n")
-                build_one_pipeline(pipeline)
+            build_all_pipelines()
         else:
             pipeline = input(
                 "Which pipeline do you want to build? (physiological, sleep, questionnaire, saliva)\n"
