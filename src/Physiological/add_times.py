@@ -1,4 +1,4 @@
-import datetime as datetime
+from datetime import datetime
 from io import StringIO
 import pandas as pd
 import panel as pn
@@ -59,7 +59,7 @@ class AddTimes(PhysiologicalBase):
     datetime = [
         (
             pn.widgets.TextInput(placeholder="Name the timestamp"),
-            pn.widgets.DatetimePicker(value=datetime.datetime.now()),
+            pn.widgets.DatetimePicker(value=datetime.now()),
         )
     ]
     add_button = pn.widgets.Button(name="Add timestamp", button_type="danger")

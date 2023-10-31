@@ -27,8 +27,9 @@ changed_imports = (
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
     # "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
+    "'fau_colors==1.5.3',"
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/pingouin-0.5.4-py3-none-any.whl', "
-    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/biopsykit-0.9.0-py3-none-any.whl',"
+    "'biopsykit',"
     "'seaborn', "
     "'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
     "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions','holoviews']\n"
@@ -145,7 +146,6 @@ def substring_replace(string_file: str) -> str:
 def build_single_pipeline_app(pipeline_type: str):
     files_dict = read_python_files()
     pipeline_type = pipeline_type.lower() + "_pipeline"
-
     pipeline_class_names = [
         name for name in files_dict.keys() if pipeline_type in name.lower()
     ]
@@ -187,7 +187,6 @@ def build_single_pipeline_app(pipeline_type: str):
     out_file_text = replace_all_imports(result_text, files_dict)
 
     output_filename = pipeline_type + ".py"
-
     with open(output_filename, "w") as outfile:
         outfile.write(out_file_text)
 
@@ -224,6 +223,34 @@ def set_pipeline(pipeline_type: str, files_dict: dict):
     print("Pipeline set")
 
 
+def remove_redundant_imports(pipeline_type: str):
+    pipeline_type = f"{pipeline_type.lower()}_pipeline.py"
+
+    if not os.path.exists(pipeline_type):
+        print("Pipeline does not exist")
+        exit(1)
+
+    with open(pipeline_type, "r") as file:
+        pipeline_code = file.read()
+
+    nodes = ast.parse(pipeline_code)
+    imports = [
+        f"import {i.name}\n" if i.asname is None else f"import {i.name} as {i.asname}\n"
+        for n in nodes.body
+        if isinstance(n, ast.Import)
+        for i in n.names
+    ]
+    imports = list(dict.fromkeys(imports))
+    existing_imports = []
+    with open(pipeline_type, "r") as input_file:
+        for line in input_file:
+            if "from" in line or "import" not in line:
+                existing_imports.append(line)
+
+    with open(pipeline_type, "w") as output:
+        output.writelines(imports + existing_imports)
+
+
 def convert_to_pyodide(selected_pipeline: str):
     combined_file = selected_pipeline + "_pipeline"
     print("Converting to pyodide")
@@ -247,18 +274,38 @@ def get_pipeline_name(pipeline_input: str) -> str:
     return l[0]
 
 
+def build_one_pipeline(pipeline_input: str):
+    build_single_pipeline_app(pipeline_input)
+    remove_redundant_imports(pipeline_input)
+    convert_to_pyodide(pipeline_input)
+
+
+def build_all_pipelines_into_one():
+    combine_all_files()
+    convert_to_pyodide(RESULTING_FILENAME)
+
+
 if __name__ == "__main__":
     print("Starting")
-    combine_all_files_input = input("Do you want to combine all files? (y/n)\n")
+    combine_all_files_input = input(
+        "Do you want to combine all pipelines into one large file (only for local testing)? (y/n)\n"
+    )
     if combine_all_files_input == "y":
-        combine_all_files()
-        convert_to_pyodide(RESULTING_FILENAME)
+        build_all_pipelines_into_one()
     else:
-        pipeline = input(
-            "Which pipeline do you want to build? (physiological, sleep, questionnaire, saliva)\n"
+        build_every_pipeline_input = input(
+            "Do you want to build every pipeline? (y/n)\n"
         )
-        pipeline = get_pipeline_name(pipeline)
-        print(f"{pipeline} selected\n")
-        build_single_pipeline_app(pipeline)
-        convert_to_pyodide(pipeline)
+        if build_every_pipeline_input == "y":
+            for pipeline in POSSIBLE_PIPELINES:
+                files_added = []
+                print(f"Building: {pipeline}\n")
+                build_one_pipeline(pipeline)
+        else:
+            pipeline = input(
+                "Which pipeline do you want to build? (physiological, sleep, questionnaire, saliva)\n"
+            )
+            pipeline = get_pipeline_name(pipeline)
+            print(f"{pipeline} selected\n")
+            build_one_pipeline(pipeline)
     print("Finished")
