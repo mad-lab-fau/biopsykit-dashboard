@@ -1,4 +1,4 @@
-MAX_STEPS = 7
+SLEEP_MAX_STEPS = 7
 
 POSSIBLE_DEVICES = [
     "Polysomnography",

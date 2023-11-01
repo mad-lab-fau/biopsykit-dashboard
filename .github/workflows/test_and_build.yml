@@ -7,7 +7,7 @@ on:
     branches: [ development ]
 
 jobs:
-  test:
+  test_build_and_deploy:
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,3 +34,12 @@ jobs:
       if: ${{ matrix.python-version == '3.10' }}
       run: |
         poetry run poe build_pipelines
+    - name: Deploy_to_pages
+      if: ${{ matrix.python-version == '3.10' }}
+      uses: crazy-max/ghaction-github-pages@v4
+      with:
+        target_branch: development
+        build_dir: dashboard
+        commit_message: Automatic deployment to GitHub Pages
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

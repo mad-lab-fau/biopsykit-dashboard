@@ -2,7 +2,7 @@ import param
 import pytz
 
 from src.Physiological.custom_components import PipelineHeader
-from src.Sleep.SLEEP_CONSTANTS import MAX_STEPS
+from src.Sleep.SLEEP_CONSTANTS import SLEEP_MAX_STEPS
 
 
 class SleepBase(param.Parameterized):
@@ -53,7 +53,7 @@ class SleepBase(param.Parameterized):
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
-        self.header = PipelineHeader(1, MAX_STEPS, header_text)
+        self.header = PipelineHeader(1, SLEEP_MAX_STEPS, header_text)
         super().__init__(**params)
 
     def update_step(self, step: int | param.Integer):

@@ -1,4 +1,4 @@
-MAX_STEPS = 9
+QUESTIONNAIRE_MAX_STEPS = 9
 
 ASK_TO_SET_LOADING_PARAMETERS_TEXT = (
     "# Loading Parameters \n\n "

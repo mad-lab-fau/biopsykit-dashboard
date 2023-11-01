@@ -1,4 +1,4 @@
-MAX_STEPS = 4
+SALIVA_MAX_STEPS = 4
 
 ASK_FOR_FORMAT_TEXT = "# Choose the format your data is stored in"
 ASK_TO_LOAD_CONDITION_LIST_TEXT = "# Do you want to add a condition list?"

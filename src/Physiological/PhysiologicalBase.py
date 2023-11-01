@@ -62,13 +62,13 @@ class PhysiologicalBase(param.Parameterized):
     time_log_present = param.Boolean(default=False)
     time_log = param.Dynamic()
     trimmed_data = param.Dynamic()
-    max_steps = MAX_STEPS
+    max_steps = PHYSIOLOGICAL_MAX_STEPS
     outlier_params = param.Dynamic(default=None)
     quality = pn.widgets.FloatInput(name="quality", value=0.4)
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
-        self.header = PipelineHeader(1, MAX_STEPS, header_text)
+        self.header = PipelineHeader(1, PHYSIOLOGICAL_MAX_STEPS, header_text)
         super().__init__(**params)
 
     def update_step(self, step: int | param.Integer):

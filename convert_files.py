@@ -123,10 +123,10 @@ def combine_all_files():
 
 def change_imports(combined_file: str):
     print("Changing imports of pyodide File")
-    with open(f"pyodide/{combined_file}.js", "r") as file:
+    with open(f"dashboard/{combined_file}.js", "r") as file:
         text = file.read()
         text = substring_replace(text)
-    with open(f"pyodide/{combined_file}.js", "w") as file:
+    with open(f"dashboard/{combined_file}.js", "w") as file:
         file.write(text)
 
 
@@ -255,7 +255,7 @@ def convert_to_pyodide(selected_pipeline: str):
         combined_file += "_pipeline"
     print("Converting to pyodide")
     exit_code = os.system(
-        f"panel convert {combined_file}.py --to pyodide-worker --out pyodide"
+        f"panel convert {combined_file}.py --to pyodide-worker --out dashboard --pwa"
     )
     if exit_code != 0:
         print("Error while converting to pyodide")

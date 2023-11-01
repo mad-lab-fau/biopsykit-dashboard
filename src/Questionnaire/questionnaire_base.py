@@ -3,7 +3,7 @@ import panel as pn
 
 
 from src.Physiological.custom_components import PipelineHeader
-from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import MAX_STEPS
+from src.Questionnaire.QUESTIONNAIRE_CONSTANTS import QUESTIONNAIRE_MAX_STEPS
 
 
 class QuestionnaireBase(param.Parameterized):
@@ -23,11 +23,11 @@ class QuestionnaireBase(param.Parameterized):
     sheet_name = param.Dynamic(default=0)
     step = param.Integer(default=1)
     subject_col = param.String(default=None)
-    max_steps = MAX_STEPS
+    max_steps = QUESTIONNAIRE_MAX_STEPS
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
-        self.header = PipelineHeader(1, MAX_STEPS, header_text)
+        self.header = PipelineHeader(1, QUESTIONNAIRE_MAX_STEPS, header_text)
         super().__init__(**params)
 
     @staticmethod
