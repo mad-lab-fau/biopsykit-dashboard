@@ -1,7 +1,7 @@
 {
   "name": "Panel Applications",
   "short_name": "Panel Applications",
-  "start_url": "dashboard.html",
+  "start_url": "index.html",
   "icons": [
     {
       "src": "images/icon-vector.svg",

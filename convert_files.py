@@ -9,7 +9,7 @@ from setuptools import glob
 
 POSSIBLE_PIPELINES = ["physiological", "sleep", "questionnaire", "saliva"]
 OWN_NAME = "combine_all_files.py"
-RESULTING_FILENAME = "dashboard"
+RESULTING_FILENAME = "index"
 RESULTING_SINGLE_PIPELINE_FILENAME = "single_dashboard"
 MAIN_FILE = "main.py"
 IGNORE_FOLDERS = ["build", "dist", "pyodide", "pyscript", "Miscellaneous"]
@@ -255,7 +255,7 @@ def convert_to_pyodide(selected_pipeline: str):
         combined_file += "_pipeline"
     print("Converting to pyodide")
     exit_code = os.system(
-        f"panel convert {combined_file}.py --to pyodide-worker --out dashboard --pwa"
+        f"panel convert {combined_file}.py --to pyodide-worker --out {RESULTING_FILENAME} --pwa"
     )
     if exit_code != 0:
         print("Error while converting to pyodide")
