@@ -123,10 +123,10 @@ def combine_all_files():
 
 def change_imports(combined_file: str):
     print("Changing imports of pyodide File")
-    with open(f"dashboard/{combined_file}.js", "r") as file:
+    with open(f"{RESULTING_FILENAME}/{combined_file}.js", "r") as file:
         text = file.read()
         text = substring_replace(text)
-    with open(f"dashboard/{combined_file}.js", "w") as file:
+    with open(f"{RESULTING_FILENAME}/{combined_file}.js", "w") as file:
         file.write(text)
 
 
@@ -281,10 +281,10 @@ def build_one_pipeline(pipeline_input: str):
 
 
 def build_all_pipelines():
-    for pipeline in POSSIBLE_PIPELINES:
+    for single_pipeline in POSSIBLE_PIPELINES:
         files_added.clear()
-        print(f"Building: {pipeline}\n")
-        build_one_pipeline(pipeline)
+        print(f"Building: {single_pipeline}\n")
+        build_one_pipeline(single_pipeline)
 
 
 def build_all_pipelines_into_one():

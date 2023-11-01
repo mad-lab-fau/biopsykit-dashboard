@@ -1,6 +1,6 @@
 {
-  "name": "Biopsykit Dashboard",
-  "short_name": "Biopsykit Dashboard",
+  "name": "Panel Applications",
+  "short_name": "Panel Applications",
   "start_url": "dashboard.html",
   "icons": [
     {
