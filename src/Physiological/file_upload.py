@@ -63,7 +63,6 @@ class FileUpload(PhysiologicalBase):
         )
 
     def filename_changed(self, _, event):
-        print("filename changed")
         self.filename = event.new
         print(self.filename)
         if self.filename is None or "." not in self.filename:

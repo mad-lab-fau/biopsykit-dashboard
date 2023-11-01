@@ -8,18 +8,26 @@ from src.utils import load_questionnaire_data
 
 class UploadQuestionnaireData(QuestionnaireBase):
     ready = param.Boolean(default=False)
+    filename = param.String(default="")
     file_input = pn.widgets.FileInput(
         styles={"background": "whitesmoke"},
         multiple=False,
         accept=".csv,.bin,.xls,.xlsx",
     )
 
-    def parse_file_input(self, _, event):
+    def filename_changed(self, _, event):
+        self.filename = event.new
+        if self.filename is None or self.filename == "" or "." not in self.filename:
+            return
+        self.parse_file_input()
+
+    def parse_file_input(self):
+        if self.file_input.value is None:
+            return
         try:
-            pn.state.notifications.info("Loading data")
             self.data = load_questionnaire_data(
                 file=self.file_input.value,
-                file_name=self.file_input.filename,
+                file_name=self.filename,
                 subject_col=self.subject_col,
                 condition_col=self.condition_col,
                 additional_index_cols=self.additional_index_cols,
@@ -29,7 +37,6 @@ class UploadQuestionnaireData(QuestionnaireBase):
             )
             self.data_scaled = self.data.copy()
             self.ready = True
-            pn.state.notifications.success("Files uploaded")
         except Exception as e:
             pn.state.notifications.error("Error while loading data: " + str(e))
             self.ready = False
@@ -39,7 +46,10 @@ class UploadQuestionnaireData(QuestionnaireBase):
         super().__init__(**params)
         self.update_step(2)
         self.update_text(LOADING_DATA_TEXT)
-        self.file_input.link(self, callbacks={"value": self.parse_file_input})
+        self.file_input.link(
+            self,
+            callbacks={"filename": self.filename_changed},
+        )
         self._view = pn.Column(
             self.header,
             self.file_input,

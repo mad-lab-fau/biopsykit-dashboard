@@ -50,6 +50,7 @@ class LoadSalivaData(SalivaBase):
         visible=False,
     )
     fill_condition_list = pn.widgets.Checkbox(name="Set Condition List", visible=False)
+    filename = param.String(default="")
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = LOAD_PLATE_DATA_TEXT
@@ -57,7 +58,7 @@ class LoadSalivaData(SalivaBase):
         self.update_step(3)
         self.update_text(LOAD_PLATE_DATA_TEXT)
         self.select_saliva.link(self, callbacks={"value": self.saliva_type_changed})
-        self.upload_btn.link(self, callbacks={"value": self.parse_file_input})
+        self.upload_btn.link(self, callbacks={"filename": self.filename_changed})
         self._view = pn.Column(
             self.header,
             self.upload_btn,
@@ -65,6 +66,12 @@ class LoadSalivaData(SalivaBase):
             self.get_wide_format_column(),
             self.get_plate_format_column(),
         )
+
+    def filename_changed(self, _, event):
+        self.filename = event.new
+        if self.filename is None or self.filename == "" or "." not in self.filename:
+            return
+        self.parse_file_input()
 
     def switch_plate_format_visibility(self, visible: bool):
         self.select_sample_id_col.visible = visible
@@ -102,10 +109,10 @@ class LoadSalivaData(SalivaBase):
         self.saliva_type = event.new
         self.ready = self.is_ready()
 
-    def parse_file_input(self, target, event):
-        if ".csv" in self.upload_btn.filename:
+    def parse_file_input(self):
+        if ".csv" in self.filename:
             self.temporary_dataframe = self.handle_csv_file(self.upload_btn.value)
-        elif ".xls" in self.upload_btn.filename:
+        elif ".xls" in self.filename:
             self.temporary_dataframe = self.handle_excel_file(self.upload_btn.value)
         if self.temporary_dataframe.empty:
             self.handle_error(ValueError("No data loaded"))

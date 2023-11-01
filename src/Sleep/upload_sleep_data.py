@@ -28,16 +28,23 @@ class UploadSleepData(SleepBase):
         default="Process Data",
         objects=["Process Data", "Convert Acc to g"],
     )
+    filename = param.String(default="")
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = UPLOAD_SLEEP_DATA_TEXT
         super().__init__(**params)
         self.update_step(4)
         self.update_text(UPLOAD_SLEEP_DATA_TEXT)
-        self.upload_data.link(self, callbacks={"value": self.process_data})
+        self.upload_data.link(self, callbacks={"filename": self.filename_changed})
         self._view = pn.Column(self.header, self.upload_data)
 
-    def process_data(self, target, _):
+    def filename_changed(self, _, event):
+        self.filename = event.new
+        if self.filename is None or self.filename == "" or "." not in self.filename:
+            return
+        self.process_data()
+
+    def process_data(self):
         try:
             if self.upload_data.value is None:
                 self.ready = False
@@ -53,9 +60,8 @@ class UploadSleepData(SleepBase):
                 self.ready = False
                 return
             self.ready = True
-            pn.state.notifications.success("Successfully loaded data")
         except Exception as e:
-            pn.state.notifications.error("Error while loading data: " + str(e))
+            print(f"Exception in upload_sleep_data: {e}")
             self.ready = False
 
     def parse_psg(self):
