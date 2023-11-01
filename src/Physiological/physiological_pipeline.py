@@ -18,11 +18,6 @@ from src.Physiological.processing_and_preview import (
 from src.Physiological.process_hrv import SetHRVParameters, AskToProcessHRV
 from src.Physiological.signal_type import PhysSignalType
 
-pn.extension(sizing_mode="stretch_width")
-pn.extension(notifications=True)
-pn.extension("plotly", "tabulator")
-pn.extension("katex")
-
 
 class PhysiologicalPipeline:
     pipeline = None

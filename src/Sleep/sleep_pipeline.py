@@ -5,11 +5,6 @@ from src.Sleep.choose_file_or_folder import ZipFolder
 from src.Sleep.set_sleep_data_parameters import SetSleepDataParameters
 from src.Sleep.upload_sleep_data import UploadSleepData
 
-pn.extension(sizing_mode="stretch_width")
-pn.extension(notifications=True)
-pn.extension("plotly", "tabulator")
-pn.extension("katex")
-
 
 class SleepPipeline:
     name = "Sleep"

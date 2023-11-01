@@ -39,6 +39,7 @@ class FileUpload(PhysiologicalBase):
         sizing_mode="stretch_width",
     )
     ready = param.Boolean(default=False)
+    filename = param.String(default=None)
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = FILE_UPLOAD_TEXT
@@ -47,14 +48,28 @@ class FileUpload(PhysiologicalBase):
         self.select_timezone.link(self, callbacks={"value": self.timezone_changed})
         self.select_hardware.link(self, callbacks={"value": self.hardware_changed})
         self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)
-        pn.bind(self.hardware_changed, self._select_hardware.value, watch=True)
-        pn.bind(self.parse_file_input, self.file_input.param.value, watch=True)
+        self.file_input.link(
+            self,
+            callbacks={
+                "filename": self.filename_changed,
+            },
+        )
+        # "value": self.parse_file_input,
         self._view = pn.Column(
             self.header,
             self.select_hardware,
             self.select_timezone,
             self.file_input,
         )
+
+    def filename_changed(self, _, event):
+        print("filename changed")
+        self.filename = event.new
+        print(self.filename)
+        if self.filename is None or "." not in self.filename:
+            return
+        if self.file_input.value is not None:
+            self.parse_file_input(self.file_input, self.file_input.value)
 
     def timezone_changed(self, _, event):
         self.timezone = event.new
@@ -70,23 +85,27 @@ class FileUpload(PhysiologicalBase):
         if self.hardware == "BioPac":
             self.file_input.accept = ".acq"
 
-    def parse_file_input(self, _):
+    def parse_file_input(self, _, event):
         self.ready = self.data is not None
         self.data = None
         if self.file_input.value is None or len(self.file_input.value) <= 0:
-            pn.state.notifications.error("No Files arrived")
+            print("No Files arrived")
             return
-        if self.file_input.filename is None or "." not in self.file_input.filename:
-            pn.state.notifications.error("No Files arrived")
+        print("parse file input 1")
+        print(self.filename)
+        if self.filename is None or "." not in self.filename:
+            print("no filename found")
             return
+        print("parse file input 2")
         fileType = self.file_input.filename[self.file_input.filename.rindex(".") + 1 :]
+        print(f"{fileType}")
         try:
             match fileType:
                 case "zip":
                     self.handle_zip_file(self.file_input.value)
                 case "csv":
                     self.handle_csv_file(
-                        file_name=self.file_input.name,
+                        file_name=self.filename,
                         file_content=self.file_input.value,
                     )
                 case "bin":
@@ -103,12 +122,12 @@ class FileUpload(PhysiologicalBase):
                     pn.state.notifications.error("No matching parser found")
                     self.ready = False
                     return
-            if self.ready:
-                pn.state.notifications.success(
-                    "File uploaded successfully", duration=5000
-                )
-            else:
-                pn.state.notifications.error("File upload failed", duration=5000)
+            # if self.ready:
+            #     pn.state.notifications.success(
+            #         "File uploaded successfully", duration=5000
+            #     )
+            # else:
+            #     pn.state.notifications.error("File upload failed", duration=5000)
         except Exception as e:
             self.ready = False
             pn.state.notifications.error(f"File upload failed: {str(e)}", duration=5000)
@@ -201,8 +220,13 @@ class FileUpload(PhysiologicalBase):
             Exception("The archive has the wrong structure")
 
     def handle_csv_file(self, file_name: string, file_content: bytes):
+        print("handle csv file")
         string_io = StringIO(file_content.decode("utf8"))
+        if string_io is None:
+            print("no string found")
         df = pd.read_csv(string_io)
+        if df is None:
+            print("no data found")
         if self.signal == "EEG":
             muse = MuseDataset(data=df, tz=self.timezone)
             df = muse.data_as_df("local_datetime")

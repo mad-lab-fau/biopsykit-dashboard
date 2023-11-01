@@ -2,11 +2,6 @@ import panel as pn
 
 from src.Psychological.setup_study import SetUpStudyDesign
 
-pn.extension(sizing_mode="stretch_width")
-pn.extension(notifications=True)
-pn.extension("plotly", "tabulator")
-pn.extension("katex")
-
 
 class PsychologicalPipeline:
     pipeline = None

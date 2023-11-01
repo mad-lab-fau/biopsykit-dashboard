@@ -8,11 +8,6 @@ from src.Saliva.load_saliva_data import (
 )
 from src.Saliva.saliva_features import ShowSalivaFeatures
 
-pn.extension(sizing_mode="stretch_width")
-pn.extension(notifications=True)
-pn.extension("plotly", "tabulator")
-pn.extension("katex")
-
 
 class SalivaPipeline:
     pipeline = None

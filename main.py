@@ -218,6 +218,7 @@ def get_mainMenu(event):
         app.main.append(pane)
 
 
+pn.config.notifications = True
 pn.config.console_output = "disable"
 app.sidebar.append(get_sidebar())
 get_mainMenu(None)

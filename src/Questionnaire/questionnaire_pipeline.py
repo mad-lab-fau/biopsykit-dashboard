@@ -14,11 +14,6 @@ from src.Questionnaire.show_results import ShowResults
 from src.Questionnaire.upload_questionnaire_data import UploadQuestionnaireData
 from src.Questionnaire.wide_to_long import AskToChangeFormat, ConvertToLong
 
-pn.extension(sizing_mode="stretch_width")
-pn.extension(notifications=True)
-pn.extension("plotly", "tabulator")
-pn.extension("katex")
-
 
 class QuestionnairePipeline:
     pipeline = None
