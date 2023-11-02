@@ -28,7 +28,7 @@ changed_imports = (
     "'biopsykit',"
     "'seaborn', "
     "'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
-    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions','holoviews']\n"
+    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions','holoviews', 'mne']\n"
 )
 
 # == 0.11.2
