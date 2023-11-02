@@ -110,7 +110,10 @@ def combine_all_files():
     files_dict = read_python_files()
     print("Combining files:")
     out_file_text = get_combined_files_string(files_dict)
-    out_file_text = 'import os \nos.environ["OUTDATED_IGNORE"] = "1"\n' + out_file_text
+    out_file_text = (
+        'import os \nos.environ["OUTDATED_IGNORE"] = "1"\npn.extension(notifications=True)\n'
+        + out_file_text
+    )
     with open(MAIN_FILE, "r") as file:
         main_file_text = file.read()
         out_file_text += "\n\n"
@@ -242,7 +245,10 @@ def remove_redundant_imports(pipeline_type: str):
     existing_imports = []
     with open(pipeline_type, "r") as input_file:
         for line in input_file:
+            if "from main import app" in line:
+                continue
             if "from" in line or "import" not in line:
+                line = line.replace("pn.state.notifications", "app.notifications")
                 existing_imports.append(line)
 
     with open(pipeline_type, "w") as output:
