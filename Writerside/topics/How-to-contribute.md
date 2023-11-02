@@ -178,6 +178,7 @@ class AskForFormat(SalivaBase):
     def panel(self):
         return self._view
 ```
+
 This class inherits from the SalivaBase class which is defined in the SalivaBase.py file. This class is responsible 
 to save the different parameters necessary for the analysis of the data so that the classes of the different steps 
 can be smaller and more readable. 
@@ -188,6 +189,38 @@ functions of the class. There are different ways to bind widgets to functions an
 [here](https://panel.holoviz.org/how_to/links/index.html). The most important one for this project is the 
 [link function](https://panel.holoviz.org/how_to/links/links.html). With this function it is possible to bind values
 to other values but also to bind a change in properties (such as the value of a widget) to a function. 
+The first parameter of the link function defines the target of the link. This can be the object itself. The 
+callbacks parameter sets which function is called if the corresponding property changes. In this example the function 
+format_changed is called if the value of the format_selector widget changes. The link function is called in the constructor
+in order to ensure that per widget there is only one link. The last important part of the constructor is the setting 
+of the _view field. This field is responsible for the actual content of the step. In this example it is a column 
+which contains the header and the format_selector widget. The panel() function returns this _view field and is automatically
+called whenever the step is displayed. Each step class also has an output() function which is called whenever the 
+user presses the next button. In most of the cases (such as in the AskForFormat class) this function is implemented
+by the corresponding base class (here SalivaBase). This function looks like this:
+
+```python
+    @param.output(
+        ("selected_device", param.String),
+        ("selected_parameters", param.Dict),
+        ("data", param.Dynamic),
+    )
+    def output(self):
+        return (
+            self.selected_device,
+            self.selected_parameters,
+            self.data,
+        )
+```
+
+The decorator of this function ( @param.output ) defines the fields which are filled in the class of the next step and 
+the type of the field. In this example the next step gets the values for the selected_device, selected_parameters and
+the data.
+
+### How to add a new pipeline
+
+After you have learned how to create a new pipeline and its steps the following part will explain how to add a new pipeline 
+to the main page.
 
 
 ## Contents of tests
