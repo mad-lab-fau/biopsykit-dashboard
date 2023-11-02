@@ -1,0 +1,197 @@
+# How to contribute
+
+
+This part of the documentation explains how to further develop parts of Biopsykit - Dashboard and how the project
+is structured. 
+
+The Project contains out of the following main parts:
+
+<ul>
+   <li>src</li>
+   <li>tests</li>
+   <li>convert_files.py</li>
+   <li>main.py</li>
+   <li>main_ide</li>
+   <li>single_pipeline.py</li>
+</ul>
+
+## Contents of src
+
+The src folder contains all the different pipelines as separate Python packages as well as the main page. Each package 
+contains an _init_.py file, a CONSTANTS file, a pipeline file and files for the different steps of the pipeline. 
+The CONSTANTS Files contain the constants of the different pipelines. Important parts are here the maximum amount 
+of steps, as well as the Markdown text used in the different steps (so if you want to change the description of a 
+pipeline step you can do that in the CONSTANTS file of the corresponding pipeline). In the pipeline file the different 
+steps are defined and also their order. In this pipeline files the different panel pages are imported and added to the 
+pipeline.
+
+
+### Constants
+
+One short example for a constant file is the following:
+
+```python
+SLEEP_MAX_STEPS = 7
+
+POSSIBLE_DEVICES = [
+    "Polysomnography",
+    "Other IMU Device",
+    "Withings",
+]
+
+UPLOAD_PARAMETERS_TEXT = "# Set sleep data parameters \n Below you can set the parameters for the sleep data. If you are unsure, you can leave the default values."
+CHOOSE_DEVICE_TEXT = "# Choose the recording device \n Below you can choose the device you used to record your sleep data. If you used a different device, please choose 'Other IMU Device'."
+ZIP_OR_FOLDER_TEXT = "# File or Folder? \n If you want to upload a complete folder, please zip it first. You can then upload the zip file in the following step."
+UPLOAD_SLEEP_DATA_TEXT = "# Upload your sleep data \n Please upload your sleep data in the following step. You can either upload a single file or a zip file containing all your files."
+```
+As you can see, you can easily define the maximum amount of steps this pipeline has, as well as the text for the 
+different steps. But there are other constants defined here, like the possible devices.
+
+### Pipeline
+
+These files manage the different steps of the pipeline as well as their order. The following is an example of a pipeline file:
+
+```python
+class SalivaPipeline:
+    pipeline = None
+    name = "Saliva"
+
+    def __init__(self):
+        self.pipeline = pn.pipeline.Pipeline()
+        self.pipeline.add_stage(
+            "Ask for Format",
+            AskForFormat(),
+            **{"ready_parameter": "ready", "auto_advance": True},
+        )
+        self.pipeline.add_stage(
+            "Ask for Subject Condition List",
+            AskToLoadConditionList(),
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
+        )
+        self.pipeline.add_stage(
+            "Add Condition List",
+            AddConditionList(),
+            **{"ready_parameter": "ready"},
+        )
+        self.pipeline.add_stage(
+            "Load Saliva Data",
+            LoadSalivaData(),
+        )
+        self.pipeline.add_stage("Show Features", ShowSalivaFeatures())
+
+        self.pipeline.define_graph(
+            {
+                "Ask for Format": "Ask for Subject Condition List",
+                "Ask for Subject Condition List": (
+                    "Add Condition List",
+                    "Load Saliva Data",
+                ),
+                "Add Condition List": "Load Saliva Data",
+                "Load Saliva Data": "Show Features",
+            }
+        )
+```
+
+This object has two fields: a pipeline object and a name. The pipeline object is a pn.pipeline.Pipeline() object and 
+the name is just a string. The name is used if you want to build a single pipeline as a standalone page (to better 
+indicate which data this pipeline analyses). The pipeline object is initialized in the constructor of the class.
+The different steps are added to the pipeline object with the
+[add_stage() method](https://panel.holoviz.org/api/panel.pipeline.html#panel.pipeline.Pipeline.add_stage) . 
+The first parameter is the name of the step which is displayed at the top right of the page. The second parameter is 
+a panel object which is the actual content of the step, these classes are defined in the rest of the matching pipeline package.
+The third parameter is a dictionary with the different parameters of the step. The most important parameters are:
+
+<ul>
+   <li><strong>ready_parameter:</strong> Here you can set which field of the class is responsible as the ready parameter 
+      if this value is false the user can't progress to the next step</li>
+   <li><strong>auto_advance:</strong> If this is set to true, the user progresses to the next step as soon as the 
+      <strong>ready_parameter</strong> becomes true without clicking "Next"</li>
+   <li><strong>next_parameter:</strong> This parameter indicates the name of the field which is responsible for the 
+      next page. If this is set, it is possible to influence the order of steps (so which step comes after the current one)</li>
+</ul>
+
+The last important point in the pipeline classes is the definition of the graph. This is done with the 
+[define_graph() method](https://panel.holoviz.org/api/panel.pipeline.html#panel.pipeline.Pipeline.define_graph). 
+This Method gets a dictionary as a parameter. The keys of the dictionary are the names of the steps and the values are 
+the following step(s). If there is only one value, the next step is always this step. For example after the 
+"Ask for Format" step the next step is always the "Ask for Subject Condition List" step. Therefore, the Dictionary 
+entry looks like this: 
+```python
+ "Ask for Format": "Ask for Subject Condition List"
+```
+So you can see the key is always the name of the step and the value is the name of the next step. If there are multiple 
+possibles steps which can follow directly after the current step, the value is a tuple of the possible steps. 
+For example after the "Ask for Subject Condition List" step the next step can be either the "Add Condition List" step or
+the "Load Saliva Data" step. Therefore, the Dictionary entry looks like this: 
+```python
+ "Ask for Subject Condition List": ("Add Condition List", "Load Saliva Data")
+```
+
+> **Important**
+>
+> The order of the steps is defined in the graph definition. Also the names of the steps are defined in the graph are case sensitive.
+>
+{style="note"}
+
+With this information you should be able to understand the different pipelines and also create new ones. Now we can take
+a look how to define a single step in the pipeline and afterward how to make that pipeline accessible in the main page.
+
+### Step of a pipeline
+
+The steps of a pipeline are defined in the different files in the pipeline package. The following is simple 
+example of a step:
+
+```python
+import param
+import panel as pn
+
+from src.Saliva.SALIVA_CONSTANTS import ASK_FOR_FORMAT_TEXT
+from src.Saliva.SalivaBase import SalivaBase
+
+
+class AskForFormat(SalivaBase):
+    format_selector = pn.widgets.Select(
+        options=["", "Wide Format", "Plate Format"],
+        name="Format",
+    )
+    ready = param.Boolean(default=False)
+
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = ASK_FOR_FORMAT_TEXT
+        super().__init__(**params)
+        self.update_step(1)
+        self.update_text(ASK_FOR_FORMAT_TEXT)
+        self.format_selector.link(self, callbacks={"value": self.format_changed})
+        self._view = pn.Column(
+            self.header,
+            self.format_selector,
+        )
+
+    def format_changed(self, _, event):
+        self.format = event.new
+        self.ready = bool(event.new)
+
+    def panel(self):
+        return self._view
+```
+This class inherits from the SalivaBase class which is defined in the SalivaBase.py file. This class is responsible 
+to save the different parameters necessary for the analysis of the data so that the classes of the different steps 
+can be smaller and more readable. 
+The step classes all have a constructor which is responsible for different things. It sets the HEADER_TEXT field 
+which is used to display the text at the top of the page, and it sets the number of its step. Another important task 
+of the constructor is to link the [panel widgets](https://panel.holoviz.org/api/panel.widgets.html) to the different
+functions of the class. There are different ways to bind widgets to functions and values as illustrated 
+[here](https://panel.holoviz.org/how_to/links/index.html). The most important one for this project is the 
+[link function](https://panel.holoviz.org/how_to/links/links.html). With this function it is possible to bind values
+to other values but also to bind a change in properties (such as the value of a widget) to a function. 
+
+
+## Contents of tests
+
+## How to build the project
+
+## Different ways to run the project
