@@ -182,6 +182,7 @@ class AskForFormat(SalivaBase):
 This class inherits from the SalivaBase class which is defined in the SalivaBase.py file. This class is responsible 
 to save the different parameters necessary for the analysis of the data so that the classes of the different steps 
 can be smaller and more readable. 
+
 The step classes all have a constructor which is responsible for different things. It sets the HEADER_TEXT field 
 which is used to display the text at the top of the page, and it sets the number of its step. Another important task 
 of the constructor is to link the [panel widgets](https://panel.holoviz.org/api/panel.widgets.html) to the different
@@ -189,10 +190,13 @@ functions of the class. There are different ways to bind widgets to functions an
 [here](https://panel.holoviz.org/how_to/links/index.html). The most important one for this project is the 
 [link function](https://panel.holoviz.org/how_to/links/links.html). With this function it is possible to bind values
 to other values but also to bind a change in properties (such as the value of a widget) to a function. 
-The first parameter of the link function defines the target of the link. This can be the object itself. The 
+The first parameter of the link function defines the target of the link, this can be the object itself. The 
 callbacks parameter sets which function is called if the corresponding property changes. In this example the function 
 format_changed is called if the value of the format_selector widget changes. The link function is called in the constructor
-in order to ensure that per widget there is only one link. The last important part of the constructor is the setting 
+in order to ensure that per widget there is only one link. The method which is called by the link function (in this
+example format_changed) gets three parameters: the first is the object itself, the second one is the target (here also the object) 
+and the third one is an Event Object (this has different fields, e.g. event.new = the new value; event.old = the old value).
+The last important part of the constructor is the setting 
 of the _view field. This field is responsible for the actual content of the step. In this example it is a column 
 which contains the header and the format_selector widget. The panel() function returns this _view field and is automatically
 called whenever the step is displayed. Each step class also has an output() function which is called whenever the 
@@ -215,16 +219,179 @@ by the corresponding base class (here SalivaBase). This function looks like this
 
 The decorator of this function ( @param.output ) defines the fields which are filled in the class of the next step and 
 the type of the field. In this example the next step gets the values for the selected_device, selected_parameters and
-the data.
+the data. 
 
 ### How to add a new pipeline
 
 After you have learned how to create a new pipeline and its steps the following part will explain how to add a new pipeline 
-to the main page.
+to the main page. The main page is defined in the main.py file. The main page is a panel object which contains a reference
+to the app itself. So to add a new pipeline you have to create a new 
+[GridBox element](https://panel.holoviz.org/reference/layouts/GridBox.html) like this:
 
+```python
+physBtn = pn.widgets.Button(
+            name="Physiological Data",
+            sizing_mode="stretch_width",
+            align="end",
+            button_type="primary",
+        )
+        physBtn.on_click(self.start_pipeline)
+        physCard = pn.GridBox(
+            pn.pane.SVG(
+                self.pathToIcons + "Physiological.svg",
+                align=("center"),
+                sizing_mode="stretch_both",
+                max_height=150,
+                max_width=200,
+                styles={"background": "whitesmoke"},
+            ),
+            pn.Spacer(height=45),
+            physBtn,
+            ncols=1,
+            styles={"background": "whitesmoke", "align": "center"},
+            width=250,
+            height=250,
+        )
+```
+So you just create the Button, then link the on_click event to the start_pipeline function and then create the GridBox 
+element with a path to an .svg-File indicating the icon of the pipeline, a spacer and the button. The GridBox element
+is then added to the signal selection part of the main page:
+
+```python
+        signalSelection = pn.GridBox(
+            *[physCard, psychCard, questionnaireCard, salCard, sleepCard],
+            ncols=3,
+            nrows=2,
+            max_width=1000,
+            height=600,
+        )
+```
+
+The last step in adding a new pipeline is to add it to the name_pipeline_dict Dictionary:
+
+
+```python
+    name_pipeline_dict = {
+        "Physiological Data": PhysiologicalPipeline(),
+        "Psychological Data": PsychologicalPipeline(),
+        "Questionnaire Data": QuestionnairePipeline(),
+        "Saliva Data": SalivaPipeline(),
+        "Sleep Data": SleepPipeline(),
+    }
+```
+
+Here the key is the text on the Button you added above to the GridBox and the value is the pipeline object you created.
+After that the new pipeline should be accessible in the main page. To also add the pipeline to the sidebar, you also 
+have to add a Button to the sidebar and link the on_click event to the start_pipeline function. The following is an 
+example for the Saliva pipeline:
+
+```python
+        salBtn = pn.widgets.Button(name="Saliva Data")
+        salBtn.on_click(self.start_pipeline)
+        column = pn.Column(
+            homeBtn, physBtn, psychBtn, questionnaireBtn, salBtn, sleepBtn
+        )
+```
+
+Congratulations, you should now know everything to create and add a new pipeline to the project.
 
 ## Contents of tests
 
+The tests folder contains all the tests for the different pipelines. The tests are written with the pytest framework.
+For the different pipelines there are different example files which are used for the tests. These files are located in
+the test_data folder. The Tests for the pipelines are located in the corresponding pipeline folder. In these pipeline
+folders there are different test files for the different steps of the pipeline for some steps are no tests, since they 
+are just info pages. 
+The tests for the different steps are written in the following way, the following is an example for the AskForFormat step:
+
+```python
+class TestAskForFormat:
+    @pytest.fixture
+    def ask_for_format(self):
+        return AskForFormat()
+
+    def test_ask_for_format(self, ask_for_format):
+        assert ask_for_format is not None
+        assert ask_for_format.ready == False
+        possible_formats = ask_for_format.format_selector.options
+        assert possible_formats == ["", "Wide Format", "Plate Format"]
+
+    def test_ask_for_format_plate(self, ask_for_format):
+        ask_for_format.format_selector.value = "Plate Format"
+        assert ask_for_format.ready == True
+        assert ask_for_format.format == "Plate Format"
+        ask_for_format.format_selector.value = ""
+        assert ask_for_format.ready == False
+        assert ask_for_format.format == ""
+        ask_for_format.format_selector.value = "Wide Format"
+        assert ask_for_format.ready == True
+        assert ask_for_format.format == "Wide Format"
+```
+
+The first function is a fixture which returns an instance of the AskForFormat class which can be used as an argument for
+the other functions (so you don't have to manually create a new instance for each test). The second function is a test
+function. The functions associated with a widget get called automatically if the value of the widget changes. So in this
+case the format_changed function in the AskForFormat class gets called automatically if the value of the format_selector
+widget changes.
+
+For further information about the pytest framework you can take a look at the documentation of [pytest](https://pytest.org).
+
+To run the tests locally you can use the following command:
+
+```bash
+poetry run poe test
+```
+
+You can also run the tests in the GitHub Actions workflow. The workflow is defined in the .github/workflows folder and
+the tests are run on every push to the development branch and only if the tests are successful a new version of 
+the project is deployed to the Github Pages.
+
 ## How to build the project
 
-## Different ways to run the project
+
+### Run the project locally without converting the files
+
+You can either run the project locally via your IDE for that you just start the main function in the main_ide.py file.
+Or you can use the following command:
+
+```bash
+poetry run poe run_local
+```
+
+With that command the project is started on the localhost and reloads automatically if you change something in the code 
+and save it.
+
+
+### Run the project locally as a standalone page
+
+For that you have to run the following command:
+
+```bash
+poetry run poe build_pipelines
+```
+
+This command converts the porject into a Progressive Web App (PWA) and saves it in the index folder. In this folder you 
+find the index.html file which is the standalone page, that uses the index.js File for the Javascript Code. 
+You can open this file in your browser and use the project as a PWA. You can also deploy this file to a webserver, this 
+is done automatically in a GitHub Actions workflow. The workflow is defined in the .github/workflows folder in the 
+test_build_and_deploy.yml file. The workflow is triggered on every push to the development branch and only if the tests
+are successful the project is deployed to the Github Pages.
+
+The heart of the conversion is the convert_files.py file. This file has different tasks:
+
+<ol>
+    <li>It combines all the necessary .py Files into one large .py File</li>
+    <li>Redundant Imports are removed from this index.py File</li>
+    <li>It replaces all occurrences of the pn.state.notifications with app.notifications</li>
+    <li>Converting the index.py File into a PWA using the [panel convert command](https://panel.holoviz.org/how_to/wasm/convert.html)</li>
+    <li>Replacing the imports in the index.js File (to make it work as a standalone page)</li>
+</ol>
+
+You can also run the convert_files.py file directly with the following command:
+
+```bash
+poetry run poe convert_files
+```
+
+This command line interface then takes you through the different steps of the conversion process.
+
