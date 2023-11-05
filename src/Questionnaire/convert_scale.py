@@ -195,6 +195,8 @@ class ConvertScales(QuestionnaireBase):
         return quest_col
 
     def get_column_col(self) -> pn.Column:
+        if self.data is None or self.data.empty:
+            return pn.Column()
         col = pn.Column()
         crSel = pn.widgets.CrossSelector(
             name="Columns to invert the data",

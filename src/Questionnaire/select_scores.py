@@ -55,6 +55,8 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
 
     def get_accordion_item(self, questionnaire_key) -> pn.Column:
         col = pn.Column(name=questionnaire_key)
+        if self.data is None:
+            return col
         height = min(400, 100 + len(self.data.columns.tolist()) * 5)
         edit_btn = pn.widgets.Button(name="Edit", button_type="primary")
         remove_btn = pn.widgets.Button(
@@ -90,6 +92,8 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
 
     def show_dict_scores(self):
         col = pn.Column()
+        if self.dict_scores is None or len(self.dict_scores) == 0:
+            return col
         row = pn.Row()
         row.append(self.select_questionnaire)
         row.append(self.add_questionnaire_btn)
@@ -120,7 +124,7 @@ class SuggestQuestionnaireScores(QuestionnaireBase):
 
     def add_questionnaire(self, selected_questionnaire, _):
         questionnaire = selected_questionnaire
-        if questionnaire is None or questionnaire == "":
+        if questionnaire is None or questionnaire == "" or self.data is None:
             pn.state.notifications.error("No Questionnaire selected")
             return
         i = 0

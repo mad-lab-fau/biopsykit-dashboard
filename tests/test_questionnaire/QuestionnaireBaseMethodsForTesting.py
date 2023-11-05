@@ -13,13 +13,11 @@ def script_dir():
 
 def upload_questionnaire():
     upload_data = UploadQuestionnaireData()
+    upload_data.file_input.filename = None
+    upload_data.file_input.value = open(
+        os.path.join(script_dir(), "questionnaire.csv"), "rb"
+    ).read()
     upload_data.file_input.filename = "questionnaire.csv"
-    upload_data.file_input.value = None
-    with open(
-        os.path.join(script_dir(), "questionnaire.csv"),
-        "rb",
-    ) as f:
-        upload_data.file_input.value = f.read()
     return upload_data.data
 
 

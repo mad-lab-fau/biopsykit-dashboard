@@ -34,8 +34,8 @@ class TestLoadSalivaData:
         load_saliva_data.format = "Plate Format"
         abs_file_path = os.path.join(script_dir, saliva_plate_file_name)
         with open(abs_file_path, "rb") as f:
-            load_saliva_data.upload_btn.filename = saliva_plate_file_name
             load_saliva_data.upload_btn.value = f.read()
+            load_saliva_data.upload_btn.filename = saliva_plate_file_name
         assert load_saliva_data.temporary_dataframe is not None
         load_saliva_data.select_saliva.value = "Cortisol"
         load_saliva_data.select_sample_id_col.value = "sample ID"

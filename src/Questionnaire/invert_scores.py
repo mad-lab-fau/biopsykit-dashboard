@@ -55,7 +55,7 @@ class InvertScores(QuestionnaireBase):
 
     def questionnaire_changed(self, _, event):
         questionnaire = event.new
-        if questionnaire == "" or questionnaire is None:
+        if questionnaire == "" or questionnaire is None or self.data is None:
             self.select_all_checkbox.visible = False
             self.column_cross_selector.visible = False
             self.invert_scores_btn.visible = False
@@ -86,6 +86,9 @@ class InvertScores(QuestionnaireBase):
             self.select_all_checkbox.value = False
 
     def invert_scores(self, target, event):
+        if self.data is None:
+            pn.state.notifications.error("No data loaded")
+            return
         if len(self.column_cross_selector.value) == 0:
             pn.state.notifications.error(
                 "You have to select at least one column to invert the scores"

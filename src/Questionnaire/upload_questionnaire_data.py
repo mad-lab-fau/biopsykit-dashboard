@@ -16,7 +16,7 @@ class UploadQuestionnaireData(QuestionnaireBase):
     )
 
     def filename_changed(self, _, event):
-        self.filename = event.new
+        self.filename = event.new if event.new is not None else ""
         if self.filename is None or self.filename == "" or "." not in self.filename:
             return
         self.parse_file_input()

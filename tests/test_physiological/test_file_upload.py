@@ -95,11 +95,8 @@ class TestFileUpload:
         file_name = "ECG.csv"
         abs_file_path = os.path.join(script_dir, file_name)
         file_upload.signal = "ECG"
-        file_upload.file_input.filename = file_name
         file_upload.file_input.value = open(abs_file_path, "rb").read()
-        # with open(abs_file_path, "rb") as f:
-        #     file_upload.file_input.filename = file_name
-        #     file_upload.handle_csv_file(file_name, f.read())
+        file_upload.file_input.filename = file_name
         assert file_upload.file_input.filename == "ECG.csv"
         assert file_upload.ready == True
         assert isinstance(file_upload.data, dict)

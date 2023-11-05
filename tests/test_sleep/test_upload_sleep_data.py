@@ -45,10 +45,10 @@ class TestUploadSleepData:
         upload_sleep_data.selected_parameters[upload_sleep_data.selected_device][
             "tz"
         ] = "Europe/Berlin"
-        upload_sleep_data.upload_data.filename = imu_bin_file_example_path
         upload_sleep_data.upload_data.value = open(
             os.path.join(script_dir, imu_bin_file_example_path), "rb"
         ).read()
+        upload_sleep_data.upload_data.filename = imu_bin_file_example_path
         assert upload_sleep_data.ready == True
         assert upload_sleep_data.next_page == "Process Data"
         data, _ = bp.example_data.get_sleep_imu_example()

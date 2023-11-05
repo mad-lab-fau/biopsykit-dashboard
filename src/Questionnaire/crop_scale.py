@@ -55,7 +55,7 @@ class CropScales(QuestionnaireBase):
     score_range_arrayInput = pn.widgets.ArrayInput(name="Score Range")
 
     def selection_changed(self, target, event):
-        if event.new == "":
+        if event.new == "" or self.data is None:
             target[0].visible = False
             target[1].visible = False
             target[2].visible = False
