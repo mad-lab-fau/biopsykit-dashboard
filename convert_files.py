@@ -15,21 +15,65 @@ MAIN_FILE = "main.py"
 IGNORE_FOLDERS = ["build", "dist", "pyodide", "pyscript", "Miscellaneous"]
 files_added = []
 
+# "'biopsykit',"
 
 changed_imports = (
-    "  const env_spec = ['https://cdn.holoviz.org/panel/1.2.3/dist/wheels/bokeh-3.2.2-py3-none-any.whl', "
-    "'https://cdn.holoviz.org/panel/1.2.3/dist/wheels/panel-1.2.3-py3-none-any.whl', "
+    "  const env_spec = ['https://cdn.holoviz.org/panel/wheels/bokeh-3.3.0-py3-none-any.whl', "
+    "'https://cdn.holoviz.org/panel/1.3.1/dist/wheels/panel-1.3.1-py3-none-any.whl', "
     "'pyodide-http==0.2.1', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
-    # "'https://files.pythonhosted.org/packages/63/ea/ace1b9df189c149e7c1272c0159c17117096d889b0ccf2130358d52ee881/fau_colors-1.1.0-py3-none-any.whl',"
     "'fau_colors==1.5.3',"
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/pingouin-0.5.4-py3-none-any.whl', "
-    "'biopsykit',"
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/zope.interface-6.2.dev0-py3-none-any.whl', "
+    "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/biopsykit-0.9.0-py3-none-any.whl', "
+    "'datetime', "
     "'seaborn', "
-    "'matplotlib', 'nilspodlib', 'numpy', 'packaging', "
-    "'pandas', 'param', 'plotly', 'pytz',  'typing_extensions','holoviews', 'mne']\n"
+    "'matplotlib',"
+    "'nilspodlib', "
+    "'numpy', "
+    "'packaging', "
+    "'pandas', "
+    "'param', "
+    "'pathlib', "
+    "'plotly', "
+    "'pytz',  "
+    "'typing', "
+    "'typing_extensions',"
+    "'holoviews', "
+    "'mne'"
+    "]\n"
 )
+
+# const_env_spec = [
+#     "https://cdn.holoviz.org/panel/wheels/bokeh-3.3.0-py3-none-any.whl",
+#     "https://cdn.holoviz.org/panel/1.3.1/dist/wheels/panel-1.3.1-py3-none-any.whl",
+#     "pyodide-http==0.2.1",
+#     "ast",
+#     "biopsykit",
+#     "datetime",
+#     "fau_colors",
+#     "io",
+#     "math",
+#     "matplotlib",
+#     "nilspodlib",
+#     "numpy",
+#     "os",
+#     "packaging",
+#     "pandas",
+#     "param",
+#     "pathlib",
+#     "plotly",
+#     "pytz",
+#     "re",
+#     "seaborn",
+#     "string",
+#     "typing",
+#     "typing_extensions",
+#     "warnings",
+#     "zipfile",
+# ]
+
 
 # == 0.11.2
 

@@ -22,7 +22,7 @@ class MainPage(param.Parameterized):
     psychBtn = pn.widgets.Button(name="Psychological Data")
     salBtn = pn.widgets.Button(name="Saliva Data")
     app = None
-    pathToIcons = "./assets/Icons/"
+    pathToIcons = "../../assets/Icons/"
     iconNames = [
         "Physiological.svg",
         "Psychological.svg",
