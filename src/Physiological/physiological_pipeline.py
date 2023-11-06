@@ -22,6 +22,8 @@ from src.Physiological.signal_type import PhysSignalType
 class PhysiologicalPipeline:
     pipeline = None
     name = "Physiological"
+    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/wave-saw-tool.svg"
+    icon_name = "wave-saw-tool"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)

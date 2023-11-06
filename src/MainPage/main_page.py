@@ -22,14 +22,6 @@ class MainPage(param.Parameterized):
     psychBtn = pn.widgets.Button(name="Psychological Data")
     salBtn = pn.widgets.Button(name="Saliva Data")
     app = None
-    pathToIcons = "../../assets/Icons/"
-    iconNames = [
-        "Physiological.svg",
-        "Psychological.svg",
-        "Questionnaire.svg",
-        "Saliva.svg",
-        "Sleep.svg",
-    ]
     name_pipeline_dict = {
         "Physiological Data": PhysiologicalPipeline(),
         "Psychological Data": PsychologicalPipeline(),
@@ -57,21 +49,18 @@ class MainPage(param.Parameterized):
         self.app.main[0].objects = [pane]
 
     def get_sidebar(self):
+        column = pn.Column()
         homeBtn = pn.widgets.Button(name="Home", button_type="primary")
         homeBtn.on_click(self.get_main_menu)
-        physBtn = pn.widgets.Button(name="Physiological Data")
-        physBtn.on_click(self.start_pipeline)
-        questionnaireBtn = pn.widgets.Button(name="Questionnaire Data")
-        questionnaireBtn.on_click(self.start_pipeline)
-        psychBtn = pn.widgets.Button(name="Psychological Data")
-        psychBtn.on_click(self.start_pipeline)
-        sleepBtn = pn.widgets.Button(name="Sleep Data")
-        sleepBtn.on_click(self.start_pipeline)
-        salBtn = pn.widgets.Button(name="Saliva Data")
-        salBtn.on_click(self.start_pipeline)
-        column = pn.Column(
-            homeBtn, physBtn, psychBtn, questionnaireBtn, salBtn, sleepBtn
-        )
+        column.append(homeBtn)
+        for pipeline in self.name_pipeline_dict.keys():
+            btn = pn.widgets.Button(
+                name=pipeline,
+                button_type="light",
+                icon=self.name_pipeline_dict[pipeline].icon_name,
+            )
+            btn.on_click(self.start_pipeline)
+            column.append(btn)
         return column
 
     def get_main_menu(self, event):
@@ -84,120 +73,34 @@ class MainPage(param.Parameterized):
             Please select below one of the Signals you want to analyse. The corresponding guide will help you to get the best out of your data.
 
             """
-        physBtn = pn.widgets.Button(
-            name="Physiological Data",
-            sizing_mode="stretch_width",
-            align="end",
-            button_type="primary",
-        )
-        physBtn.on_click(self.start_pipeline)
-        physCard = pn.GridBox(
-            pn.pane.SVG(
-                self.pathToIcons + "Physiological.svg",
-                align=("center"),
-                sizing_mode="stretch_both",
-                max_height=150,
-                max_width=200,
-                styles={"background": "whitesmoke"},
-            ),
-            pn.Spacer(height=45),
-            physBtn,
-            ncols=1,
-            styles={"background": "whitesmoke", "align": "center"},
-            width=250,
-            height=250,
-        )
-        sleepBtn = pn.widgets.Button(
-            name="Sleep Data",
-            sizing_mode="stretch_width",
-            align="end",
-            button_type="primary",
-        )
-        sleepBtn.on_click(self.start_pipeline)
-        sleepCard = pn.GridBox(
-            pn.pane.SVG(
-                self.pathToIcons + "Sleep.svg",
-                align=("center"),
-                sizing_mode="stretch_both",
-                max_height=150,
-                max_width=160,
-                fixed_aspect=False,
-            ),
-            pn.Spacer(height=45),
-            sleepBtn,
-            ncols=1,
-            styles={"background": "whitesmoke", "align": "center"},
-            width=250,
-            height=250,
-        )
-        questionnaireBtn = pn.widgets.Button(
-            name="Questionnaire Data",
-            sizing_mode="stretch_width",
-            button_type="primary",
-        )
-        questionnaireBtn.on_click(self.start_pipeline)
-        questionnaireCard = pn.GridBox(
-            pn.pane.SVG(
-                self.pathToIcons + "Questionnaire.svg",
-                align=("center"),
-                sizing_mode="stretch_both",
-                max_height=150,
-                max_width=150,
-                styles={"background": "whitesmoke"},
-            ),
-            pn.Spacer(height=45),
-            questionnaireBtn,
-            ncols=1,
-            styles={"background": "whitesmoke", "align": "center"},
-            width=250,
-            height=250,
-        )
-        psychBtn = pn.widgets.Button(
-            name="Psychological Data",
-            sizing_mode="stretch_width",
-            button_type="primary",
-        )
-        psychBtn.on_click(self.start_pipeline)
-        psychCard = pn.GridBox(
-            pn.pane.SVG(
-                self.pathToIcons + "Psychological.svg",
-                align=("center"),
-                sizing_mode="stretch_both",
-                max_height=150,
-                max_width=150,
-                styles={"background": "whitesmoke"},
-            ),
-            pn.Spacer(height=45),
-            psychBtn,
-            ncols=1,
-            styles={"background": "whitesmoke", "align": "center"},
-            width=250,
-            height=250,
-        )
-        salBtn = pn.widgets.Button(
-            name="Saliva Data",
-            sizing_mode="stretch_width",
-            button_type="primary",
-        )
-        salBtn.on_click(self.start_pipeline)
-        salCard = pn.GridBox(
-            pn.pane.SVG(
-                self.pathToIcons + "Saliva.svg",
-                align=("center"),
-                sizing_mode="stretch_both",
-                max_height=150,
-                max_width=150,
-                styles={"background": "whitesmoke"},
-            ),
-            pn.Spacer(height=45),
-            salBtn,
-            ncols=1,
-            styles={"background": "whitesmoke", "align": "center"},
-            width=250,
-            height=250,
-        )
+        card_list = []
+        for pipeline_name in self.name_pipeline_dict.keys():
+            btn = pn.widgets.Button(
+                name=pipeline_name,
+                sizing_mode="stretch_width",
+                align="end",
+                button_type="primary",
+            )
+            btn.on_click(self.start_pipeline)
+            card = pn.GridBox(
+                pn.pane.SVG(
+                    self.name_pipeline_dict[pipeline_name].icon_svg,
+                    align=("center"),
+                    sizing_mode="stretch_both",
+                    max_height=150,
+                    max_width=200,
+                    styles={"background": "whitesmoke"},
+                ),
+                pn.Spacer(height=45),
+                btn,
+                ncols=1,
+                styles={"background": "whitesmoke", "align": "center"},
+                width=250,
+                height=250,
+            )
+            card_list.append(card)
         signalSelection = pn.GridBox(
-            *[physCard, psychCard, questionnaireCard, salCard, sleepCard],
+            *card_list,
             ncols=3,
             nrows=2,
             max_width=1000,

@@ -18,6 +18,8 @@ from src.Questionnaire.wide_to_long import AskToChangeFormat, ConvertToLong
 class QuestionnairePipeline:
     pipeline = None
     name = "Questionnaire"
+    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/clipboard-check.svg"
+    icon_name = "clipboard-check"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(debug=True, inherit_params=True)

@@ -12,6 +12,8 @@ from src.Saliva.saliva_features import ShowSalivaFeatures
 class SalivaPipeline:
     pipeline = None
     name = "Saliva"
+    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/test-pipe.svg"
+    icon_name = "test-pipe"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()

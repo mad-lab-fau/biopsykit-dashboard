@@ -5,6 +5,9 @@ from src.Psychological.setup_study import SetUpStudyDesign
 
 class PsychologicalPipeline:
     pipeline = None
+    name = "Psychological Data"
+    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/brain.svg"
+    icon_name = "brain"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline(

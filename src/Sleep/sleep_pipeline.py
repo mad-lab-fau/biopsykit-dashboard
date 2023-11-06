@@ -8,6 +8,8 @@ from src.Sleep.upload_sleep_data import UploadSleepData
 
 class SleepPipeline:
     name = "Sleep"
+    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/bed-filled.svg"
+    icon_name = "bed-filled"
 
     def __init__(self):
         self.pipeline = pn.pipeline.Pipeline()
