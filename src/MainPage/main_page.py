@@ -14,13 +14,6 @@ pn.extension("plotly", "tabulator")
 
 
 class MainPage(param.Parameterized):
-    welcomeText = ""
-    signalSelection = pn.GridBox(ncols=3)
-    physBtn = pn.widgets.Button(name="Physiological Data", button_type="light")
-    sleepBtn = pn.widgets.Button(name="Sleep Data")
-    questionnaireBtn = pn.widgets.Button(name="Questionnaire Data")
-    psychBtn = pn.widgets.Button(name="Psychological Data")
-    salBtn = pn.widgets.Button(name="Saliva Data")
     app = None
     name_pipeline_dict = {
         "Physiological Data": PhysiologicalPipeline(),
@@ -36,7 +29,6 @@ class MainPage(param.Parameterized):
             pn.state.notifications.error("No Pipeline found for this Button")
             return
         pipeline = self.name_pipeline_dict[pipeline_name]
-        self.app.notifications.info("Starting Pipeline")
         pane = pn.Column(
             pn.Row(
                 pn.layout.HSpacer(),
@@ -115,9 +107,8 @@ class MainPage(param.Parameterized):
     def __init__(self, app, **params):
         self.app = app
         self.welcomeText = WELCOME_TEXT
-        self.signalSelection.append(self.physBtn)
         super().__init__(**params)
-        self._view = pn.Column(pn.pane.Markdown(self.welcomeText), self.signalSelection)
+        self._view = pn.Column(pn.pane.Markdown(self.welcomeText))
 
     def view(self):
         return self._view

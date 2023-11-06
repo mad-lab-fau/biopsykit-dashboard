@@ -286,7 +286,12 @@ def remove_redundant_imports(pipeline_type: str):
         for i in n.names
     ]
     imports = list(dict.fromkeys(imports))
-    existing_imports = []
+    existing_imports = [
+        "import numpy as np\n",
+        "import holoviews as hv\n",
+        "from holoviews import opts\n",
+        "hv.extension('matplotlib')\n",
+    ]
     with open(pipeline_type, "r") as input_file:
         for line in input_file:
             if "from main import app" in line:

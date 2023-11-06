@@ -13,7 +13,7 @@ class AskToProcessHRV(PhysiologicalBase):
     methods = ["hrv_time", "hrv_nonlinear", "hrv_frequency"]
     skip_btn = pn.widgets.Button(name="Skip", sizing_mode="stretch_width")
     expert_mode_btn = pn.widgets.Button(
-        name="Expert Mode", button_type="warning", sizing_mode="stretch_width"
+        name="Expert Mode", button_type="danger", sizing_mode="stretch_width"
     )
     default_btn = pn.widgets.Button(
         name="Default", button_type="primary", sizing_mode="stretch_width"
@@ -32,7 +32,7 @@ class AskToProcessHRV(PhysiologicalBase):
         self.default_btn.link(self, callbacks={"clicks": self.click_default_hrv})
         self.expert_mode_btn.link(self, callbacks={"clicks": self.click_expert_hrv})
         self._view = pn.Column(
-            self.header, pn.Row(self.skip_btn, self.default_btn, self.expert_mode_btn)
+            self.header, pn.Row(self.default_btn, self.expert_mode_btn, self.skip_btn)
         )
 
     def click_skip(self, target, event):

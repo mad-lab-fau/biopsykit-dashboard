@@ -196,12 +196,13 @@ class PlotViewer(pn.viewable.Viewer):
         self.select_phase = pn.widgets.Select(name="Phase")
         if signal is not None:
             self.select_result.options = list(signal.keys())
-        self.graph = pn.pane.Matplotlib()
-        self.select_result.link(self.graph, callbacks={"value": self.change_result})
-        self.select_phase.link(self.graph, callbacks={"value": self.change_phase})
-        self._layout = pn.Column(
-            pn.Row(self.select_result, self.select_phase), self.graph
-        )
+        # self.graph = pn.pane.Matplotlib()
+        # self.select_result.link(self.graph, callbacks={"value": self.change_result})
+        # self.select_phase.link(self.graph, callbacks={"value": self.change_phase})
+        self.select_result.link(self, callbacks={"value": self.change_result})
+        self.select_phase.link(self, callbacks={"value": self.change_phase})
+        self._layout = pn.Column(pn.Row(self.select_result, self.select_phase))
+        # , self.graph
         super().__init__(**params)
 
     def set_signal_type(self, signal_type: str):
@@ -218,34 +219,47 @@ class PlotViewer(pn.viewable.Viewer):
         self._sampling_rate = sampling_rate
         self.select_result.options = list(signal.keys())
 
-    def set_signal(self, signal: Dict[str, pd.DataFrame]):
+    def set_signal(self, signal: Dict[str, _BaseProcessor]):
         self._signal = signal
         self.select_result.options = list(signal.keys())
 
     def change_phase(self, target, event):
+        print("change phase")
         phase = event.new
         subject = self.select_result.value
         if subject is None or phase is None:
+            print("subject or phase is None")
             return
-        if self._signal_type == "ECG" and self._signal is not None:
-            self.select_phase.options = list()
+        if (
+            self._signal_type == "ECG"
+            and self._signal is not None
+            and subject in self._signal.keys()
+        ):
             fig, _ = bp.signals.ecg.plotting.ecg_plot(
                 ecg_processor=self._signal[subject],
                 sampling_rate=self._sampling_rate,
                 key=phase,
             )
-            target.object = fig
+            if fig is not None:
+                print("fig is not None")
+                # target.object = fig
 
     def change_result(self, target, event):
-        if self._signal_type == "ECG" and self._signal is not None:
-            self.select_phase.options = list()
+        print("change result")
+        if (
+            self._signal_type == "ECG"
+            and self._signal is not None
+            and event.new in self._signal.keys()
+        ):
+            print("change result -> creating fig")
             fig, _ = bp.signals.ecg.plotting.ecg_plot(
                 ecg_processor=self._signal[event.new],
                 sampling_rate=self._sampling_rate,
                 key=self._signal[event.new].phases[0],
             )
             self.select_phase.options = self._signal[event.new].phases
-            target.object = fig
+            if fig is not None:
+                target.object = fig
 
     def __panel__(self):
         return self._layout

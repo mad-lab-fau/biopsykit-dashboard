@@ -19,14 +19,19 @@ from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
 
 class ProcessingPreStep(PhysiologicalBase):
     ready = param.Boolean(default=False)
-    ready_btn = pn.widgets.Button(name="Ok", button_type="primary")
+    ready_btn = pn.widgets.Button(
+        name="Ok", button_type="primary", sizing_mode="stretch_width"
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = PRESTEP_PROCESSING_TEXT
         super().__init__(**params)
         self.update_step(8)
         self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
-        self._view = pn.Column(self.header, self.ready_btn)
+        self._view = pn.Column(
+            self.header,
+            pn.Row(pn.layout.HSpacer(), self.ready_btn, pn.layout.HSpacer()),
+        )
 
     def ready_btn_click(self, target, event):
         self.ready = True
@@ -46,9 +51,8 @@ class ProcessingAndPreview(PhysiologicalBase):
         self.subject_time_dict = {}
         self.result_view = SubjectDataFrameView({})
         self.result_graph = PlotViewer(None, None, None)
-        self._view = pn.Column(
-            self.header, self.results, self.result_view, self.result_graph
-        )
+        self._view = pn.Column(self.header, self.results, self.result_view)
+        # , self.result_graph
 
     def get_phases(self) -> list:
         if self.subject is not None:
@@ -72,6 +76,7 @@ class ProcessingAndPreview(PhysiologicalBase):
             self.process_rsp()
         if not self.skip_hrv:
             col.append(self.process_hrv())
+        print("all processing done")
         return col
 
     def get_dataframes_as_accordions(self):
@@ -191,6 +196,7 @@ class ProcessingAndPreview(PhysiologicalBase):
         col = pn.Column()
         self.ecg_processor = {}
         for subject in self.data.keys():
+            print(subject)
             ep = EcgProcessor(
                 data=self.data[subject],
                 sampling_rate=self.sampling_rate,
@@ -201,20 +207,7 @@ class ProcessingAndPreview(PhysiologicalBase):
                 outlier_params=self.outlier_params,
             )
             self.ecg_processor[subject] = ep
-        # elif self.session == "Multiple Sessions":
-        #     self.ecg_processor = {}
-        #     for subject in self.data.keys():
-        #         ep = EcgProcessor(
-        #             data=self.data[subject],
-        #             sampling_rate=self.sampling_rate,
-        #             time_intervals=self.get_timelog(subject),
-        #         )
-        #         ep.ecg_process(
-        #             outlier_correction=self.selected_outlier_methods,
-        #             outlier_params=self.outlier_params,
-        #             title=subject,
-        #         )
-        #         self.ecg_processor[subject] = ep
+        print("Processing Done")
         subject_result_dict = {}
         graph_dict = {}
         for subject in self.ecg_processor.keys():
@@ -226,6 +219,7 @@ class ProcessingAndPreview(PhysiologicalBase):
             graph_dict[subject] = self.ecg_processor[subject]
         self.result_view.set_subject_results(subject_result_dict)
         self.result_graph.set_signal(graph_dict)
+        print("return from processing")
         return col
 
     def process_hr(self):
@@ -294,5 +288,7 @@ class ProcessingAndPreview(PhysiologicalBase):
     def panel(self):
         self.results = self.processing()
         self.result_graph.set_signal_type(self.signal)
+        print("set signal type done")
         self.result_graph.set_sampling_rate(self.sampling_rate)
+        print("set sampling rate done")
         return self._view
