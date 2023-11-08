@@ -111,6 +111,7 @@ def get_combined_files_string(python_file_dict: dict) -> str:
             out_file_text += "\n\n"
             out_file_text += value
         out_file_text = replace_all_imports(out_file_text, python_file_dict)
+        files_added.append(key)
     return out_file_text
 
 
@@ -290,7 +291,7 @@ def remove_redundant_imports(pipeline_type: str):
         "import numpy as np\n",
         "import holoviews as hv\n",
         "from holoviews import opts\n",
-        "hv.extension('matplotlib')\n",
+        # "hv.extension('matplotlib')\n",
     ]
     with open(pipeline_type, "r") as input_file:
         for line in input_file:

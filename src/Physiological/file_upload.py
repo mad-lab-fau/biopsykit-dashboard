@@ -54,7 +54,6 @@ class FileUpload(PhysiologicalBase):
                 "filename": self.filename_changed,
             },
         )
-        # "value": self.parse_file_input,
         self._view = pn.Column(
             self.header,
             self.select_hardware,
@@ -88,7 +87,7 @@ class FileUpload(PhysiologicalBase):
         self.ready = self.data is not None
         self.data = None
         if self.file_input.value is None or len(self.file_input.value) <= 0:
-            print("No Files arrived")
+            pn.state.notifications.error("No file uploaded")
             return
         print("parse file input 1")
         print(self.filename)
@@ -264,6 +263,7 @@ class FileUpload(PhysiologicalBase):
         self.sampling_rate = fs
         self.data = {file_name: df}
         self.ready = True
+        pn.state.notifications.success("File uploaded successfully")
 
     def handle_xlsx_file(self, file_content: bytes, filename: string):
         if self.signal == "CFT":

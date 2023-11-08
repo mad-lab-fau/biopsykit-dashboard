@@ -39,6 +39,7 @@ class DownloadResults(PhysiologicalBase):
         self._view = pn.Column(self.header)
         self._view.append(self._load_results_checkbox)
         self._view.append(self.load_plots_hrv)
+        # self._view.append(self.load_plots_ecg)
 
     def get_selected_files(self):
         print("get selected files")
@@ -131,19 +132,25 @@ class DownloadResults(PhysiologicalBase):
             zip_file.writestr(f"HRV_{key}.png", buf.getvalue())
 
     def load_ecg_plots(self, zip_file):
-        if self.subject is not None:
-            for key in self.ecg_processor[self.subject].ecg_result.keys():
-                buf = io.BytesIO()
-                fig, axs = bp.signals.ecg.plotting.ecg_plot(
-                    self.ecg_processor[self.subject], key=key
-                )
-                fig.savefig(buf)
-                zip_file.writestr(f"ECG_{key}_{self.subject}.png", buf.getvalue())
+        print("load ecg plots")
+        if isinstance(self.ecg_processor, dict):
+            for subject in self.ecg_processor.keys():
+                print(f"Subject: {subject}")
+                for key in self.ecg_processor[self.subject].ecg_result.keys():
+                    print(f"Key: {key}")
+                    print("create ecg plot")
+                    buf = io.BytesIO()
+                    fig, axs = bp.signals.ecg.plotting.ecg_plot(
+                        self.ecg_processor[subject], key=key
+                    )
+                    fig.savefig(buf)
+                    zip_file.writestr(f"ECG_{key}_{subject}.png", buf.getvalue())
         elif type(self.ecg_processor) != dict:
             buf = io.BytesIO()
             fig, axs = bp.signals.ecg.plotting.ecg_plot(self.ecg_processor, key="Data")
             fig.savefig(buf)
             zip_file.writestr(f"ECG.png", buf.getvalue())
+        print("load ecg plots done")
 
     def load_eeg_plots(self, zip_file):
         for key in self.eeg_processor.keys():

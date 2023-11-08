@@ -15,6 +15,8 @@ from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
 )
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
+import holoviews as hv
+import neurokit2 as nk
 
 
 class ProcessingPreStep(PhysiologicalBase):
@@ -288,7 +290,5 @@ class ProcessingAndPreview(PhysiologicalBase):
     def panel(self):
         self.results = self.processing()
         self.result_graph.set_signal_type(self.signal)
-        print("set signal type done")
         self.result_graph.set_sampling_rate(self.sampling_rate)
-        print("set sampling rate done")
         return self._view

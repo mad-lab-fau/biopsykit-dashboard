@@ -130,7 +130,7 @@ class DataArrived(PhysiologicalBase):
             self.ready = False
             pn.state.notifications.warning("Please provide a sampling rate")
         self.subject_selector.options = [""] + list(self.data.keys())
-        self.subject_selector.value = ""
+        self.subject_selector.value = list(self.data.keys())[0]
         self.subject_selector.visible = self.data is not None
         self.data_view.visible = self.data is not None
         return self._view

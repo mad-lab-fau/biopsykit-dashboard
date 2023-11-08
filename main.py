@@ -3,12 +3,6 @@ import os
 
 os.environ["OUTDATED_IGNORE"] = "1"
 import panel as pn
-import holoviews.plotting.mpl
-
-import matplotlib.pyplot as plt
-import matplotlib
-
-matplotlib.use("agg")
 
 
 pn.extension(sizing_mode="stretch_width")

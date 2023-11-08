@@ -1,5 +1,6 @@
 import panel as pn
 import param
+
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
     SIGNAL_TYPE_TEXT,
     PHYSIOLOGICAL_SIGNAL_OPTIONS,

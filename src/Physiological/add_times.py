@@ -54,7 +54,10 @@ class AskToAddTimes(PhysiologicalBase):
 
 class AddTimes(PhysiologicalBase):
     time_upload = pn.widgets.FileInput(
-        styles={"background": "whitesmoke"}, multiple=False, accept=".xls,.xlsx,.csv"
+        styles={"background": "whitesmoke"},
+        multiple=False,
+        accept=".xls,.xlsx,.csv",
+        align="end",
     )
     datetime = [
         (
@@ -62,9 +65,6 @@ class AddTimes(PhysiologicalBase):
             pn.widgets.DatetimePicker(value=datetime.now()),
         )
     ]
-    add_button = pn.widgets.Button(name="Add timestamp", button_type="danger")
-    remove_button = pn.widgets.Button(name="Remove last Phase", button_type="danger")
-    pane = pn.Column()
     subject_log = None
     subject_timestamps = []
     df = None
@@ -82,10 +82,7 @@ class AddTimes(PhysiologicalBase):
         self.ready = False
         super().__init__(**params)
         self.update_step(6)
-        self.time_upload.link(self, callbacks={"value": self.parse_time_file})
-        self.times = pn.Column(
-            self.datetime[0][0], self.datetime[0][1], self.add_button
-        )
+        self.time_upload.link(self, callbacks={"filename": self.parse_time_file})
         self.times_to_subject = TimesToSubject([])
         self.select_subject = pn.widgets.Select(
             name="Select Subject column", visible=False
@@ -93,7 +90,6 @@ class AddTimes(PhysiologicalBase):
         self.select_condition = pn.widgets.Select(
             name="Select Condition column", visible=False
         )
-        self.select_condition.visible = True
         self.select_condition.link(
             self,
             callbacks={"value": self.condition_column_changed},
@@ -129,6 +125,8 @@ class AddTimes(PhysiologicalBase):
         return self._view
 
     def parse_time_file(self, target, event):
+        if self.time_upload.value is None:
+            return
         self.select_condition.visible = False
         self.select_subject.visible = False
         self.select_vp.visible = False
@@ -261,7 +259,6 @@ class AddTimes(PhysiologicalBase):
         ("trimmed_data", param.Dynamic),
         ("session", param.String),
         ("selected_signal", param.String),
-        ("recordings", param.String),
         ("recording", param.String),
         ("data", param.Dynamic),
         ("sampling_rate", param.Number),
@@ -279,6 +276,8 @@ class AddTimes(PhysiologicalBase):
         file_dict = self.times_to_subject.get_files_to_subjects()
         subject_time_dict = self.times_to_subject.get_subject_time_dict()
         for file_name in file_dict.keys():
+            if file_name not in self.data.keys():
+                continue
             self.data[file_dict[file_name]] = self.data.pop(file_name)
         self.subject_time_dict = subject_time_dict
         return (
@@ -289,7 +288,6 @@ class AddTimes(PhysiologicalBase):
             self.trimmed_data,
             self.session,
             self.signal,
-            self.recordings,
             self.recording,
             self.data,
             self.sampling_rate,
