@@ -1,6 +1,6 @@
 import panel as pn
 
-from src.Psychological.setup_study import SetUpStudyDesign
+from src.under_construction_page import UnderConstruction
 
 
 class PsychologicalPipeline:
@@ -15,7 +15,12 @@ class PsychologicalPipeline:
         )
 
         # self.pipeline.add_stage("Test", TestPage(), ready_parameter="ready")
-        self.pipeline.add_stage("Set upt Study Design", SetUpStudyDesign())
+        self.pipeline.add_stage(
+            "Under Construction",
+            UnderConstruction(),
+            ready_parameter="ready",
+        )
+        # self.pipeline.add_stage("Set up Study Design", SetUpStudyDesign())
 
         # self.pipeline.add_stage(
         #     "Ask for Subject Condition List",

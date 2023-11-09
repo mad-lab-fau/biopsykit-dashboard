@@ -295,7 +295,7 @@ class AddTimes(PhysiologicalBase):
             self.time_log_present,
             self.time_log,
             self.get_outlier_params(),
-            self.selected_outlier_methods,
+            self.outlier_methods,
             self.skip_hrv,
             self.subject,
             self.cft_sheets,

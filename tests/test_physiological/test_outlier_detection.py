@@ -43,8 +43,8 @@ class TestOutlierDetection:
         assert ask_to_detect_outlier.skip_outlier_detection == False
 
     def test_outlier_detection_constructor(self, detect_outlier):
-        assert detect_outlier.outlier_methods.value == ["quality", "artifact"]
-        assert detect_outlier.outlier_methods.options == OUTLIER_METHODS
+        assert detect_outlier.select_outlier_methods.value == ["quality", "artifact"]
+        assert detect_outlier.select_outlier_methods.options == OUTLIER_METHODS
 
     def test_setting_upper_and_lower_bound(self, detect_outlier):
         detect_outlier.physiological_upper.value = -100

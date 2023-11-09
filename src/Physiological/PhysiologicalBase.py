@@ -3,18 +3,21 @@ import param
 import panel as pn
 import datetime as datetime
 
+from biopsykit.signals.ecg import EcgProcessor
+
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import *
 from src.Physiological.custom_components import PipelineHeader
 
 
 class PhysiologicalBase(param.Parameterized):
-    artifact = pn.widgets.FloatInput(name="artifact", value=0)
-    correlation = pn.widgets.FloatInput(name="correlation", value=0.3)
-    correct_rpeaks = param.Boolean(default=False)
+    artifact = param.Dynamic(default=0.0)
+    correlation = param.Dynamic(default=0.3)
+    correct_rpeaks = param.Boolean(default=True)
     cft_sheets = param.Dynamic()
     cft_processor = {}
     data = param.Dynamic()
     data_processed = param.Boolean(default=False)
+    default_outlier_detection = param.Boolean(default=False)
     dict_hr_subjects = {}
     ecg_processor = param.Dynamic()
     eeg_processor = {}
@@ -28,14 +31,16 @@ class PhysiologicalBase(param.Parameterized):
     )
     hr_data = None
     hrv_types = param.List(default=None)
-    hrv_index_name = param.String(default="")
+    hrv_index_name = param.Dynamic(default=None)
+    hrv_index = param.Dynamic(default=None)
     original_data = param.Dynamic()
     progress = pn.indicators.Progress(
         name="Progress", height=20, sizing_mode="stretch_width"
     )
     phase_series = param.Dynamic()
-    physiological_upper = pn.widgets.IntInput(name="physiological_upper", value=200)
-    physiological_lower = pn.widgets.IntInput(name="physiological_lower", value=45)
+    physiological_upper = param.Integer(default=200)
+    physiological_lower = param.Integer(default=40)
+    quality = param.Dynamic(default=0.4)
     recording = param.String(default="Single Recording")
     rsp_processor = {}
     sampling_rate = param.Number(default=-1.0)
@@ -52,10 +57,10 @@ class PhysiologicalBase(param.Parameterized):
     step = param.Integer(default=1)
     subject_time_dict = param.Dynamic(default={})
     statistical_param = pn.widgets.FloatInput(name="Statistical:", value=2.576)
-    statistical_rr = pn.widgets.FloatInput(name="statistical_rr", value=2.576)
-    statistical_rr_diff = pn.widgets.FloatInput(name="statistical_rr_diff", value=1.96)
+    statistical_rr = param.Dynamic(default=2.576)
+    statistical_rr_diff = param.Dynamic(default=1.96)
     skip_outlier_detection = param.Boolean(default=True)
-    selected_outlier_methods = param.Dynamic(default=None)
+    outlier_methods = param.Dynamic(default=None)
     textHeader = ""
     times = None
     timezone = param.String(default="Europe/Berlin")
@@ -64,7 +69,6 @@ class PhysiologicalBase(param.Parameterized):
     trimmed_data = param.Dynamic()
     max_steps = PHYSIOLOGICAL_MAX_STEPS
     outlier_params = param.Dynamic(default=None)
-    quality = pn.widgets.FloatInput(name="quality", value=0.4)
 
     def __init__(self, **params):
         header_text = params.pop("HEADER_TEXT") if "HEADER_TEXT" in params else ""
@@ -196,17 +200,19 @@ class PhysiologicalBase(param.Parameterized):
     def get_outlier_params(self):
         if self.skip_outlier_detection:
             self.outlier_params = None
-            self.selected_outlier_methods = None
+            self.outlier_methods = None
             return None
+        if self.default_outlier_detection:
+            return EcgProcessor.outlier_params_default()
         self.outlier_params = {
-            "correlation": self.correlation.value,
-            "quality": self.quality.value,
-            "artifact": self.artifact.value,
-            "statistical_rr": self.statistical_rr.value,
-            "statistical_rr_diff": self.statistical_rr_diff.value,
+            "correlation": self.correlation,
+            "quality": self.quality,
+            "artifact": self.artifact,
+            "statistical_rr": self.statistical_rr,
+            "statistical_rr_diff": self.statistical_rr_diff,
             "physiological": (
-                self.physiological_lower.value,
-                self.physiological_upper.value,
+                self.physiological_lower,
+                self.physiological_upper,
             ),
         }
         return self.outlier_params
@@ -248,7 +254,7 @@ class PhysiologicalBase(param.Parameterized):
             self.time_log_present,
             self.time_log,
             self.get_outlier_params(),
-            self.selected_outlier_methods,
+            self.outlier_methods,
             self.skip_hrv,
             self.subject,
             self.cft_sheets,

@@ -1,6 +1,6 @@
 import pytz
 
-PHYSIOLOGICAL_MAX_STEPS = 12
+PHYSIOLOGICAL_MAX_STEPS = 10
 PHYSIOLOGICAL_SIGNAL_OPTIONS = ["", "ECG", "RSP", "EEG"]
 TIMEZONES = ["None Selected"] + list(pytz.all_timezones)
 PHYSIOLOGICAL_HW_OPTIONS = ["NilsPod", "BioPac"]

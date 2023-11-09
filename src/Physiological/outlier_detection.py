@@ -24,9 +24,6 @@ class AskToDetectOutliers(PhysiologicalBase):
     default_btn = pn.widgets.Button(
         name="Default", button_type="primary", sizing_mode="stretch_width"
     )
-    outlier_methods = pn.widgets.MultiChoice(
-        name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
-    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = ASK_DETECT_OUTLIER_TEXT
@@ -48,11 +45,16 @@ class AskToDetectOutliers(PhysiologicalBase):
     def click_detect_outlier(self, target, event):
         self.next = "Expert Outlier Detection"
         self.skip_outlier_detection = False
+        self.default_outlier_detection = False
         self.ready = True
 
     def click_default(self, target, event):
         self.next = "Do you want to process the HRV also?"
         self.skip_outlier_detection = False
+        self.default_outlier_detection = True
+        self.outlier_params = None
+        self.selected_outlier_methods = "all"
+
         self.ready = True
 
     def panel(self):
@@ -61,9 +63,18 @@ class AskToDetectOutliers(PhysiologicalBase):
 
 class OutlierDetection(PhysiologicalBase):
     textHeader = ""
-    outlier_methods = pn.widgets.MultiChoice(
+    select_outlier_methods = pn.widgets.MultiChoice(
         name="Methods", value=["quality", "artifact"], options=OUTLIER_METHODS
     )
+    set_correlation = pn.widgets.FloatInput(name="Correlation")  # , value=0.3
+    set_quality = pn.widgets.FloatInput(name="Quality")  # , value=0.3
+    set_artifact = pn.widgets.FloatInput(name="Artifact")  # , value=0.3
+    set_statistical_rr = pn.widgets.FloatInput(name="Statistical RR")  # , value=0.3
+    set_statistical_rr_diff = pn.widgets.FloatInput(
+        name="Statistical RR Diff"
+    )  # , value=0.3
+    set_physiological_lower = pn.widgets.IntInput(name="Physiological Lower")
+    set_physiological_upper = pn.widgets.IntInput(name="Physiological Upper")
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = OUTLIER_DETECTION_TEXT
@@ -72,21 +83,25 @@ class OutlierDetection(PhysiologicalBase):
         self.update_step(6)
         self.update_text(OUTLIER_DETECTION_TEXT)
         self.set_progress_value(self.step)
-        self.physiological_upper.link(self, callbacks={"value": self.check_upper_bound})
-        self.physiological_lower.link(self, callbacks={"value": self.check_lower_bound})
-        self.outlier_methods.link(
+        self.set_physiological_lower.link(
+            self, callbacks={"value": self.check_upper_bound}
+        )
+        self.set_physiological_lower.link(
+            self, callbacks={"value": self.check_lower_bound}
+        )
+        self.select_outlier_methods.link(
             self, callbacks={"value": self.outlier_methods_changed}
         )
         pane = pn.Column(self.header)
         pane.append(
             pn.Column(
-                self.outlier_methods,
-                self.correlation,
-                self.quality,
-                self.artifact,
-                self.statistical_rr,
-                self.statistical_rr_diff,
-                pn.Row(self.physiological_lower, self.physiological_upper),
+                self.select_outlier_methods,
+                self.set_correlation,
+                self.set_quality,
+                self.set_artifact,
+                self.set_statistical_rr,
+                self.set_statistical_rr_diff,
+                pn.Row(self.set_physiological_lower, self.set_physiological_lower),
             )
         )
         self._view = pane
@@ -97,20 +112,35 @@ class OutlierDetection(PhysiologicalBase):
         self.selected_outlier_methods = event.new
 
     def check_upper_bound(self, target, event):
-        if self.physiological_upper.value < 0:
-            self.physiological_upper.value = 0
-        if self.physiological_lower.value > self.physiological_upper.value:
-            switched_value = self.physiological_lower.value
-            self.physiological_lower.value = self.physiological_upper.value
-            self.physiological_upper.value = switched_value
+        if self.set_physiological_upper.value < 0:
+            self.set_physiological_upper.value = 0
+        if self.set_physiological_lower.value > self.set_physiological_upper.value:
+            switched_value = self.set_physiological_lower.value
+            self.set_physiological_lower.value = self.set_physiological_upper.value
+            self.set_physiological_upper.value = switched_value
+        self.physiological_upper = self.set_physiological_upper.value
+        self.physiological_lower = self.set_physiological_lower.value
 
     def check_lower_bound(self, target, event):
-        if self.physiological_lower.value < 0:
-            self.physiological_lower.value = 0
-        if self.physiological_lower.value > self.physiological_upper.value:
-            switched_value = self.physiological_upper.value
-            self.physiological_upper.value = self.physiological_lower.value
-            self.physiological_lower.value = switched_value
+        if self.set_physiological_lower.value < 0:
+            self.set_physiological_lower.value = 0
+        if self.set_physiological_lower.value > self.set_physiological_upper.value:
+            switched_value = self.set_physiological_upper.value
+            self.set_physiological_upper.value = self.set_physiological_lower.value
+            self.set_physiological_lower.value = switched_value
+        self.physiological_upper = self.set_physiological_upper.value
+        self.physiological_lower = self.set_physiological_lower.value
+
+    def set_values_of_widgets(self):
+        self.select_outlier_methods.value = self.selected_outlier_methods
+        self.set_correlation.value = self.correlation
+        self.set_quality.value = self.quality
+        self.set_artifact.value = self.artifact
+        self.set_statistical_rr.value = self.statistical_rr
+        self.set_statistical_rr_diff.value = self.statistical_rr_diff
+        self.set_physiological_lower.value = self.physiological_lower
+        self.set_physiological_upper.value = self.physiological_upper
 
     def panel(self):
+        self.set_values_of_widgets()
         return self._view

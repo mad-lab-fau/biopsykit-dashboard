@@ -15,8 +15,6 @@ from src.Physiological.PHYSIOLOGICAL_CONSTANTS import (
 )
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
 from src.Physiological.custom_components import SubjectDataFrameView, PlotViewer
-import holoviews as hv
-import neurokit2 as nk
 
 
 class ProcessingPreStep(PhysiologicalBase):
@@ -28,7 +26,7 @@ class ProcessingPreStep(PhysiologicalBase):
     def __init__(self, **params):
         params["HEADER_TEXT"] = PRESTEP_PROCESSING_TEXT
         super().__init__(**params)
-        self.update_step(8)
+        self.update_step(9)
         self.ready_btn.link(self, callbacks={"clicks": self.ready_btn_click})
         self._view = pn.Column(
             self.header,
@@ -108,7 +106,7 @@ class ProcessingAndPreview(PhysiologicalBase):
                     time_intervals=time_intervals,
                 )
                 ep.ecg_process(
-                    outlier_correction=self.selected_outlier_methods,
+                    outlier_correction=self.outlier_methods,
                     outlier_params=self.outlier_params,
                 )
                 phases = (
@@ -198,14 +196,15 @@ class ProcessingAndPreview(PhysiologicalBase):
         col = pn.Column()
         self.ecg_processor = {}
         for subject in self.data.keys():
-            print(subject)
             ep = EcgProcessor(
                 data=self.data[subject],
                 sampling_rate=self.sampling_rate,
                 time_intervals=self.get_timelog(subject),
             )
+            outlier_params = self.get_outlier_params()
+
             ep.ecg_process(
-                outlier_correction=self.selected_outlier_methods,
+                outlier_correction=self.outlier_methods,
                 outlier_params=self.outlier_params,
             )
             self.ecg_processor[subject] = ep
@@ -283,8 +282,8 @@ class ProcessingAndPreview(PhysiologicalBase):
                     self.ecg_processor[subject],
                     key,
                     index=subject,
-                    hrv_types=self.hrv_types.value,
-                    correct_rpeaks=self.correct_rpeaks.value,
+                    hrv_types=self.hrv_types,
+                    correct_rpeaks=self.correct_rpeaks,
                 )
 
     def panel(self):

@@ -2,12 +2,10 @@ import panel as pn
 import param
 import biopsykit as bp
 
+from src.Sleep.sleep_base import SleepBase
 
-class ProcessDataParameters(param.Parameterized):
-    data = param.Dynamic(default=None)
-    selected_device = param.String(default="")
-    processed_data = param.Dynamic(default=None)
-    processing_parameters = {}
+
+class ProcessDataParameters(SleepBase):
     possible_processing_parameters = {
         "acceleration": {
             "convert_to_g": True,

@@ -3,12 +3,10 @@ import panel as pn
 import param
 import biopsykit as bp
 
+from src.Sleep.sleep_base import SleepBase
 
-class ResultsPreview(param.Parameterized):
-    data = param.Dynamic(default=None)
-    selected_device = param.String(default="")
-    processed_data = param.Dynamic(default=None)
 
+class ResultsPreview(SleepBase):
     def show_results(self) -> pn.Column:
         col = pn.Column()
         if len(self.processed_data) == 1:

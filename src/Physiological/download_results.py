@@ -34,7 +34,7 @@ class DownloadResults(PhysiologicalBase):
         self.download_btn = None
         params["HEADER_TEXT"] = DOWNLOAD_RESULT_TEXT
         super().__init__(**params)
-        self.update_step(12)
+        self.update_step(10)
         self._load_results_checkbox = pn.widgets.Checkbox(name="Load Results")
         self._view = pn.Column(self.header)
         self._view.append(self._load_results_checkbox)
@@ -125,11 +125,14 @@ class DownloadResults(PhysiologicalBase):
                     zip_file.write(f"hr_result_{key}.xlsx")
 
     def load_hrv_plots(self, zip_file):
-        for key in self.ecg_processor.ecg_result.keys():
-            buf = io.BytesIO()
-            fig, axs = bp.signals.ecg.plotting.hrv_plot(self.ecg_processor, key=key)
-            fig.savefig(buf)
-            zip_file.writestr(f"HRV_{key}.png", buf.getvalue())
+        for subject in self.ecg_processor.keys():
+            for key in self.ecg_processor[subject].ecg_result.keys():
+                buf = io.BytesIO()
+                fig, axs = bp.signals.ecg.plotting.hrv_plot(
+                    self.ecg_processor[subject], key=key
+                )
+                fig.savefig(buf)
+                zip_file.writestr(f"HRV_{key}.png", buf.getvalue())
 
     def load_ecg_plots(self, zip_file):
         print("load ecg plots")

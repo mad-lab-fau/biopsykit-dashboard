@@ -29,7 +29,7 @@ class TestProcessingAndPreview:
         processing_and_preview.signal = "ECG"
         df, fs = self.get_sample_ecg_data(script_dir, "Vp01")
         processing_and_preview.data = {"ecg_sample_Vp01.bin": df}
-        processing_and_preview.selected_outlier_methods = None
+        processing_and_preview.outlier_methods = None
         processing_and_preview.outlier_params = None
         processing_and_preview.sampling_rate = fs
         try:
@@ -63,7 +63,7 @@ class TestProcessingAndPreview:
         processing_and_preview.signal = "ECG"
         df, fs = self.get_sample_ecg_data(script_dir, "Vp01")
         processing_and_preview.data = {"Vp01": df}
-        processing_and_preview.selected_outlier_methods = None
+        processing_and_preview.outlier_methods = None
         processing_and_preview.outlier_params = None
         processing_and_preview.sampling_rate = fs
         try:
