@@ -19,7 +19,7 @@ class DownloadSleepResults(SleepBase):
     def __init__(self, **params):
         params["HEADER_TEXT"] = DOWNLOAD_SLEEP_RESULTS_TEXT
         super().__init__(**params)
-        self.update_step(9)
+        self.update_step(7)
         self.update_text(DOWNLOAD_SLEEP_RESULTS_TEXT)
         self.download.callback = pn.bind(self.load_results)
         self._view = pn.Column(

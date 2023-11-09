@@ -6,6 +6,7 @@ from src.Sleep.condition_list_sleep import (
     AskToLoadSleepConditionList,
     AddSleepConditionList,
 )
+from src.Sleep.download_sleep_results import DownloadSleepResults
 from src.Sleep.process_sleep_data import ProcessDataParameters
 from src.Sleep.results_preview import ResultsPreview
 from src.Sleep.set_sleep_data_parameters import SetSleepDataParameters
@@ -56,13 +57,14 @@ class SleepPipeline:
 
         self.pipeline.add_stage("Results Preview", ResultsPreview())
 
-        self.pipeline.add_stage("Download Results", ResultsPreview())
+        self.pipeline.add_stage("Download Results", DownloadSleepResults())
 
         self.pipeline.define_graph(
             {
                 "Ask for Recording Device": "Set Parsing Parameters",
                 "Set Parsing Parameters": "Ask for Format",
                 "Ask for Format": "Upload Sleep Data",
+                "Upload Sleep Data": "Ask for Subject Condition List",
                 "Ask for Subject Condition List": (
                     "Upload Subject Condition List",
                     "Set Sleep Data Parameters",

@@ -35,7 +35,13 @@ class UploadSleepData(SleepBase):
         super().__init__(**params)
         self.update_step(4)
         self.update_text(UPLOAD_SLEEP_DATA_TEXT)
-        self.upload_data.link(self, callbacks={"filename": self.filename_changed})
+        self.upload_data.link(
+            self,
+            callbacks={
+                "value": self.filename_changed,
+                "filename": self.filename_changed,
+            },
+        )
         self._view = pn.Column(self.header, self.upload_data)
 
     def filename_changed(self, _, event):
@@ -145,4 +151,11 @@ class UploadSleepData(SleepBase):
         if self.selected_device == "Other IMU Device":
             self.next_page = "Convert Acc to g"
         self.upload_data.accept = self.accepted_file_types[self.selected_device]
+        self.upload_data.link(
+            self,
+            callbacks={
+                "value": self.filename_changed,
+                "filename": self.filename_changed,
+            },
+        )
         return self._view
