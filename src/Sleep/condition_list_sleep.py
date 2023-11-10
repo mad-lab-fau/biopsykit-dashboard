@@ -10,21 +10,23 @@ from src.utils import load_subject_condition_list
 
 
 class AskToLoadSleepConditionList(SleepBase):
-    no_condition_list_btn = pn.widgets.Button(name="No", button_type="primary")
-    add_condition_list_btn = pn.widgets.Button(name="Yes")
+    no_condition_list_btn = pn.widgets.Button(
+        name="No", button_type="primary", sizing_mode="stretch_width"
+    )
+    add_condition_list_btn = pn.widgets.Button(name="Yes", sizing_mode="stretch_width")
     ready = param.Boolean(default=False)
     next_page = param.Selector(
         default="Add Condition List",
         objects=[
             "Add Condition List",
-            "Set Sleep Data Parameters",
+            "Process Data Parameters",
         ],
     )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = ASK_TO_LOAD_CONDITION_LIST_SLEEP_TEXT
         super().__init__(**params)
-        self.update_step(2)
+        self.update_step(4)
         self.update_text(ASK_TO_LOAD_CONDITION_LIST_SLEEP_TEXT)
         self.no_condition_list_btn.link(
             self, callbacks={"clicks": self.no_condition_list}
@@ -38,7 +40,7 @@ class AskToLoadSleepConditionList(SleepBase):
         )
 
     def no_condition_list(self, _, event):
-        self.next_page = "Set Sleep Data Parameters"
+        self.next_page = "Process Data Parameters"
         self.ready = True
 
     def add_condition_list(self, _, event):

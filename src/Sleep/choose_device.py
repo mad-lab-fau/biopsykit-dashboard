@@ -6,10 +6,11 @@ from src.Sleep.sleep_base import SleepBase
 
 
 class ChooseRecordingDevice(SleepBase):
-    possible_devices = [""] + POSSIBLE_DEVICES
     ready = param.Boolean(default=False)
     device_selector = pn.widgets.Select(
         name="Device",
+        sizing_mode="stretch_width",
+        options=[""] + POSSIBLE_DEVICES,
     )
 
     def __init__(self, **params):
@@ -17,7 +18,6 @@ class ChooseRecordingDevice(SleepBase):
         super().__init__(**params)
         self.update_step(1)
         self.update_text(CHOOSE_DEVICE_TEXT)
-        self.device_selector.options = self.possible_devices
         self.device_selector.link(self, callbacks={"value": self.device_changed})
         self._view = pn.Column(self.header, self.device_selector)
 

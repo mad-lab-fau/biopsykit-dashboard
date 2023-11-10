@@ -28,11 +28,13 @@ class SetSleepDataParameters(SleepBase):
                     name=parameter,
                     options=options,
                     value=set_value if set_value is not None else options[0],
+                    sizing_mode="stretch_width",
                 )
             elif isinstance(options, bool):
                 widget = pn.widgets.Checkbox(
                     name=parameter,
                     value=set_value,
+                    sizing_mode="stretch_width",
                 )
             else:
                 continue

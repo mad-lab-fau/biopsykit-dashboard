@@ -4,8 +4,8 @@
   "start_url": "index.html",
   "icons": [
     {
-      "src": "images/icon-vector.svg",
-      "type": "image/svg+xml",
+      "src": "images/icon-512x512.png",
+      "type": "image/png",
       "sizes": "512x512"
     },
     {

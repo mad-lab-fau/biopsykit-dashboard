@@ -1,6 +1,5 @@
 import pandas as pd
 import panel as pn
-import param
 import biopsykit as bp
 
 from src.Sleep.sleep_base import SleepBase
@@ -45,4 +44,6 @@ class ResultsPreview(SleepBase):
 
     def panel(self):
         text = "# Results Preview \n Below you can see a preview of the results. If you are satisfied with the results, you can click 'Save Results' to save the results to your local machine."
-        return pn.Column(pn.pane.Markdown(text), self.show_results())
+        return pn.Column(pn.pane.Markdown(text))
+
+    # , self.show_results()

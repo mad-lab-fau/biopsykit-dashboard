@@ -23,10 +23,7 @@ class UploadSleepData(SleepBase):
     upload_data = pn.widgets.FileInput(
         name="Upload sleep data",
         multiple=False,
-    )
-    next_page = param.Selector(
-        default="Process Data",
-        objects=["Process Data", "Convert Acc to g"],
+        sizing_mode="stretch_width",
     )
     filename = param.String(default="")
 
@@ -38,7 +35,6 @@ class UploadSleepData(SleepBase):
         self.upload_data.link(
             self,
             callbacks={
-                "value": self.filename_changed,
                 "filename": self.filename_changed,
             },
         )
@@ -48,6 +44,7 @@ class UploadSleepData(SleepBase):
         self.filename = event.new
         if self.filename is None or self.filename == "" or "." not in self.filename:
             return
+        pn.state.notifications.info("Processing data...")
         self.process_data()
 
     def process_data(self):
@@ -82,14 +79,16 @@ class UploadSleepData(SleepBase):
             self.ready = False
 
     def parse_other_imu(self):
+        pn.state.notifications.info("Parsing imu data...")
         if self.upload_data.filename.endswith(".bin"):
             dataset = NilsPodAdapted.from_bin_file(
                 filepath_or_buffer=BytesIO(self.upload_data.value),
                 legacy_support="resolve",
                 **self.selected_parameters[self.selected_device],
             )
-            df, _ = bp.io.nilspod.load_dataset_nilspod(dataset=dataset)
+            df, fs = bp.io.nilspod.load_dataset_nilspod(dataset=dataset)
             self.add_data(df, self.upload_data.filename)
+            self.sampling_rate = fs
         elif self.upload_data.filename.endswith(".csv"):
             string_io = StringIO(self.upload_data.value.decode("utf-8"))
             dataset = pd.read_csv(string_io)
@@ -111,6 +110,7 @@ class UploadSleepData(SleepBase):
                     datasets.append(dataset)
             self.add_data(datasets, self.upload_data.filename)
         self.ready = True
+
         pn.state.notifications.success("Successfully loaded data")
 
     def parse_withings(self):
@@ -148,14 +148,13 @@ class UploadSleepData(SleepBase):
         return dataset
 
     def panel(self):
-        if self.selected_device == "Other IMU Device":
-            self.next_page = "Convert Acc to g"
+        # if self.selected_device == "Other IMU Device":
+        #     self.next_page = "Convert Acc to g"
         self.upload_data.accept = self.accepted_file_types[self.selected_device]
-        self.upload_data.link(
-            self,
-            callbacks={
-                "value": self.filename_changed,
-                "filename": self.filename_changed,
-            },
-        )
+        # self.upload_data.link(
+        #     self,
+        #     callbacks={
+        #         "value": self.filename_changed,
+        #     },
+        # )
         return self._view

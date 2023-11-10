@@ -51,7 +51,6 @@ class SleepPipeline:
             AddSleepConditionList(),
             ready_parameter="ready",
         )
-        self.pipeline.add_stage("Set Sleep Data Parameters", SetSleepDataParameters())
 
         self.pipeline.add_stage("Process Data Parameters", ProcessDataParameters())
 
@@ -67,10 +66,9 @@ class SleepPipeline:
                 "Upload Sleep Data": "Ask for Subject Condition List",
                 "Ask for Subject Condition List": (
                     "Upload Subject Condition List",
-                    "Set Sleep Data Parameters",
+                    "Process Data Parameters",
                 ),
-                "Upload Subject Condition List": "Set Sleep Data Parameters",
-                "Set Sleep Data Parameters": "Process Data Parameters",
+                "Upload Subject Condition List": "Process Data Parameters",
                 "Process Data Parameters": "Results Preview",
                 "Results Preview": "Download Results",
             }
