@@ -1,5 +1,6 @@
 import ast
 import os
+import shutil
 import sys
 from _ast import ImportFrom
 from typing import List
@@ -131,6 +132,12 @@ def replace_all_imports(out_file_text: str, python_file_dict: dict) -> str:
             if isinstance(n, ast.ImportFrom) and n.module.startswith("src")
         ]
     return out_file_text
+
+
+def replace_manifest_file_and_images():
+    target_path = "./index"
+    source_path = "./assets/PWA"
+    shutil.copytree(source_path, target_path, dirs_exist_ok=True)
 
 
 def add_subpart(
@@ -347,6 +354,7 @@ def build_all_pipelines_into_one():
     combine_all_files()
     remove_redundant_imports(RESULTING_FILENAME)
     convert_to_pyodide(RESULTING_FILENAME)
+    replace_manifest_file_and_images()
 
 
 if __name__ == "__main__":
