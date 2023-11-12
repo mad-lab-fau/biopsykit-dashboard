@@ -23,6 +23,9 @@ class TestUploadQuestionnaireData:
 
     @pytest.fixture
     def upload_questionnaire(self):
+        upload_questionnaire = UploadQuestionnaireData()
+        upload_questionnaire.file_input.value = None
+        upload_questionnaire.file_input.filename = None
         return UploadQuestionnaireData()
 
     def test_constructor_upload_questionnaire(self, upload_questionnaire):

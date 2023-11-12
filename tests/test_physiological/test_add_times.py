@@ -47,8 +47,8 @@ class TestAddTimes:
         file_name = "ecg_time_log_changed_all.xlsx"
         abs_file_path = os.path.join(script_dir, file_name)
         with open(abs_file_path, "rb") as f:
-            add_times.time_upload.filename = file_name
             add_times.time_upload.value = f.read()
+            add_times.time_upload.filename = file_name
         assert add_times.ready == False
         add_times.select_subject.value = "versuchspersonen"
         assert "subject" in add_times.df.columns.to_list()
@@ -63,8 +63,8 @@ class TestAddTimes:
         file_name = "ecg_time_log_changed.xlsx"
         abs_file_path = os.path.join(script_dir, file_name)
         with open(abs_file_path, "rb") as f:
-            add_times.time_upload.filename = file_name
             add_times.time_upload.value = f.read()
+            add_times.time_upload.filename = file_name
         assert add_times.ready == False
         add_times.select_subject.value = "versuchspersonen"
         assert add_times.ready == True
@@ -76,8 +76,8 @@ class TestAddTimes:
         file_name = "ecg_time_log.xlsx"
         abs_file_path = os.path.join(script_dir, file_name)
         with open(abs_file_path, "rb") as f:
-            add_times.time_upload.filename = file_name
             add_times.time_upload.value = f.read()
+            add_times.time_upload.filename = file_name
         assert add_times.ready == True
         assert add_times.next == "Do you want to detect Outlier?"
         keys = ["Vp01", "Vp02"]

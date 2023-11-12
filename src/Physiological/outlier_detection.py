@@ -83,7 +83,7 @@ class OutlierDetection(PhysiologicalBase):
         self.update_step(6)
         self.update_text(OUTLIER_DETECTION_TEXT)
         self.set_progress_value(self.step)
-        self.set_physiological_lower.link(
+        self.set_physiological_upper.link(
             self, callbacks={"value": self.check_upper_bound}
         )
         self.set_physiological_lower.link(

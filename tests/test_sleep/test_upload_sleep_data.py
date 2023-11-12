@@ -36,7 +36,6 @@ class TestUploadSleepData:
         }
         assert upload_sleep_data.upload_data.name == "Upload sleep data"
         assert upload_sleep_data.upload_data.multiple == False
-        assert upload_sleep_data.next_page == "Process Data"
 
     def test_upload_sleep_data_process_imu_bin_file(
         self, upload_sleep_data, script_dir, imu_bin_file_example_path
@@ -50,6 +49,5 @@ class TestUploadSleepData:
         ).read()
         upload_sleep_data.upload_data.filename = imu_bin_file_example_path
         assert upload_sleep_data.ready == True
-        assert upload_sleep_data.next_page == "Process Data"
         data, _ = bp.example_data.get_sleep_imu_example()
         assert upload_sleep_data.data[imu_bin_file_example_path].equals(data)

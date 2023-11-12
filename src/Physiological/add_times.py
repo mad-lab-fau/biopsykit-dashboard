@@ -140,7 +140,7 @@ class AddTimes(PhysiologicalBase):
         self.set_subject_time_dict()
 
     def ask_for_additional_infos(self):
-        row = pn.Row()
+        # row = pn.Row()
         cols = list(self.df.columns)
         cols.insert(0, " ")
         if "subject" not in self.df.columns:
@@ -149,7 +149,7 @@ class AddTimes(PhysiologicalBase):
         if "condition" not in self.df.columns:
             self.select_condition.options = cols
             self.select_condition.visible = True
-        self.pane.append(row)
+        # self.pane.append(row)
 
     def parse_file(self, file_name, file_content) -> pd.DataFrame:
         if file_content is None:
