@@ -10,8 +10,10 @@ from src.utils import load_subject_condition_list
 
 
 class AskToLoadConditionList(SalivaBase):
-    no_condition_list_btn = pn.widgets.Button(name="No", button_type="primary")
-    add_condition_list_btn = pn.widgets.Button(name="Yes")
+    no_condition_list_btn = pn.widgets.Button(
+        name="No", button_type="primary", sizing_mode="stretch_width"
+    )
+    add_condition_list_btn = pn.widgets.Button(name="Yes", sizing_mode="stretch_width")
     ready = param.Boolean(default=False)
     next_page = param.Selector(
         default="Add Condition List",

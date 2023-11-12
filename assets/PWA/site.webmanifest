@@ -1,6 +1,6 @@
 {
   "name": "Biopsykit Dashboard",
-  "short_name": "Biopsykit Dashboard",
+//   "short_name": "",
   "start_url": "index.html",
   "icons": [
     {
@@ -26,7 +26,7 @@
   ],
   "display": "standalone",
   "scope": "/",
-  "background_color": "#fdfdfd",
-  "theme_color": "#0072B5",
+  "background_color": "#186FEF",
+  "theme_color": "#355eab",
   "orientation": "any"
 }

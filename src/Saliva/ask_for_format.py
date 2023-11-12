@@ -9,6 +9,7 @@ class AskForFormat(SalivaBase):
     format_selector = pn.widgets.Select(
         options=["", "Wide Format", "Plate Format"],
         name="Format",
+        sizing_mode="stretch_width",
     )
     ready = param.Boolean(default=False)
 

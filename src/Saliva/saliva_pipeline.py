@@ -7,6 +7,7 @@ from src.Saliva.load_saliva_data import (
     LoadSalivaData,
 )
 from src.Saliva.saliva_features import ShowSalivaFeatures
+from src.Saliva.sample_times import SetSampleTimes, AskToSetSampleTimes
 
 
 class SalivaPipeline:
@@ -22,6 +23,19 @@ class SalivaPipeline:
             AskForFormat(),
             **{"ready_parameter": "ready", "auto_advance": True},
         )
+
+        self.pipeline.add_stage(
+            "Ask to add sample times",
+            AskToSetSampleTimes(),
+            **{
+                "ready_parameter": "ready",
+                "auto_advance": True,
+                "next_parameter": "next_page",
+            },
+        )
+
+        self.pipeline.add_stage("Add Sample Times", SetSampleTimes())
+
         self.pipeline.add_stage(
             "Ask for Subject Condition List",
             AskToLoadConditionList(),
@@ -44,12 +58,24 @@ class SalivaPipeline:
 
         self.pipeline.define_graph(
             {
-                "Ask for Format": "Ask for Subject Condition List",
+                "Ask for Format": "Ask to add sample times",
+                "Ask to add sample times": (
+                    "Add Sample Times",
+                    "Ask for Subject Condition List",
+                ),
+                "Add Sample Times": "Ask for Subject Condition List",
                 "Ask for Subject Condition List": (
                     "Add Condition List",
                     "Load Saliva Data",
                 ),
                 "Add Condition List": "Load Saliva Data",
                 "Load Saliva Data": "Show Features",
+                # "Ask for Format": "Ask for Subject Condition List",
+                # "Ask for Subject Condition List": (
+                #     "Add Condition List",
+                #     "Load Saliva Data",
+                # ),
+                # "Add Condition List": "Load Saliva Data",
+                # "Load Saliva Data": "Show Features",
             }
         )

@@ -10,53 +10,71 @@ from src.utils import load_saliva_plate, load_saliva_wide_format
 class LoadSalivaData(SalivaBase):
     ready = param.Boolean(default=False)
     temporary_dataframe = param.DataFrame(default=None)
-    upload_btn = pn.widgets.FileInput(accept=".csv,.xls,.xlsx", multiple=False)
+    upload_btn = pn.widgets.FileInput(
+        accept=".csv,.xls,.xlsx", multiple=False, sizing_mode="stretch_width"
+    )
     select_saliva = pn.widgets.Select(
         name="Choose the saliva type",
         options=["", "cortisol", "amylase"],
         visible=False,
+        sizing_mode="stretch_width",
     )
     select_subject_col = pn.widgets.Select(
-        name="Select Subject Column", options=[], visible=False
+        name="Select Subject Column",
+        options=[],
+        visible=False,
+        sizing_mode="stretch_width",
     )
     select_condition_col = pn.widgets.Select(
-        name="Select Condition Column", options=[], visible=False
+        name="Select Condition Column",
+        options=[],
+        visible=False,
+        sizing_mode="stretch_width",
     )
     select_additional_index_cols = pn.widgets.MultiChoice(
         name="Select Additional Index Columns",
         options=[],
         visible=False,
+        sizing_mode="stretch_width",
     )
     sample_times_input = pn.widgets.TextInput(
         name="Sample Times",
         placeholder="Enter sample times separated by commas, e.g. [-30,10,30,60]",
         visible=False,
+        sizing_mode="stretch_width",
     )
     select_id_col_names = pn.widgets.MultiChoice(
-        name="Select Id Columns",
-        options=[],
-        visible=False,
+        name="Select Id Columns", options=[], visible=False, sizing_mode="stretch_width"
     )
     select_sample_id_col = pn.widgets.Select(
-        name="Select Sample ID Column", options=[], visible=False
+        name="Select Sample ID Column",
+        options=[],
+        visible=False,
+        sizing_mode="stretch_width",
     )
     select_data_col = pn.widgets.Select(
-        name="Select Data Column", options=[], visible=False
+        name="Select Data Column",
+        options=[],
+        visible=False,
+        sizing_mode="stretch_width",
     )
     regex_input = pn.widgets.TextInput(
         name="Regex for sample id",
         value=None,
         placeholder="regular expression to extract subject ID, day ID and sample ID from the sample identifier",
         visible=False,
+        sizing_mode="stretch_width",
     )
-    fill_condition_list = pn.widgets.Checkbox(name="Set Condition List", visible=False)
-    filename = param.String(default="")
+    fill_condition_list = pn.widgets.Checkbox(
+        name="Set Condition List", visible=False, sizing_mode="stretch_width"
+    )
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = LOAD_PLATE_DATA_TEXT
         super().__init__(**params)
         self.update_step(3)
         self.update_text(LOAD_PLATE_DATA_TEXT)
+        self.filename = None
         self.select_saliva.link(self, callbacks={"value": self.saliva_type_changed})
         self.upload_btn.link(self, callbacks={"filename": self.filename_changed})
         self._view = pn.Column(
@@ -69,7 +87,12 @@ class LoadSalivaData(SalivaBase):
 
     def filename_changed(self, _, event):
         self.filename = event.new
-        if self.filename is None or self.filename == "" or "." not in self.filename:
+        if (
+            self.filename is None
+            or self.filename == ""
+            or "." not in self.filename
+            or self.upload_btn.value is None
+        ):
             return
         self.parse_file_input()
 
@@ -208,24 +231,26 @@ class LoadSalivaData(SalivaBase):
     def process_plate_format(self):
         try:
             self.data = load_saliva_plate(
-                self.temporary_dataframe,
-                self.saliva_type,
-                (
+                file=self.temporary_dataframe,
+                saliva_type=self.select_saliva.value,
+                sample_id_col=(
                     self.select_sample_id_col.value
                     if self.select_sample_id_col.value != ""
                     else None
                 ),
-                (
+                data_col=(
                     self.select_data_col.value
                     if self.select_data_col.value != ""
                     else None
                 ),
-                (
+                id_col_names=(
                     self.select_id_col_names.value
                     if len(self.select_id_col_names.value) > 0
                     else None
                 ),
-                (self.regex_input.value if self.regex_input.value != "" else None),
+                regex=(
+                    self.regex_input.value if self.regex_input.value != "" else None
+                ),
                 condition_list=(
                     self.condition_list
                     if self.condition_list is not None
