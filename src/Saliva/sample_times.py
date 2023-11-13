@@ -18,7 +18,7 @@ class AskToSetSampleTimes(SalivaBase):
         ],
     )
     no_sample_times_btn = pn.widgets.Button(
-        name="No", button_type="light", sizing_mode="stretch_width"
+        name="No", button_type="primary", sizing_mode="stretch_width"
     )
     add_sample_times_btn = pn.widgets.Button(name="Yes", sizing_mode="stretch_width")
 
@@ -52,30 +52,30 @@ class SetSampleTimes(SalivaBase):
     sample_times_input = pn.widgets.ArrayInput(
         name="Sample Times",
         placeholder="Enter sample times separated by commas, e.g. [-30,10,30,60]",
+        sizing_mode="stretch_width",
     )
-    ready = param.Boolean(default=False)
 
     def __init__(self, **params):
         params["HEADER_TEXT"] = SET_SAMPLE_TIMES_TEXT
         super().__init__(**params)
         self.update_step(2)
         self.update_text(SET_SAMPLE_TIMES_TEXT)
-        self.sample_times_input.param.watch(self.sample_times_changed, "value")
+        self.sample_times_input.link(
+            self, callbacks={"value": self.sample_times_changed}
+        )
         self._view = pn.Column(
             self.header,
             pn.pane.Markdown("# Enter the sample times"),
             self.sample_times_input,
         )
 
-    def sample_times_changed(self, event):
+    def sample_times_changed(self, _, event):
         self.sample_times = event.new
-        if self.sample_times is None or len(self.sample_times) == 0:
-            self.ready = False
-        else:
-            self.ready = True
+        if len(self.sample_times) == 0:
+            self.sample_times = None
+        pn.state.notifications.info(f"Sample times set to {self.sample_times}")
 
     def panel(self):
-        self.sample_times_input.param.watch(self.sample_times_changed, "value")
         return pn.Column(
             pn.pane.Markdown("# Enter the sample times"),
             self.sample_times_input,

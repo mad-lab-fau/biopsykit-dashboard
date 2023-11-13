@@ -10,3 +10,4 @@ LOAD_PLATE_DATA_TEXT = (
     "In the following steps you can analyze the data and then download the results."
 )
 SHOW_FEATURES_TEXT = "# Show Features"
+ASK_TO_EXCLUDE_SUBJECTS_TEXT = "# Do you want to exclude subjects?"

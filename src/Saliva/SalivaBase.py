@@ -10,7 +10,7 @@ class SalivaBase(param.Parameterized):
     format = param.String(default=None)
     saliva_type = param.String(default="")
     sample_id = param.String(default=None)
-    sample_times = param.Dynamic()
+    sample_times = param.Dynamic(default=None)
     step = param.Integer(default=1)
 
     def __init__(self, **params):

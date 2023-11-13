@@ -1,8 +1,10 @@
 import io
 import itertools
+from typing import Tuple, Dict
 
 import matplotlib.figure
 import numpy as np
+import pandas as pd
 import panel as pn
 import param
 import biopsykit as bp
@@ -16,7 +18,7 @@ from src.Saliva.SalivaBase import SalivaBase
 
 class ShowSalivaFeatures(SalivaBase):
     data_features = param.Dynamic(default=None)
-    auc_args = {"remove_s0": False, "compute_auc_post": False, "sample_times": None}
+    auc_args = {"remove_s0": False, "compute_auc_post": False}
     slope_args = {"sample_idx": None, "sample_labels": None}
     standard_features_args = {"group_cols": None, "keep_index": True}
     mean_se_args = {
@@ -38,11 +40,14 @@ class ShowSalivaFeatures(SalivaBase):
         "palette": cmaps.faculties_light,
     }
     feature_accordion_column = pn.Column(pn.Accordion(name="Features"))
+    exclude_subjects = pn.widgets.MultiChoice(
+        name="Exclude Subjects", options=[], sizing_mode="stretch_width"
+    )
 
     def get_feature_accordion(self) -> pn.Accordion:
-        if self.data is None:
-            return pn.Accordion()
         if self.saliva_type is None:
+            return pn.Accordion()
+        if self.get_data()[self.saliva_type] is None:
             return pn.Accordion()
         acc = pn.Accordion(name="Features", sizing_mode="stretch_width")
         acc.append(self.get_mean_se_element())
@@ -91,13 +96,15 @@ class ShowSalivaFeatures(SalivaBase):
             # col.append(download_btn)
             return col
         except Exception as e:
+            pn.state.notifications.error("Error in Mean and SE")
+            print("crashed in mean and se")
             col = pn.Column(name="Mean and SE")
             col.append(pn.pane.Str(str(e)))
             return col
 
     def get_mean_se_df(self) -> SalivaMeanSeDataFrame:
         return bp.saliva.mean_se(
-            data=self.data,
+            data=self.get_data()[self.saliva_type],
             saliva_type=self.saliva_type,
         )
 
@@ -315,7 +322,7 @@ class ShowSalivaFeatures(SalivaBase):
         else:
             return
         auc_df = bp.saliva.auc(
-            data=self.data,
+            data=self.get_data()[self.saliva_type],
             saliva_type=self.saliva_type,
             **self.auc_args,
         )
@@ -328,7 +335,7 @@ class ShowSalivaFeatures(SalivaBase):
             )
             compute_auc_post = pn.widgets.Checkbox(name="Compute AUC Post", value=False)
             auc_df = bp.saliva.auc(
-                data=self.data,
+                data=self.get_data()[self.saliva_type],
                 saliva_type=self.saliva_type,
                 sample_times=self.sample_times,
                 remove_s0=switch_remove_s0.value,
@@ -378,12 +385,16 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def max_value_switch_removes0(self, target, event):
-        target.value = bp.saliva.max_value(self.data, remove_s0=event.new)
+        target.value = bp.saliva.max_value(
+            self.get_data()[self.saliva_type], remove_s0=event.new
+        )
 
     def get_max_value(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-            df = bp.saliva.max_value(self.data, remove_s0=switch_remove_s0.value)
+            df = bp.saliva.max_value(
+                self.get_data()[self.saliva_type], remove_s0=switch_remove_s0.value
+            )
             max_value_tabulator = pn.widgets.Tabulator(
                 df,
                 pagination="local",
@@ -430,7 +441,7 @@ class ShowSalivaFeatures(SalivaBase):
             return
         # try:
         df = bp.saliva.standard_features(
-            data=self.data,
+            data=self.get_data()[self.saliva_type],
             saliva_type=self.saliva_type,
             **self.standard_features_args,
         )
@@ -442,11 +453,13 @@ class ShowSalivaFeatures(SalivaBase):
     def get_standard_features(self) -> pn.Column:
         try:
             group_cols = pn.widgets.MultiChoice(
-                name="Group Columns", value=[], options=list(self.data.columns)
+                name="Group Columns",
+                value=[],
+                options=list(self.get_data()[self.saliva_type].columns),
             )
             keep_index = pn.widgets.Checkbox(name="Keep Index", value=True)
             df = bp.saliva.standard_features(
-                self.data,
+                self.get_data()[self.saliva_type],
                 saliva_type=self.saliva_type,
                 group_cols=(group_cols.value if group_cols.value != [] else None),
                 keep_index=keep_index.value,
@@ -490,12 +503,16 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def initial_value_switch_removes0(self, target, event):
-        target.value = bp.saliva.initial_value(self.data, remove_s0=event.new)
+        target.value = bp.saliva.initial_value(
+            self.get_data()[self.saliva_type], remove_s0=event.new
+        )
 
     def get_initial_value(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-            df = bp.saliva.initial_value(self.data, remove_s0=switch_remove_s0.value)
+            df = bp.saliva.initial_value(
+                self.get_data()[self.saliva_type], remove_s0=switch_remove_s0.value
+            )
             initial_value_tabulator = pn.widgets.Tabulator(
                 df, pagination="local", layout="fit_data_stretch", page_size=10
             )
@@ -527,12 +544,14 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def max_increase_switch_removes0(self, target, event):
-        target.value = bp.saliva.max_increase(self.data, remove_s0=event.new)
+        target.value = bp.saliva.max_increase(
+            self.get_data()[self.saliva_type], remove_s0=event.new
+        )
 
     def get_max_increase(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-            df = bp.saliva.max_increase(self.data)
+            df = bp.saliva.max_increase(self.get_data()[self.saliva_type])
             max_increase_tabulator = pn.widgets.Tabulator(
                 df, pagination="local", layout="fit_data_stretch", page_size=10
             )
@@ -568,7 +587,7 @@ class ShowSalivaFeatures(SalivaBase):
             name="Sample Index", value=[1, 4], placeholder="Enter the sample index"
         )
         slope_df = bp.saliva.slope(
-            self.data,
+            self.get_data()[self.saliva_type],
             sample_idx=sample_idx.value,
             sample_times=sample_times_input.value,
             sample_labels=None,
@@ -583,30 +602,56 @@ class ShowSalivaFeatures(SalivaBase):
         )
         return col
 
+    def get_data(self) -> Dict[str, pd.DataFrame]:
+        return bp.utils.data_processing.exclude_subjects(
+            excluded_subjects=self.exclude_subjects.value,
+            condition_list=self.condition_list.tolist()
+            if isinstance(self.condition_list, ndarray)
+            else self.condition_list,
+            **{self.saliva_type: self.data},
+        )
+
+    def update_feature_column(self, target, event):
+        self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
+
+    def get_all_subjects(self):
+        try:
+            return list(self.data.index.get_level_values("subject").unique())
+        except Exception:
+            return []
+
     def __init__(self, **params):
         params["HEADER_TEXT"] = SHOW_FEATURES_TEXT
         super().__init__(**params)
         self.update_step(4)
         self.update_text(SHOW_FEATURES_TEXT)
-        self._view = pn.Column(self.header, self.feature_accordion_column)
+        self.exclude_subjects.link(
+            self, callbacks={"value": self.update_feature_column}
+        )
+        self._view = pn.Column(
+            self.header,
+            self.exclude_subjects,
+            pn.layout.Divider(),
+            self.feature_accordion_column,
+        )
 
     def panel(self):
+        self.exclude_subjects.options = self.get_all_subjects()
+        if self.exclude_subjects.options is None or self.exclude_subjects.options == []:
+            self.exclude_subjects.visible = False
         if self.data_features is None and self.data is not None:
-            print("Computing features")
             try:
                 self.data_features = bp.saliva.standard_features(
-                    self.data, saliva_type="cortisol"
+                    self.data, saliva_type=self.saliva_type
                 )
             except Exception as e:
                 print(f"Exception in computing features: {e}")
-            print("Computing features done")
-            print("Converting to long format")
             try:
                 self.data_features = bp.saliva.utils.saliva_feature_wide_to_long(
                     self.data_features, saliva_type=self.saliva_type
                 )
             except Exception as e:
                 print(f"Exception in converting to long format: {e}")
-            print("Converting to long format done")
-        self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
+        self.update_feature_column(None, None)
+        # self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
         return self._view

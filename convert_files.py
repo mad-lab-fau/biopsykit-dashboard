@@ -46,38 +46,6 @@ changed_imports = (
     "]\n"
 )
 
-# const_env_spec = [
-#     "https://cdn.holoviz.org/panel/wheels/bokeh-3.3.0-py3-none-any.whl",
-#     "https://cdn.holoviz.org/panel/1.3.1/dist/wheels/panel-1.3.1-py3-none-any.whl",
-#     "pyodide-http==0.2.1",
-#     "ast",
-#     "biopsykit",
-#     "datetime",
-#     "fau_colors",
-#     "io",
-#     "math",
-#     "matplotlib",
-#     "nilspodlib",
-#     "numpy",
-#     "os",
-#     "packaging",
-#     "pandas",
-#     "param",
-#     "pathlib",
-#     "plotly",
-#     "pytz",
-#     "re",
-#     "seaborn",
-#     "string",
-#     "typing",
-#     "typing_extensions",
-#     "warnings",
-#     "zipfile",
-# ]
-
-
-# == 0.11.2
-
 
 def is_ignored(filename) -> bool:
     return (

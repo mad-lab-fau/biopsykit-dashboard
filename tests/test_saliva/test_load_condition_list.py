@@ -24,6 +24,9 @@ class TestLoadConditionList:
 
     @pytest.fixture
     def add_condition_list(self):
+        add_condition_list = AddConditionList()
+        add_condition_list.upload_condition_list_btn.filename = None
+        add_condition_list.upload_condition_list_btn.value = None
         return AddConditionList()
 
     def test_constructor_ask_to_load_condition_list_(self, ask_to_load_condition_list):
@@ -48,10 +51,10 @@ class TestLoadConditionList:
     ):
         abs_file_path = os.path.join(script_dir, condition_list_filename)
         with open(abs_file_path, "rb") as f:
+            add_condition_list.upload_condition_list_btn.value = f.read()
             add_condition_list.upload_condition_list_btn.filename = (
                 condition_list_filename
             )
-            add_condition_list.upload_condition_list_btn.value = f.read()
         assert add_condition_list.condition_list is not None
         assert add_condition_list.ready == True
         assert add_condition_list.condition_list.shape == (28, 1)

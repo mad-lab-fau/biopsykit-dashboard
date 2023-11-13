@@ -1,3 +1,4 @@
+import numpy
 import pandas as pd
 import panel as pn
 import param
@@ -251,14 +252,13 @@ class LoadSalivaData(SalivaBase):
                 regex=(
                     self.regex_input.value if self.regex_input.value != "" else None
                 ),
-                condition_list=(
-                    self.condition_list
-                    if self.condition_list is not None
-                    and self.fill_condition_list.value
-                    else None
-                ),
+                condition_list=self.condition_list,
+                sample_times=self.sample_times.tolist()
+                if isinstance(self.sample_times, numpy.ndarray)
+                else None,
             )
         except Exception as e:
+            print("Error while processing plate format")
             self.handle_error(e)
 
     def is_ready(self) -> bool:

@@ -13,7 +13,9 @@ class AskToLoadConditionList(SalivaBase):
     no_condition_list_btn = pn.widgets.Button(
         name="No", button_type="primary", sizing_mode="stretch_width"
     )
-    add_condition_list_btn = pn.widgets.Button(name="Yes", sizing_mode="stretch_width")
+    add_condition_list_btn = pn.widgets.Button(
+        name="Yes", sizing_mode="stretch_width", button_type="light"
+    )
     ready = param.Boolean(default=False)
     next_page = param.Selector(
         default="Add Condition List",
@@ -63,18 +65,31 @@ class AddConditionList(SalivaBase):
         self.update_step(2)
         self.update_text(ADD_CONDITION_LIST_TEXT)
         self.upload_condition_list_btn.link(
-            self, callbacks={"value": self.parse_file_input}
+            self, callbacks={"filename": self.filename_changed}
         )
         self._view = pn.Column(
             self.header,
             self.upload_condition_list_btn,
         )
 
-    def parse_file_input(self, target, event):
+    def filename_changed(self, _, event):
+        filename = event.new
+        if (
+            filename is None
+            or filename == ""
+            or "." not in filename
+            or self.upload_condition_list_btn.value is None
+        ):
+            self.ready = False
+            return
+        else:
+            self.parse_file_input(filename)
+
+    def parse_file_input(self, filename: str):
         try:
             self.condition_list = load_subject_condition_list(
                 self.upload_condition_list_btn.value,
-                self.upload_condition_list_btn.filename,
+                filename,
             )
             pn.state.notifications.success("Condition List successfully loaded")
             self.ready = True
