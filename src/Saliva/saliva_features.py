@@ -331,9 +331,11 @@ class ShowSalivaFeatures(SalivaBase):
     def get_auc(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(
-                name="Remove S0", value=False, align=("start", "start")
+                name="Remove S0", value=False, align=("start", "end")
             )
-            compute_auc_post = pn.widgets.Checkbox(name="Compute AUC Post", value=False)
+            compute_auc_post = pn.widgets.Checkbox(
+                name="Compute AUC Post", value=False, align=("start", "end")
+            )
             auc_df = bp.saliva.auc(
                 data=self.get_data()[self.saliva_type],
                 saliva_type=self.saliva_type,
@@ -364,13 +366,12 @@ class ShowSalivaFeatures(SalivaBase):
             col = pn.Column(name="AUC")
             col.append(
                 pn.Row(
-                    "**Remove s0**",
                     switch_remove_s0,
                     pn.layout.HSpacer(),
                     align=("center"),
                 )
             )
-            col.append(pn.Row("**Compute AUC Post**", compute_auc_post))
+            col.append(pn.Row(compute_auc_post))
             col.append(auc_tabulator)
             col.append(
                 pn.Row(
@@ -414,7 +415,7 @@ class ShowSalivaFeatures(SalivaBase):
                 max_value_tabulator, callbacks={"value": self.max_value_switch_removes0}
             )
             col = pn.Column(name="Max Value")
-            col.append(pn.Row("**Remove s0**", switch_remove_s0, pn.layout.HSpacer()))
+            col.append(pn.Row(switch_remove_s0, pn.layout.HSpacer()))
             col.append(max_value_tabulator)
             col.append(
                 pn.Row(
@@ -529,7 +530,7 @@ class ShowSalivaFeatures(SalivaBase):
                 callbacks={"value": self.initial_value_switch_removes0},
             )
             col = pn.Column(name="Initial Value")
-            col.append(pn.Row("**Remove s0**", switch_remove_s0))
+            col.append(pn.Row(switch_remove_s0))
             col.append(initial_value_tabulator)
             col.append(
                 pn.Row(
@@ -568,7 +569,7 @@ class ShowSalivaFeatures(SalivaBase):
                 },
             )
             col = pn.Column(name="Max Increase")
-            col.append(pn.Row("**Remove s0**", switch_remove_s0))
+            col.append(pn.Row(switch_remove_s0))
             col.append(max_increase_tabulator)
             col.append(pn.Row(filename, button))
             return col
@@ -589,7 +590,9 @@ class ShowSalivaFeatures(SalivaBase):
         slope_df = bp.saliva.slope(
             self.get_data()[self.saliva_type],
             sample_idx=sample_idx.value,
-            sample_times=sample_times_input.value,
+            sample_times=sample_times_input.value.tolist()
+            if isinstance(sample_times_input.value, ndarray)
+            else None,
             sample_labels=None,
         )
         col = pn.Column(name="Slope")
@@ -653,5 +656,4 @@ class ShowSalivaFeatures(SalivaBase):
             except Exception as e:
                 print(f"Exception in converting to long format: {e}")
         self.update_feature_column(None, None)
-        # self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
         return self._view

@@ -56,7 +56,10 @@ class AskToLoadConditionList(SalivaBase):
 class AddConditionList(SalivaBase):
     ready = param.Boolean(default=False)
     upload_condition_list_btn = pn.widgets.FileInput(
-        name="Upload condition list", accept=".csv,.xls,.xlsx", multiple=False
+        name="Upload condition list",
+        accept=".csv,.xls,.xlsx",
+        multiple=False,
+        sizing_mode="stretch_width",
     )
 
     def __init__(self, **params):
