@@ -1,6 +1,5 @@
 import io
 import itertools
-from typing import Tuple, Dict
 
 import matplotlib.figure
 import numpy as np
@@ -47,7 +46,7 @@ class ShowSalivaFeatures(SalivaBase):
     def get_feature_accordion(self) -> pn.Accordion:
         if self.saliva_type is None:
             return pn.Accordion()
-        if self.get_data()[self.saliva_type] is None:
+        if self.get_data() is None:
             return pn.Accordion()
         acc = pn.Accordion(name="Features", sizing_mode="stretch_width")
         acc.append(self.get_mean_se_element())
@@ -104,7 +103,7 @@ class ShowSalivaFeatures(SalivaBase):
 
     def get_mean_se_df(self) -> SalivaMeanSeDataFrame:
         return bp.saliva.mean_se(
-            data=self.get_data()[self.saliva_type],
+            data=self.get_data(),
             saliva_type=self.saliva_type,
         )
 
@@ -322,7 +321,7 @@ class ShowSalivaFeatures(SalivaBase):
         else:
             return
         auc_df = bp.saliva.auc(
-            data=self.get_data()[self.saliva_type],
+            data=self.get_data(),
             saliva_type=self.saliva_type,
             **self.auc_args,
         )
@@ -337,7 +336,7 @@ class ShowSalivaFeatures(SalivaBase):
                 name="Compute AUC Post", value=False, align=("start", "end")
             )
             auc_df = bp.saliva.auc(
-                data=self.get_data()[self.saliva_type],
+                data=self.get_data(),
                 saliva_type=self.saliva_type,
                 sample_times=self.sample_times,
                 remove_s0=switch_remove_s0.value,
@@ -386,16 +385,12 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def max_value_switch_removes0(self, target, event):
-        target.value = bp.saliva.max_value(
-            self.get_data()[self.saliva_type], remove_s0=event.new
-        )
+        target.value = bp.saliva.max_value(self.get_data(), remove_s0=event.new)
 
     def get_max_value(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-            df = bp.saliva.max_value(
-                self.get_data()[self.saliva_type], remove_s0=switch_remove_s0.value
-            )
+            df = bp.saliva.max_value(self.get_data(), remove_s0=switch_remove_s0.value)
             max_value_tabulator = pn.widgets.Tabulator(
                 df,
                 pagination="local",
@@ -442,7 +437,7 @@ class ShowSalivaFeatures(SalivaBase):
             return
         # try:
         df = bp.saliva.standard_features(
-            data=self.get_data()[self.saliva_type],
+            data=self.get_data(),
             saliva_type=self.saliva_type,
             **self.standard_features_args,
         )
@@ -456,11 +451,11 @@ class ShowSalivaFeatures(SalivaBase):
             group_cols = pn.widgets.MultiChoice(
                 name="Group Columns",
                 value=[],
-                options=list(self.get_data()[self.saliva_type].columns),
+                options=list(self.get_data().columns),
             )
             keep_index = pn.widgets.Checkbox(name="Keep Index", value=True)
             df = bp.saliva.standard_features(
-                self.get_data()[self.saliva_type],
+                self.get_data(),
                 saliva_type=self.saliva_type,
                 group_cols=(group_cols.value if group_cols.value != [] else None),
                 keep_index=keep_index.value,
@@ -504,15 +499,13 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def initial_value_switch_removes0(self, target, event):
-        target.value = bp.saliva.initial_value(
-            self.get_data()[self.saliva_type], remove_s0=event.new
-        )
+        target.value = bp.saliva.initial_value(self.get_data(), remove_s0=event.new)
 
     def get_initial_value(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
             df = bp.saliva.initial_value(
-                self.get_data()[self.saliva_type], remove_s0=switch_remove_s0.value
+                self.get_data(), remove_s0=switch_remove_s0.value
             )
             initial_value_tabulator = pn.widgets.Tabulator(
                 df, pagination="local", layout="fit_data_stretch", page_size=10
@@ -545,14 +538,12 @@ class ShowSalivaFeatures(SalivaBase):
             return col
 
     def max_increase_switch_removes0(self, target, event):
-        target.value = bp.saliva.max_increase(
-            self.get_data()[self.saliva_type], remove_s0=event.new
-        )
+        target.value = bp.saliva.max_increase(self.get_data(), remove_s0=event.new)
 
     def get_max_increase(self) -> pn.Column:
         try:
             switch_remove_s0 = pn.widgets.Checkbox(name="Remove S0", value=False)
-            df = bp.saliva.max_increase(self.get_data()[self.saliva_type])
+            df = bp.saliva.max_increase(self.get_data())
             max_increase_tabulator = pn.widgets.Tabulator(
                 df, pagination="local", layout="fit_data_stretch", page_size=10
             )
@@ -588,7 +579,7 @@ class ShowSalivaFeatures(SalivaBase):
             name="Sample Index", value=[1, 4], placeholder="Enter the sample index"
         )
         slope_df = bp.saliva.slope(
-            self.get_data()[self.saliva_type],
+            self.get_data(),
             sample_idx=sample_idx.value,
             sample_times=sample_times_input.value.tolist()
             if isinstance(sample_times_input.value, ndarray)
@@ -605,14 +596,22 @@ class ShowSalivaFeatures(SalivaBase):
         )
         return col
 
-    def get_data(self) -> Dict[str, pd.DataFrame]:
-        return bp.utils.data_processing.exclude_subjects(
-            excluded_subjects=self.exclude_subjects.value,
-            condition_list=self.condition_list.tolist()
-            if isinstance(self.condition_list, ndarray)
-            else self.condition_list,
-            **{self.saliva_type: self.data},
-        )
+    def get_data(self) -> pd.DataFrame:
+        args = {
+            "excluded_subjects": self.exclude_subjects.value,
+            self.saliva_type: self.data,
+        }
+        if self.condition_list is not None and isinstance(self.condition_list, ndarray):
+            args["condition_list"] = self.condition_list.tolist()
+        try:
+            subjects_excluded = bp.utils.data_processing.exclude_subjects(**args)
+            if not isinstance(subjects_excluded, dict):
+                return subjects_excluded
+            else:
+                return subjects_excluded[self.saliva_type]
+        except Exception as e:
+            print(f"Exception in excluding subjects: {e}")
+            return self.data
 
     def update_feature_column(self, target, event):
         self.feature_accordion_column.__setitem__(0, self.get_feature_accordion())
