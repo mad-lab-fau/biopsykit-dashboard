@@ -4,7 +4,6 @@ from biopsykit.signals.ecg import EcgProcessor
 import biopsykit as bp
 from src.Physiological.PHYSIOLOGICAL_CONSTANTS import SESSION_TEXT
 from src.Physiological.PhysiologicalBase import PhysiologicalBase
-from src.Physiological.ecg_plotting import ecg_plot
 import holoviews as hv
 
 
