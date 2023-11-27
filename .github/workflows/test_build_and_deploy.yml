@@ -6,60 +6,113 @@ on:
   pull_request:
     branches: [ development ]
 
+env:
+    # Name of module and id separated by a slash
+    INSTANCE: Writerside/hi
+    # Replace HI with the ID of the instance in capital letters
+    ARTIFACT: webHelpHI2-all.zip
+    # Writerside docker image version
+    DOCKER_VERSION: 232.10165.1
+# Add the variable below to upload Algolia indexes
+# Replace HI with the ID of the instance in capital letters
+    ALGOLIA_ARTIFACT: algolia-indexes-HI.zip
+
 jobs:
-  test_build:
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-      contents: read
-    strategy:
-      matrix:
-        python-version: ["3.10"]
-    steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v3
-      with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install poetry
-        pip install poethepoet
-        poetry config virtualenvs.in-project true
-        poetry install -E mne -E jupyter
-    - name: Testing
-      if: ${{ matrix.python-version == '3.10' }}
-      run: |
-        poetry run poe test
-    - name: Building
-      if: ${{ matrix.python-version == '3.10' }}
-      run: |
-        poetry run poe build_pipelines
-    - name: Upload site as artifact
-      if: ${{ matrix.python-version == '3.10' }}
-      uses: actions/upload-pages-artifact@v1
-      with:
+    build_documentation:
+        runs-on: ubuntu-latest
+
+        steps:
+        - name: Checkout repository
+          uses: actions/checkout@v3
+
+        - name: Build Writerside docs using Docker
+          uses: JetBrains/writerside-github-action@v4
+          with:
+            instance: ${{ env.INSTANCE }}
+            artifact: ${{ env.ARTIFACT }}
+            docker-version: ${{ env.DOCKER_VERSION }}
+
+        - name: Upload documentation
+          uses: actions/upload-artifact@v3
+          with:
+            name: docs
+            path: |
+                artifacts/${{ env.ARTIFACT }}
+                artifacts/report.json
+            retention-days: 7
+
+# Add the step below to upload Algolia indexes
+        - name: Upload algolia-indexes
+          uses: actions/upload-artifact@v3
+          with:
+            name: algolia-indexes
+            path: artifacts/${{ env.ALGOLIA_ARTIFACT }}
+            retention-days: 7
+
+    test_build_page:
+      needs: build_documentation
+      runs-on: ubuntu-latest
+      permissions:
+        pages: write      # to deploy to Pages
+        id-token: write   # to verify the deployment originates from an appropriate source
+        contents: read
+      strategy:
+        matrix:
+          python-version: ["3.10"]
+      steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v3
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install poetry
+          pip install poethepoet
+          poetry config virtualenvs.in-project true
+          poetry install -E mne -E jupyter
+
+      - name: Testing
+        if: ${{ matrix.python-version == '3.10' }}
+        run: |
+          poetry run poe test
+
+      - name: Building
+        if: ${{ matrix.python-version == '3.10' }}
+        run: |
+          poetry run poe build_pipelines
+      - name: Download artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: docs
+      - name: Unzip artifact
+        uses: montudor/action-zip@v1
+        with:
+          args: unzip -qq ${{ env.ARTIFACT }} -d index/documentation
+      - name: Upload site as artifact
+        if: ${{ matrix.python-version == '3.10' }}
+        uses: actions/upload-pages-artifact@v1
+        with:
+          name: github-pages
+          path: index
+    upload_artifact:
+      needs: test_build_page
+
+      # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
+      permissions:
+        pages: write      # to deploy to Pages
+        id-token: write   # to verify the deployment originates from an appropriate source
+
+      # Deploy to the github-pages environment
+      environment:
         name: github-pages
-        path: index
-  upload_artifact:
-    needs: test_build
+        url: ${{ steps.deployment.outputs.page_url }}
 
-    # Grant GITHUB_TOKEN the permissions required to make a Pages deployment
-    permissions:
-      pages: write      # to deploy to Pages
-      id-token: write   # to verify the deployment originates from an appropriate source
-
-    # Deploy to the github-pages environment
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
-    # Specify runner + deployment step
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
+      # Specify runner + deployment step
+      runs-on: ubuntu-latest
+      steps:
+        - name: Deploy to GitHub Pages
+          id: deployment
+          uses: actions/deploy-pages@v2 # or the latest "vX.X.X" version tag for this action
 
