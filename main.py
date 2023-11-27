@@ -18,7 +18,7 @@ app = pn.template.BootstrapTemplate(
     title="BioPysKit Dashboard",
     header_background="#186FEF",
     logo="./assets/Icons/biopsykit_Icon.png",
-    favicon="https://raw.githubusercontent.com/shMeske/test-site/gh-pages/favicon.ico",
+    favicon="https://raw.githubusercontent.com/mad-lab-fau/biopsykit-dashboard/development/assets/Favicon/bio.ico",
 )
 
 app.config.console_output = "disable"

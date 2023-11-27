@@ -26,9 +26,7 @@ app.main.constant = False
 app.theme_toggle = False
 info_btn = pn.widgets.Button(button_type="light", icon="help-hexagon", width=15)
 info_btn.js_on_click(
-    args={
-        "target": "https://shmeske.github.io/biopsykit-dashboard-documentation/general-info.html"
-    },
+    args={"target": "https://mad-lab-fau.github.io/biopsykit-dashboard/documentation/"},
     code="window.open(target)",
 )
 app.header.append(info_btn)
