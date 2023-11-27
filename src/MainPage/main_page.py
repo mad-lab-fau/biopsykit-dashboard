@@ -17,7 +17,6 @@ class MainPage(param.Parameterized):
     app = None
     name_pipeline_dict = {
         "Physiological Data": PhysiologicalPipeline(),
-        "Psychological Data": PsychologicalPipeline(),
         "Questionnaire Data": QuestionnairePipeline(),
         "Saliva Data": SalivaPipeline(),
         "Sleep Data": SleepPipeline(),

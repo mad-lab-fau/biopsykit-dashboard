@@ -18,9 +18,10 @@ files_added = []
 
 # "'biopsykit',"
 
+
 changed_imports = (
-    "  const env_spec = ['https://cdn.holoviz.org/panel/wheels/bokeh-3.3.0-py3-none-any.whl', "
-    "'https://cdn.holoviz.org/panel/1.3.1/dist/wheels/panel-1.3.1-py3-none-any.whl', "
+    "  const env_spec = ['https://cdn.holoviz.org/panel/wheels/bokeh-3.2.2-py3-none-any.whl', "
+    "'https://cdn.holoviz.org/panel/1.3.2/dist/wheels/panel-1.3.2-py3-none-any.whl', "
     "'pyodide-http==0.2.1', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/shMeske/WheelFiles/master/littleutils-0.2.2-py3-none-any.whl', "
