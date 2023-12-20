@@ -18,7 +18,7 @@ from src.Questionnaire.wide_to_long import AskToChangeFormat, ConvertToLong
 class QuestionnairePipeline:
     pipeline = None
     name = "Questionnaire"
-    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/clipboard-check.svg"
+    icon_svg = "https://github.com/mad-lab-fau/biopsykit-dashboard/raw/development/assets/Icons/Questionnaire.svg"
     icon_name = "clipboard-check"
 
     def __init__(self):

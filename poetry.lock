@@ -2262,13 +2262,13 @@ files = [
 
 [[package]]
 name = "panel"
-version = "1.3.2"
+version = "1.3.5"
 description = "The powerful data exploration & web app framework for Python."
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "panel-1.3.2-py2.py3-none-any.whl", hash = "sha256:da1e6c8c41e88c728a89b8119da03ac13870e32759e401c2ecc0a7ba47ea74c3"},
-    {file = "panel-1.3.2.tar.gz", hash = "sha256:0b8907726ffaee97e2f0c89f047519ab511266cdbaeef1574d5eb5b327b0a30d"},
+    {file = "panel-1.3.5-py2.py3-none-any.whl", hash = "sha256:d49cde574958e5b766357c456f0bc832530dde4c02e9ae7b5065cc82003a15a8"},
+    {file = "panel-1.3.5.tar.gz", hash = "sha256:fdf8db8cd1a1fa96f86cecb2dfb83b8792e9e8088f284d4d5163fd787602a2b6"},
 ]
 
 [package.dependencies]
@@ -4011,4 +4011,4 @@ mne = ["mne"]
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9,<3.11"
-content-hash = "ce545c35f149864641e2c592f23b9ce16fbe0406304bd52f30159a3aca0e89e4"
+content-hash = "63cf9d1685ac1a173f72652a9129655533a2662aabc7c3c17b32da36a4229bd4"

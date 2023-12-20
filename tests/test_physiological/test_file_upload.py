@@ -39,8 +39,8 @@ class TestFileUpload:
         assert file_upload.file_input.accept == ".acq"
         file_upload.select_hardware.value = "NilsPod"
         assert file_upload.file_input.accept == ".csv,.bin, .zip"
-        with pytest.raises(Exception):
-            file_upload.select_hardware.value = "False Hardware"
+        file_upload.select_hardware.value = "False Hardware"
+        assert file_upload.select_hardware.value != "False Hardware"
 
     def test_extract_simple_zip(self, file_upload, script_dir):
         file_name = "Archiv.zip"

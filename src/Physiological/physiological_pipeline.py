@@ -22,7 +22,7 @@ from src.Physiological.signal_type import PhysSignalType
 class PhysiologicalPipeline:
     pipeline = None
     name = "Physiological"
-    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/wave-saw-tool.svg"
+    icon_svg = "https://github.com/mad-lab-fau/biopsykit-dashboard/raw/development/assets/Icons/Physiological.svg"
     icon_name = "wave-saw-tool"
 
     def __init__(self):

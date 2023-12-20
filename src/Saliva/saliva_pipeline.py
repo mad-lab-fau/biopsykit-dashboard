@@ -13,7 +13,7 @@ from src.Saliva.sample_times import SetSampleTimes, AskToSetSampleTimes
 class SalivaPipeline:
     pipeline = None
     name = "Saliva"
-    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/test-pipe.svg"
+    icon_svg = "https://github.com/mad-lab-fau/biopsykit-dashboard/raw/development/assets/Icons/Saliva.svg"
     icon_name = "test-pipe"
 
     def __init__(self):

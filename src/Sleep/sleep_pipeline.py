@@ -15,7 +15,7 @@ from src.Sleep.upload_sleep_data import UploadSleepData
 
 class SleepPipeline:
     name = "Sleep"
-    icon_svg = "https://tabler-icons.io/static/tabler-icons/icons/bed.svg"
+    icon_svg = "https://github.com/mad-lab-fau/biopsykit-dashboard/raw/development/assets/Icons/Sleep.svg"
     icon_name = "bed"
 
     def __init__(self):

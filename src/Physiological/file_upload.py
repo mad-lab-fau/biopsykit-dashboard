@@ -47,7 +47,6 @@ class FileUpload(PhysiologicalBase):
         self.update_step(4)
         self.select_timezone.link(self, callbacks={"value": self.timezone_changed})
         self.select_hardware.link(self, callbacks={"value": self.hardware_changed})
-        self._select_hardware = pn.widgets.Select.from_param(self.param.hardware)
         self.file_input.link(
             self,
             callbacks={
@@ -77,6 +76,9 @@ class FileUpload(PhysiologicalBase):
             self.ready = True
 
     def hardware_changed(self, _, event):
+        if event.new not in self.select_hardware.options:
+            self.select_hardware.value = self.select_hardware.options[0]
+            return
         self.hardware = event.new
         if self.hardware == "NilsPod":
             self.file_input.accept = ".csv,.bin, .zip"

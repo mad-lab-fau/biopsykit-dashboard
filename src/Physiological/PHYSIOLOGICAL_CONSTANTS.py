@@ -23,7 +23,11 @@ SESSION_TEXT = (
     "while multiple Sessions describe that two or more sensors are used. \n"
 )
 
-SIGNAL_TYPE_TEXT = "# Selecting Physiological Signal Type"
+SIGNAL_TYPE_TEXT = (
+    "# Selecting Physiological Signal Type \n"
+    "Below you can select the Physiological Signal Type you want to analyse.\n"
+    "You may choose between: ECG, RSP, EEG. \n"
+)
 SELECT_CFT_TEXT = (
     "# Select CFT Sheet \n\n"
     "This step allows you to select a CFT sheet from a list "
@@ -64,7 +68,13 @@ ASK_PROCESS_HRV_TEXT = (
     "hit the process button, and then proceed. "
     "Otherwise, you can skip this step and go to the next stage. \n \n"
 )
-ASK_DETECT_OUTLIER_TEXT = "# Do you want to check for outliers?"
+ASK_DETECT_OUTLIER_TEXT = (
+    "# Do you want to check for outliers? \n"
+    "If you want to check for outliers,"
+    'you can click the "Yes" button, otherwise click "Skip". In the following '
+    "step are the different kinds of outlier detection methods you can apply"
+    "to your data.\n"
+)
 
 OUTLIER_DETECTION_TEXT = (
     "# Outlier Detection \n\n"
@@ -94,11 +104,16 @@ OUTLIER_DETECTION_TEXT = (
 
 FILE_UPLOAD_TEXT = (
     "# Upload your session File \n"
-    "## The supported File formats are .bin, .csv, and you can also choose Folders.\n"
+    "## The supported File formats are .bin, .csv you can also upload Folders,"
+    "but these have to be zipped before.\n"
     "After your upload your file will also be checked if it contains the necessary columns.\n"
 )
 
-DOWNLOAD_RESULT_TEXT = "# Download Result \n"
+DOWNLOAD_RESULT_TEXT = (
+    "# Download Result \n"
+    "You can download the result of the analysis here. In the downloaded file you "
+    "you can find the analysed data as .xslsx files."
+)
 DATA_ARRIVED_TEXT = (
     "# Files uploaded successfully \n"
     "Below is a short summary of the files which you uploaded."
@@ -114,12 +129,18 @@ COMPRESS_FILES_TEXT = (
 ASK_ADD_TIMES_TEXT = (
     "# Do you want to add Phases for your Data?\n"
     "If you want to upload an Excel oder CSV File, or if you want to manually add Phases "
-    "to your data then click on the Add Times Button otherwise skip"
+    "to your data then click on the Add Times Button otherwise skip."
 )
-ADD_TIMES_TEXT = "# Select Times"
+ADD_TIMES_TEXT = (
+    "# Select Times\n"
+    "In this step you can add Phases for your data. \n"
+    "You can either upload an Excel or CSV File or you can manually add "
+    "Phases for the different subjects. \n"
+)
 PRESTEP_PROCESSING_TEXT = (
     "# Processing \n"
-    "Im nächsten Schritt werden die Daten verarbeitet, dieser Schritt dauert einen Moment :)."
+    "In the following step your data will be processed with the parameters you provided"
+    "in the previous steps."
 )
 
 SET_RSP_PARAMETERS_TEXT = (
