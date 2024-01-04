@@ -1,6 +1,5 @@
 {
   "name": "Biopsykit Dashboard",
-//   "short_name": "",
   "start_url": "index.html",
   "icons": [
     {
