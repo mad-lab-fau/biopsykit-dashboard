@@ -15,10 +15,9 @@ RESULTING_SINGLE_PIPELINE_FILENAME = "single_dashboard"
 MAIN_FILE = "main.py"
 IGNORE_FOLDERS = ["build", "dist", "pyodide", "pyscript", "Miscellaneous"]
 files_added = []
-
 changed_imports = (
     "  const env_spec = ['https://cdn.holoviz.org/panel/wheels/bokeh-3.2.2-py3-none-any.whl', "
-    "'https://cdn.holoviz.org/panel/1.3.2/dist/wheels/panel-1.3.2-py3-none-any.whl', "
+    "'https://cdn.holoviz.org/panel/1.3.6/dist/wheels/panel-1.3.6-py3-none-any.whl', "
     "'pyodide-http==0.2.1', "
     "'https://raw.githubusercontent.com/mad-lab-fau/biopsykit-dashboard/development/assets/WheelFiles/docopt-0.6.2-py2.py3-none-any.whl', "
     "'https://raw.githubusercontent.com/mad-lab-fau/biopsykit-dashboard/development/assets/WheelFiles/littleutils-0.2.2-py3-none-any.whl', "

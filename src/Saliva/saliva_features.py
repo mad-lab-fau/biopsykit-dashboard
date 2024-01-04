@@ -55,8 +55,6 @@ class ShowSalivaFeatures(SalivaBase):
         acc.append(self.get_max_value())
         acc.append(self.get_standard_features())
         acc.append(self.get_initial_value())
-        # acc.append(self.get_feature_boxplot_element())
-        # acc.append(self.get_multi_feature_boxplot_element())
         return acc
 
     def get_mean_se_element(self):
@@ -84,15 +82,6 @@ class ShowSalivaFeatures(SalivaBase):
                     button,
                 )
             )
-            # col.append(pn.layout.Divider())
-            # col.append(self.edit_mean_se_figure())
-            # download_btn = pn.widgets.FileDownload(
-            #     label="Download",
-            #     button_type="primary",
-            #     callback=pn.bind(self.download_mean_se_figure),
-            #     filename="figure.png",
-            # )
-            # col.append(download_btn)
             return col
         except Exception as e:
             pn.state.notifications.error("Error in Mean and SE")

@@ -3,7 +3,7 @@ import pandas as pd
 import panel as pn
 import param
 
-from src.Saliva.SALIVA_CONSTANTS import LOAD_PLATE_DATA_TEXT
+from src.Saliva.SALIVA_CONSTANTS import LOAD_SALIVA_DATA_TEXT
 from src.Saliva.SalivaBase import SalivaBase
 from src.utils import load_saliva_plate, load_saliva_wide_format
 
@@ -71,10 +71,10 @@ class LoadSalivaData(SalivaBase):
     )
 
     def __init__(self, **params):
-        params["HEADER_TEXT"] = LOAD_PLATE_DATA_TEXT
+        params["HEADER_TEXT"] = LOAD_SALIVA_DATA_TEXT
         super().__init__(**params)
         self.update_step(3)
-        self.update_text(LOAD_PLATE_DATA_TEXT)
+        self.update_text(LOAD_SALIVA_DATA_TEXT)
         self.filename = None
         self.select_saliva.link(self, callbacks={"value": self.saliva_type_changed})
         self.upload_btn.link(self, callbacks={"filename": self.filename_changed})

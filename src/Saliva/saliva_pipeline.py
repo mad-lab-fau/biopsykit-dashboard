@@ -70,12 +70,5 @@ class SalivaPipeline:
                 ),
                 "Add Condition List": "Load Saliva Data",
                 "Load Saliva Data": "Show Features",
-                # "Ask for Format": "Ask for Subject Condition List",
-                # "Ask for Subject Condition List": (
-                #     "Add Condition List",
-                #     "Load Saliva Data",
-                # ),
-                # "Add Condition List": "Load Saliva Data",
-                # "Load Saliva Data": "Show Features",
             }
         )

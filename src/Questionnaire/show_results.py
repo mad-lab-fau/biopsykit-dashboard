@@ -15,6 +15,13 @@ class ShowResults(QuestionnaireBase):
     )
     questionnaire_results_Column = pn.Column()
 
+    def __init__(self, **params):
+        params["HEADER_TEXT"] = SHOW_RESULTS_TEXT
+        super().__init__(**params)
+        self.update_step(7)
+        self.update_text(SHOW_RESULTS_TEXT)
+        self._view = pn.Column(self.header, self.questionnaire_results_Column)
+
     def show_questionnaire_results(self) -> pn.Accordion:
         acc = pn.Accordion(sizing_mode="stretch_width")
         supported_questionnaires = (
@@ -48,13 +55,6 @@ class ShowResults(QuestionnaireBase):
                 )
             )
         return acc
-
-    def __init__(self, **params):
-        params["HEADER_TEXT"] = SHOW_RESULTS_TEXT
-        super().__init__(**params)
-        self.update_step(7)
-        self.update_text(SHOW_RESULTS_TEXT)
-        self._view = pn.Column(self.header, self.questionnaire_results_Column)
 
     def panel(self):
         if self.data_scaled is None:
