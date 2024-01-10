@@ -370,12 +370,12 @@ For that you have to run the following command:
 poetry run poe build_pipelines
 ```
 
-This command converts the porject into a Progressive Web App (PWA) and saves it in the index folder. In this folder you 
+This command converts the project into a Progressive Web App (PWA) and saves it in the index folder. In this folder you 
 find the index.html file which is the standalone page, that uses the index.js File for the Javascript Code. 
 You can open this file in your browser and use the project as a PWA. You can also deploy this file to a webserver, this 
 is done automatically in a GitHub Actions workflow. The workflow is defined in the .github/workflows folder in the 
 test_build_and_deploy.yml file. The workflow is triggered on every push to the development branch and only if the tests
-are successful the project is deployed to the Github Pages.
+are successful the project is deployed to the GitHub Pages.
 
 The heart of the conversion is the convert_files.py file. This file has different tasks:
 
@@ -395,3 +395,56 @@ poetry run poe convert_files
 
 This command line interface then takes you through the different steps of the conversion process.
 
+### What does convert_files.py do?
+
+The convert_files.py file has different tasks: combine the different .py Files into one large .py File, remove redundant
+ imports and convert the .py File into a PWA. The following is a short explanation of the different steps:
+
+#### Combine the different .py Files into one large .py File
+
+This is done with the following function:
+
+```python
+def combine_all_files()
+```
+ in this function all the different .py Files are combined into one large .py File.
+This is necessary since the panel convert command only converts one .py File into a PWA. So if you want to convert the
+whole project into a PWA you have to combine all the different .py Files into one large .py File.
+
+After that the redundant imports are removed from this large .py File. This is done with the following function:
+
+```python
+def remove_redundant_imports()
+```
+
+After removing the redundant imports the following function is called:
+
+```python
+def convert_to_pyodide()
+```
+
+This function calls the panel convert command to convert the .py File into a PWA. The following is the command:
+
+```bash
+
+  panel convert {combined_file}.py --to pyodide-worker --out {RESULTING_FILENAME} --pwa
+    
+```
+
+If everything runs correctly a .html File as well as a .js File are created. The .html File is the standalone page and
+the .js File contains the Javascript Code. The last step is to replace the imports in the .js File. This is done with
+the following function:
+
+```python
+def change_imports()
+```
+
+This function replaces the imports in the .js File. If you want to update some of the imports you can do that in the
+variable changed_imports. This variable is just a string which contains the imports which should be replaced. 
+For example to update the panel version you have to change the following line:
+
+```python
+    "'https://cdn.holoviz.org/panel/1.3.6/dist/wheels/panel-1.3.6-py3-none-any.whl'"
+```
+
+and update the link such that it points to the new version of panel.
